@@ -18,6 +18,7 @@ export interface User {
   displayName: string;
   bio: string | null;
   avatarUrl: string | null;
+  bannerUrl: string | null;
   activeTabs: Domain[];
   tastes: Tastes;
   createdAt: Date;

@@ -6,6 +6,8 @@ export interface UserRepository {
   findByEmail(email: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
   update(user: User): Promise<void>;
+  /** Utilisateurs récents (pour les suggestions « À suivre »). */
+  listRecent(limit: number): Promise<User[]>;
 }
 export interface FollowRepository {
   add(follow: Follow): Promise<void>;
@@ -34,6 +36,8 @@ export interface LibraryEntryRepository {
     cursor: { createdAt: Date; id: string } | null;
     limit: number;
   }): Promise<LibraryEntry[]>;
+  /** Entrées publiques et publiables récentes (pour les tendances). */
+  listRecentPublic(limit: number): Promise<LibraryEntry[]>;
 }
 export interface ListRepository {
   create(list: List): Promise<void>;

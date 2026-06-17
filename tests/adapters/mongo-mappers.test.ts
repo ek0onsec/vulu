@@ -3,7 +3,7 @@ import { toUserDoc, fromUserDoc, toEntryDoc, fromEntryDoc } from "@/server/adapt
 import type { User, LibraryEntry } from "@/server/domain/entities";
 
 const user: User = { id: "u1", email: "a@x.io", passwordHash: "h", username: "alice",
-  displayName: "Alice", bio: null, avatarUrl: null, activeTabs: ["films"],
+  displayName: "Alice", bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"],
   tastes: { filmGenreIds: [1, 2, 3], people: [] }, createdAt: new Date("2024-01-01") };
 const entry: LibraryEntry = { id: "e1", userId: "u1", workId: "w1", domain: "films",
   status: "done", rating: 4.2, text: "top", visibility: "public",

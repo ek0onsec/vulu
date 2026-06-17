@@ -7,6 +7,7 @@ const schema = z.object({
   TMDB_API_KEY: z.string().min(1),
   TMDB_BASE_URL: z.url(),
   TMDB_IMAGE_BASE: z.url(),
+  UPLOADS_DIR: z.string().default(`${process.cwd()}/uploads`),
 });
 
 export type Env = z.infer<typeof schema>;

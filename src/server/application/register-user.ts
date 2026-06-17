@@ -29,6 +29,7 @@ export async function registerUser(deps: Deps, input: RegisterInput): Promise<Us
     displayName: input.displayName.trim(),
     bio: null,
     avatarUrl: null,
+    bannerUrl: null,
     activeTabs: [...input.activeTabs],
     tastes: input.tastes,
     createdAt: deps.clock.now(),

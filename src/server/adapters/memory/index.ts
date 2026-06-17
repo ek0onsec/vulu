@@ -12,6 +12,9 @@ export class InMemoryUserRepository implements UserRepository {
   async findByEmail(email: string) { return [...this.byId.values()].find((u) => u.email === email) ?? null; }
   async findByUsername(username: string) { return [...this.byId.values()].find((u) => u.username === username) ?? null; }
   async update(u: User) { this.byId.set(u.id, u); }
+  async listRecent(limit: number) {
+    return [...this.byId.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
+  }
 }
 
 export class InMemoryFollowRepository implements FollowRepository {
@@ -58,6 +61,12 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
       .filter((e) => !opts.cursor || e.createdAt.getTime() < opts.cursor.createdAt.getTime())
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, opts.limit);
+  }
+  async listRecentPublic(limit: number) {
+    return [...this.byId.values()]
+      .filter((e) => e.visibility === "public" && isPublishable(e))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
   }
 }
 

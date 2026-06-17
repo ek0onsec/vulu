@@ -14,6 +14,9 @@ export class MongoUserRepository implements UserRepository {
   async findByEmail(email: string) { const d = await this.col.findOne({ email }); return d ? M.fromUserDoc(d) : null; }
   async findByUsername(username: string) { const d = await this.col.findOne({ username }); return d ? M.fromUserDoc(d) : null; }
   async update(u: User) { await this.col.replaceOne({ _id: u.id }, M.toUserDoc(u)); }
+  async listRecent(limit: number) {
+    return (await this.col.find({}).sort({ createdAt: -1 }).limit(limit).toArray()).map(M.fromUserDoc);
+  }
 }
 
 export class MongoFollowRepository implements FollowRepository {
@@ -57,6 +60,10 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
     ];
     if (opts.cursor) and.push({ createdAt: { $lt: opts.cursor.createdAt } });
     return (await this.col.find({ $and: and }).sort({ createdAt: -1, _id: -1 }).limit(opts.limit).toArray()).map(M.fromEntryDoc);
+  }
+  async listRecentPublic(limit: number) {
+    const q: Filter<M.WithIdEntry> = { visibility: "public", status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] };
+    return (await this.col.find(q).sort({ createdAt: -1 }).limit(limit).toArray()).map(M.fromEntryDoc);
   }
 }
 

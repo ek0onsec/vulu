@@ -10,7 +10,7 @@ afterAll(async () => { await m.stop(); });
 beforeEach(async () => { await m.db.collection("users").deleteMany({}); await m.db.collection("entries").deleteMany({}); });
 
 const user = (id: string, over: Partial<User> = {}): User => ({ id, email: `${id}@x.io`, passwordHash: "h",
-  username: id, displayName: id, bio: null, avatarUrl: null, activeTabs: ["films"],
+  username: id, displayName: id, bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"],
   tastes: { filmGenreIds: [1, 2, 3], people: [] }, createdAt: new Date(), ...over });
 const entry = (id: string, over: Partial<LibraryEntry> = {}): LibraryEntry => ({ id, userId: "u1", workId: "w1",
   domain: "films", status: "done", rating: 4, text: "x", visibility: "public",

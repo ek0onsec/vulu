@@ -12,6 +12,10 @@ import type {
 } from "@/server/ports/repositories";
 import type { CatalogProvider } from "@/server/ports/catalog";
 import type { PasswordHasher, TokenService, IdGenerator, Clock } from "@/server/ports/security";
+import type { MediaStorage } from "@/server/ports/media";
+import { LocalDiskStorage } from "@/server/adapters/media/local-disk-storage";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { getDb } from "@/server/adapters/mongo/client";
 import {
   MongoUserRepository, MongoFollowRepository, MongoWorkRepository, MongoLibraryEntryRepository,
@@ -29,6 +33,7 @@ export interface Deps {
   likes: LikeRepository;
   comments: CommentRepository;
   catalog: CatalogProvider;
+  media: MediaStorage;
   hasher: PasswordHasher;
   tokens: TokenService;
   ids: IdGenerator;
@@ -46,6 +51,7 @@ export function makeInMemoryDeps(catalog: CatalogProvider): Deps {
     likes: new InMemoryLikeRepository(),
     comments: new InMemoryCommentRepository(),
     catalog,
+    media: new LocalDiskStorage(join(tmpdir(), "vulu-test-uploads")),
     hasher: new BcryptHasher(4),
     tokens: new JwtTokenService("test-secret-test-secret-test-secret-32"),
     ids: new UuidIdGenerator(),
@@ -69,6 +75,7 @@ export async function getDeps(): Promise<Deps> {
     likes: new MongoLikeRepository(db),
     comments: new MongoCommentRepository(db),
     catalog: new TmdbCatalog({ apiKey: env.TMDB_API_KEY, baseUrl: env.TMDB_BASE_URL, imageBase: env.TMDB_IMAGE_BASE }),
+    media: new LocalDiskStorage(env.UPLOADS_DIR),
     hasher: new BcryptHasher(12),
     tokens: new JwtTokenService(env.JWT_SECRET),
     ids: new UuidIdGenerator(),
