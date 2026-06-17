@@ -3,6 +3,7 @@ import { currentUser } from "@/server/http/session";
 import { getDeps } from "@/server/container";
 import { AppShell } from "@/components/AppShell";
 import { EntryEditor } from "@/components/EntryEditor";
+import { AddToListButton } from "@/components/AddToListButton";
 import { RatingStars } from "@/components/RatingStars";
 
 export default async function WorkPage({ params }: { params: Promise<{ id: string }> }) {
@@ -40,6 +41,10 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
 
       <div className="mt-4">
         <EntryEditor workRef={{ source: work.source, externalId: work.externalId, type: work.type }} initial={entry} />
+      </div>
+
+      <div className="mt-3">
+        <AddToListButton workRef={{ source: work.source, externalId: work.externalId, type: work.type }} workId={work.id} />
       </div>
 
       {entry?.status === "done" && entry.rating !== null && (
