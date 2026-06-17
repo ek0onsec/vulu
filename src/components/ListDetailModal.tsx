@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation";
 import { Modal } from "./Modal";
 import { Icon } from "./Icon";
 import { api } from "@/lib/api-client";
+import { toast } from "@/lib/toast";
 import type { List, Work } from "@/server/domain/entities";
 import type { WorkSummary } from "@/server/ports/catalog";
 
-export function ListDetailModal({ listId, onClose, onChanged }: {
-  listId: string; onClose: () => void; onChanged: (workCount: number) => void;
+export function ListDetailModal({ listId, onClose, onChanged, editable = true }: {
+  listId: string; onClose: () => void; onChanged?: (workCount: number) => void; editable?: boolean;
 }) {
   const router = useRouter();
   const [list, setList] = useState<List | null>(null);
@@ -48,14 +49,16 @@ export function ListDetailModal({ listId, onClose, onChanged }: {
       source: "tmdb", externalId: r.externalId, type: r.type,
     });
     const { works: fresh } = await api.get<{ works: Work[] }>(`/api/lists/${listId}`);
-    setWorks(fresh); onChanged(updated.workIds.length);
+    setWorks(fresh); onChanged?.(updated.workIds.length);
     setQ(""); setResults([]); setAdding(false);
+    toast(`« ${r.title} » ajouté`);
   }
 
   async function removeWork(workId: string) {
     const { list: updated } = await api.del<{ list: List }>(`/api/lists/${listId}/items`, { workId });
     setWorks((prev) => prev.filter((w) => w.id !== workId));
-    onChanged(updated.workIds.length);
+    onChanged?.(updated.workIds.length);
+    toast("Œuvre retirée");
   }
 
   function openWork(id: string) { onClose(); router.push(`/work/${id}`); }
@@ -66,13 +69,15 @@ export function ListDetailModal({ listId, onClose, onChanged }: {
 
       <div className="mb-4 flex items-center justify-between">
         <span className="text-sm text-[var(--color-text-muted)]">{works.length} œuvre{works.length > 1 ? "s" : ""}</span>
-        <button onClick={() => setAdding((a) => !a)}
-          className="flex items-center gap-1.5 rounded-full border border-[var(--color-primary)] px-3 py-1.5 text-sm font-semibold text-[var(--color-primary)]">
-          <Icon name="plus" size={16} /> Ajouter
-        </button>
+        {editable && (
+          <button onClick={() => setAdding((a) => !a)}
+            className="flex items-center gap-1.5 rounded-full border border-[var(--color-primary)] px-3 py-1.5 text-sm font-semibold text-[var(--color-primary)]">
+            <Icon name="plus" size={16} /> Ajouter
+          </button>
+        )}
       </div>
 
-      {adding && (
+      {editable && adding && (
         <div className="mb-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
           <input value={q} onChange={(e) => setQ(e.target.value)} autoFocus placeholder="Chercher un film, une série…"
             className="w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm" />
@@ -99,10 +104,12 @@ export function ListDetailModal({ listId, onClose, onChanged }: {
                 style={w.posterUrl ? { backgroundImage: `url(${w.posterUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
               <p className="mt-1 line-clamp-2 text-xs leading-tight">{w.title}</p>
             </button>
-            <button onClick={() => removeWork(w.id)} aria-label={`Retirer ${w.title}`}
-              className="absolute right-1 top-1 rounded-full bg-black/65 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
-            </button>
+            {editable && (
+              <button onClick={() => removeWork(w.id)} aria-label={`Retirer ${w.title}`}
+                className="absolute right-1 top-1 rounded-full bg-black/65 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+              </button>
+            )}
           </div>
         ))}
       </div>

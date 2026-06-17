@@ -4,6 +4,7 @@ import { getDeps } from "@/server/container";
 import { AppShell } from "@/components/AppShell";
 import { EntryEditor } from "@/components/EntryEditor";
 import { AddToListButton } from "@/components/AddToListButton";
+import { WorkReviews } from "@/components/WorkReviews";
 import { RatingStars } from "@/components/RatingStars";
 
 export default async function WorkPage({ params }: { params: Promise<{ id: string }> }) {
@@ -52,6 +53,8 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
           Ta note : <RatingStars value={entry.rating} /> {entry.rating.toFixed(1).replace(".", ",")}/5
         </p>
       )}
+
+      <WorkReviews workId={work.id} />
     </AppShell>
   );
 }

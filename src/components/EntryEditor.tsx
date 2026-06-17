@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { RatingSlider } from "./RatingSlider";
 import { api, ApiError } from "@/lib/api-client";
+import { toast } from "@/lib/toast";
 import type { LibraryEntry, Visibility, WorkType } from "@/server/domain/entities";
 
 interface Ref { source: "tmdb"; externalId: string; type: WorkType }
@@ -25,8 +26,10 @@ export function EntryEditor({ workRef, initial }: { workRef: Ref; initial: Libra
         });
       }
       setMsg("Enregistré ✓");
+      toast("Entrée enregistrée");
     } catch (err) {
-      setMsg(err instanceof ApiError ? err.message : "Erreur");
+      const m = err instanceof ApiError ? err.message : "Erreur";
+      setMsg(m); toast(m, "error");
     } finally {
       setBusy(false);
     }

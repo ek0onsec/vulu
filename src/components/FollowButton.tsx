@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { api } from "@/lib/api-client";
+import { toast } from "@/lib/toast";
 
 export function FollowButton({ username, initialFollowing }: { username: string; initialFollowing: boolean }) {
   const [following, setFollowing] = useState(initialFollowing);
@@ -12,8 +13,10 @@ export function FollowButton({ username, initialFollowing }: { username: string;
     try {
       if (next) await api.post(`/api/users/${username}/follow`);
       else await api.del(`/api/users/${username}/follow`);
+      toast(next ? `Tu suis @${username}` : `Tu ne suis plus @${username}`);
     } catch {
       setFollowing(!next);
+      toast("Action impossible", "error");
     } finally {
       setBusy(false);
     }

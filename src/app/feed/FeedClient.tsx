@@ -11,6 +11,7 @@ export function FeedClient({ activeTabs }: { activeTabs: Domain[] }) {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
 
   const load = useCallback(async (reset: boolean, fromCursor: string | null) => {
     setLoading(true);
@@ -21,6 +22,7 @@ export function FeedClient({ activeTabs }: { activeTabs: Domain[] }) {
       setCursor(data.nextCursor);
     } finally {
       setLoading(false);
+      setReady(true);
     }
   }, []);
 
@@ -30,8 +32,13 @@ export function FeedClient({ activeTabs }: { activeTabs: Domain[] }) {
   return (
     <>
       <TabSwitcher active={activeTabs} value={tab} onChange={setTab} />
-      {visible.map((i) => <FeedCard key={i.entry.id} item={i} />)}
-      {visible.length === 0 && !loading && (
+      {!ready && (
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => <div key={i} className="h-32 animate-pulse rounded-2xl bg-[var(--color-border)]" />)}
+        </div>
+      )}
+      {ready && visible.map((i) => <FeedCard key={i.entry.id} item={i} />)}
+      {ready && visible.length === 0 && !loading && (
         <p className="mt-8 text-center text-[var(--color-text-muted)]">
           Rien ici pour l’instant. Suis des amis ou note un film pour remplir ton feed.
         </p>

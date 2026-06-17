@@ -1,13 +1,13 @@
 import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
 import { currentUser } from "@/server/http/session";
 import { getDeps } from "@/server/container";
 import { getCircle } from "@/server/application/social";
 import { AppShell } from "@/components/AppShell";
 import { FollowButton } from "@/components/FollowButton";
-import { RatingStars } from "@/components/RatingStars";
 import { Avatar } from "@/components/Avatar";
 import { ProfileEditModal } from "@/components/ProfileEditModal";
+import { ProfileTabs, type PosterItem, type ListItem } from "@/components/ProfileTabs";
+import type { LibraryEntry } from "@/server/domain/entities";
 
 export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const viewer = await currentUser();
@@ -21,10 +21,23 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
 
   const isSelf = viewer.id === target.id;
   const inCircle = (await getCircle(deps, viewer.id)).has(target.id);
-  const watched = (await deps.entries.listByUser(target.id, { status: "done" }))
+
+  async function toPosters(entries: LibraryEntry[]): Promise<PosterItem[]> {
+    const resolved = await Promise.all(entries.map(async (e) => ({ e, w: await deps.works.findById(e.workId) })));
+    return resolved
+      .filter((x) => x.w !== null)
+      .map(({ e, w }) => ({ id: e.id, workId: w!.id, posterUrl: w!.posterUrl, title: w!.title, rating: e.rating }));
+  }
+
+  const watchedEntries = (await deps.entries.listByUser(target.id, { status: "done" }))
     .filter((e) => e.visibility === "public" || isSelf || inCircle);
-  const works = await Promise.all(watched.map(async (e) => ({ entry: e, work: await deps.works.findById(e.workId) })));
-  const lists = (await deps.lists.listByUser(target.id)).filter((l) => l.visibility === "public" || isSelf);
+  const watched = await toPosters(watchedEntries);
+  const planned = isSelf ? await toPosters(await deps.entries.listByUser(target.id, { status: "planned" })) : null;
+
+  const lists: ListItem[] = (await deps.lists.listByUser(target.id))
+    .filter((l) => l.visibility === "public" || isSelf)
+    .map((l) => ({ id: l.id, name: l.name, description: l.description, visibility: l.visibility, count: l.workIds.length }));
+
   const [followers, following] = await Promise.all([deps.follows.countFollowers(target.id), deps.follows.countFollowing(target.id)]);
   const isFollowing = await deps.follows.exists(viewer.id, target.id);
 
@@ -55,35 +68,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
         </div>
       </div>
 
-      <h2 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Vus</h2>
-      {works.length === 0 && <p className="text-sm text-[var(--color-text-muted)]">Aucune œuvre visible.</p>}
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-        {works.map(({ entry, work }) => work && (
-          <Link key={entry.id} href={`/work/${work.id}`}
-            className="relative aspect-[2/3] overflow-hidden rounded-xl bg-[var(--color-border)]"
-            style={work.posterUrl ? { backgroundImage: `url(${work.posterUrl})`, backgroundSize: "cover" } : undefined}>
-            {entry.rating !== null && (
-              <span className="absolute bottom-1 left-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[0.65rem] font-bold text-[var(--color-accent)]">
-                ★ {entry.rating.toFixed(1).replace(".", ",")}
-              </span>
-            )}
-          </Link>
-        ))}
-      </div>
-
-      {lists.length > 0 && (
-        <>
-          <h2 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Listes</h2>
-          <div className="flex flex-wrap gap-3">
-            {lists.map((l) => (
-              <div key={l.id} className="w-40 rounded-xl border border-[var(--color-border)] p-3">
-                <p className="font-semibold">{l.name}</p>
-                <p className="text-xs text-[var(--color-text-muted)]">{l.workIds.length} œuvres · {l.visibility === "public" ? "public" : "privé"}</p>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      <ProfileTabs watched={watched} planned={planned} lists={lists} isSelf={isSelf} />
     </AppShell>
   );
 }

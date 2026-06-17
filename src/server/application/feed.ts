@@ -12,23 +12,9 @@ export interface FeedItem {
   likedByMe: boolean;
 }
 
-export async function buildFeed(
-  deps: Deps, viewerId: string, opts: { cursor: { createdAt: Date; id: string } | null; limit: number },
-): Promise<FeedItem[]> {
-  const viewer = await deps.users.findById(viewerId);
-  if (!viewer) throw new NotFoundError("Utilisateur introuvable");
-  const circle = await getCircle(deps, viewerId);
-
-  const entries = await deps.entries.feed({
-    circleUserIds: [...circle],
-    viewerId,
-    domains: viewer.activeTabs,
-    cursor: opts.cursor,
-    limit: opts.limit,
-  });
-
+/** Enrichit des entrées brutes en items de feed (auteur, œuvre, compteurs, likedByMe). */
+export async function enrichEntries(deps: Deps, viewerId: string, entries: LibraryEntry[]): Promise<FeedItem[]> {
   const liked = new Set(await deps.likes.likedEntryIds(viewerId, entries.map((e) => e.id)));
-
   return Promise.all(entries.map(async (entry) => {
     const [author, work, likeCount, commentCount] = await Promise.all([
       deps.users.findById(entry.userId),
@@ -44,4 +30,31 @@ export async function buildFeed(
       likeCount, commentCount, likedByMe: liked.has(entry.id),
     };
   }));
+}
+
+export async function buildFeed(
+  deps: Deps, viewerId: string, opts: { cursor: { createdAt: Date; id: string } | null; limit: number },
+): Promise<FeedItem[]> {
+  const viewer = await deps.users.findById(viewerId);
+  if (!viewer) throw new NotFoundError("Utilisateur introuvable");
+  const circle = await getCircle(deps, viewerId);
+
+  const entries = await deps.entries.feed({
+    circleUserIds: [...circle],
+    viewerId,
+    domains: viewer.activeTabs,
+    cursor: opts.cursor,
+    limit: opts.limit,
+  });
+
+  return enrichEntries(deps, viewerId, entries);
+}
+
+/** Avis d'autres membres sur une œuvre, visibles pour le viewer (public ou cercle), hors soi. */
+export async function getWorkReviews(deps: Deps, viewerId: string, workId: string): Promise<FeedItem[]> {
+  const circle = await getCircle(deps, viewerId);
+  const entries = (await deps.entries.listByWork(workId)).filter(
+    (e) => e.userId !== viewerId && (e.visibility === "public" || circle.has(e.userId)),
+  );
+  return enrichEntries(deps, viewerId, entries);
 }

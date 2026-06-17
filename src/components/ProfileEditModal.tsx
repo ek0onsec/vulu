@@ -5,6 +5,7 @@ import { Modal } from "./Modal";
 import { Avatar } from "./Avatar";
 import { Icon } from "./Icon";
 import { api, ApiError } from "@/lib/api-client";
+import { toast } from "@/lib/toast";
 import { resizeImage } from "@/lib/image-resize";
 import type { Domain } from "@/server/domain/entities";
 
@@ -38,8 +39,10 @@ export function ProfileEditModal({ initial }: { initial: ProfileEditInitial }) {
       const data = await res.json();
       if (!res.ok) throw new ApiError(res.status, data.error, data.message);
       if (kind === "avatar") setAvatarUrl(data.user.avatarUrl); else setBannerUrl(data.user.bannerUrl);
+      toast(kind === "avatar" ? "Avatar mis à jour" : "Bannière mise à jour");
     } catch (e) {
-      setMsg(e instanceof ApiError ? e.message : "Échec de l'upload");
+      const m = e instanceof ApiError ? e.message : "Échec de l'upload";
+      setMsg(m); toast(m, "error");
     }
   }
 
@@ -48,9 +51,11 @@ export function ProfileEditModal({ initial }: { initial: ProfileEditInitial }) {
     try {
       await api.patch("/api/me", { displayName, bio: bio.trim() || null, avatarUrl, activeTabs: tabs });
       setOpen(false);
+      toast("Profil enregistré");
       router.refresh();
     } catch (e) {
-      setMsg(e instanceof ApiError ? e.message : "Erreur");
+      const m = e instanceof ApiError ? e.message : "Erreur";
+      setMsg(m); toast(m, "error");
     } finally {
       setBusy(false);
     }

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api-client";
+import { toast } from "@/lib/toast";
 import { Avatar } from "./Avatar";
 import { Icon } from "./Icon";
 import type { DiscoverResult } from "@/server/application/discover";
@@ -16,7 +17,13 @@ export function DiscoverRail() {
 
   async function follow(username: string, id: string) {
     setFollowed((s) => new Set(s).add(id));
-    await api.post(`/api/users/${username}/follow`).catch(() => setFollowed((s) => { const n = new Set(s); n.delete(id); return n; }));
+    try {
+      await api.post(`/api/users/${username}/follow`);
+      toast(`Tu suis @${username}`);
+    } catch {
+      setFollowed((s) => { const n = new Set(s); n.delete(id); return n; });
+      toast("Action impossible", "error");
+    }
   }
 
   if (!data) return null;

@@ -5,7 +5,7 @@ import { registerUser } from "@/server/application/register-user";
 import { rateOrReviewWork } from "@/server/application/library-entry";
 import { followUser } from "@/server/application/social";
 import { likeEntry } from "@/server/application/engagement";
-import { buildFeed } from "@/server/application/feed";
+import { buildFeed, getWorkReviews } from "@/server/application/feed";
 
 let deps: Deps; let me: string; let friend: string; let stranger: string;
 const tastes = { filmGenreIds: [878, 18, 35], people: [] };
@@ -37,5 +37,22 @@ describe("buildFeed", () => {
     await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "hidden", visibility: "circle" });
     const items = await buildFeed(deps, me, { cursor: null, limit: 10 });
     expect(items).toHaveLength(0);
+  });
+});
+
+describe("getWorkReviews", () => {
+  const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+  it("montre les avis des autres (public/cercle) mais pas le sien", async () => {
+    await rateOrReviewWork(deps, me, ref, { rating: 4, text: "le mien", visibility: "public" });
+    await rateOrReviewWork(deps, friend, ref, { rating: 5, text: "cercle", visibility: "circle" });
+    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "public", visibility: "public" });
+    const work = await deps.works.findByExternal("tmdb", "603");
+    const reviews = await getWorkReviews(deps, me, work!.id);
+    expect(reviews.map((r) => r.author.username).sort()).toEqual(["friend", "stranger"]);
+  });
+  it("cache l'avis cercle d'un inconnu", async () => {
+    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "secret", visibility: "circle" });
+    const work = await deps.works.findByExternal("tmdb", "603");
+    expect(await getWorkReviews(deps, me, work!.id)).toHaveLength(0);
   });
 });

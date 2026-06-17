@@ -65,6 +65,10 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
     const q: Filter<M.WithIdEntry> = { visibility: "public", status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] };
     return (await this.col.find(q).sort({ createdAt: -1 }).limit(limit).toArray()).map(M.fromEntryDoc);
   }
+  async listByWork(workId: string) {
+    const q: Filter<M.WithIdEntry> = { workId, status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] };
+    return (await this.col.find(q).sort({ createdAt: -1 }).toArray()).map(M.fromEntryDoc);
+  }
 }
 
 export class MongoListRepository implements ListRepository {

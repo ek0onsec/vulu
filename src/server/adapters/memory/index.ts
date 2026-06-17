@@ -68,6 +68,11 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
   }
+  async listByWork(workId: string) {
+    return [...this.byId.values()]
+      .filter((e) => e.workId === workId && isPublishable(e))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
 }
 
 export class InMemoryListRepository implements ListRepository {

@@ -52,6 +52,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <DiscoverRail />
       </aside>
 
+      <Link href="/search" aria-label="Rechercher une œuvre"
+        className="fixed bottom-16 right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_40%,transparent)] transition-transform active:scale-95 md:hidden">
+        <Icon name="plus" size={26} />
+      </Link>
+
       <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-[var(--color-border)] bg-[var(--color-surface)] py-2 md:hidden">
         {NAV.map((n) => (
           <Link key={n.href} href={n.href} aria-label={n.label}

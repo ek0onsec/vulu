@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
+import { toast } from "@/lib/toast";
 import { Modal } from "@/components/Modal";
 import { Icon } from "@/components/Icon";
 import { ListDetailModal } from "@/components/ListDetailModal";
@@ -41,7 +42,10 @@ export function ListsClient() {
         const { list } = await api.patch<{ list: List }>(`/api/lists/${editing.list.id}`, payload);
         setLists((prev) => prev.map((l) => (l.id === list.id ? list : l)));
       }
+      toast(editing.mode === "create" ? "Liste créée" : "Liste mise à jour");
       setEditing(null);
+    } catch {
+      toast("Action impossible", "error");
     } finally {
       setBusy(false);
     }
@@ -50,6 +54,7 @@ export function ListsClient() {
   async function remove(id: string) {
     await api.del(`/api/lists/${id}`);
     setLists((prev) => prev.filter((l) => l.id !== id));
+    toast("Liste supprimée");
   }
 
   return (

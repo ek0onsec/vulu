@@ -38,6 +38,8 @@ export interface LibraryEntryRepository {
   }): Promise<LibraryEntry[]>;
   /** Entrées publiques et publiables récentes (pour les tendances). */
   listRecentPublic(limit: number): Promise<LibraryEntry[]>;
+  /** Entrées publiables (vues + notées/commentées) d'une œuvre, tous publics confondus. */
+  listByWork(workId: string): Promise<LibraryEntry[]>;
 }
 export interface ListRepository {
   create(list: List): Promise<void>;

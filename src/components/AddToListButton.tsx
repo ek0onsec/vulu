@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Modal } from "./Modal";
 import { Icon } from "./Icon";
 import { api } from "@/lib/api-client";
+import { toast } from "@/lib/toast";
 import type { List, WorkType } from "@/server/domain/entities";
 
 interface Ref { source: "tmdb"; externalId: string; type: WorkType }
@@ -32,6 +33,9 @@ export function AddToListButton({ workRef, workId }: { workRef: Ref; workId: str
         ? await api.del<{ list: List }>(`/api/lists/${l.id}/items`, { workId })
         : await api.post<{ list: List }>(`/api/lists/${l.id}/items`, workRef);
       setLists((prev) => prev?.map((x) => (x.id === list.id ? list : x)) ?? null);
+      toast(member ? `Retiré de « ${l.name} »` : `Ajouté à « ${l.name} »`);
+    } catch {
+      toast("Action impossible", "error");
     } finally {
       setPending((s) => { const n = new Set(s); n.delete(l.id); return n; });
     }
