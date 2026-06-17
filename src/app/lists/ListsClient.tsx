@@ -5,10 +5,13 @@ import { Modal } from "@/components/Modal";
 import { Icon } from "@/components/Icon";
 import type { List, ListVisibility } from "@/server/domain/entities";
 
+type Editing = { mode: "create" } | { mode: "edit"; list: List };
+
 export function ListsClient() {
   const [lists, setLists] = useState<List[]>([]);
-  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Editing | null>(null);
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<ListVisibility>("public");
   const [busy, setBusy] = useState(false);
 
@@ -16,13 +19,27 @@ export function ListsClient() {
     api.get<{ lists: List[] }>("/api/lists").then((d) => setLists(d.lists)).catch(() => setLists([]));
   }, []);
 
-  async function create() {
-    if (!name.trim()) return;
+  function openCreate() {
+    setName(""); setDescription(""); setVisibility("public"); setEditing({ mode: "create" });
+  }
+  function openEdit(list: List) {
+    setName(list.name); setDescription(list.description ?? ""); setVisibility(list.visibility);
+    setEditing({ mode: "edit", list });
+  }
+
+  async function submit() {
+    if (!name.trim() || !editing) return;
     setBusy(true);
     try {
-      const { list } = await api.post<{ list: List }>("/api/lists", { name, domain: "films", description: null, visibility });
-      setLists((prev) => [list, ...prev]);
-      setName(""); setVisibility("public"); setOpen(false);
+      const payload = { name, domain: "films", description: description.trim() || null, visibility };
+      if (editing.mode === "create") {
+        const { list } = await api.post<{ list: List }>("/api/lists", payload);
+        setLists((prev) => [list, ...prev]);
+      } else {
+        const { list } = await api.patch<{ list: List }>(`/api/lists/${editing.list.id}`, payload);
+        setLists((prev) => prev.map((l) => (l.id === list.id ? list : l)));
+      }
+      setEditing(null);
     } finally {
       setBusy(false);
     }
@@ -37,7 +54,7 @@ export function ListsClient() {
     <>
       <div className="mb-5 flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Mes listes</h1>
-        <button onClick={() => setOpen(true)}
+        <button onClick={openCreate}
           className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white">
           <Icon name="plus" size={18} /> Nouvelle liste
         </button>
@@ -46,20 +63,30 @@ export function ListsClient() {
       {lists.length === 0 && <p className="text-sm text-[var(--color-text-muted)]">Aucune liste. Crée ta première collection thématique.</p>}
       <div className="flex flex-col gap-3">
         {lists.map((l) => (
-          <div key={l.id} className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-            <div>
+          <div key={l.id} className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+            <div className="min-w-0 flex-1">
               <p className="font-semibold">{l.name}</p>
+              {l.description && <p className="truncate text-sm text-[var(--color-text)]">{l.description}</p>}
               <p className="text-xs text-[var(--color-text-muted)]">{l.workIds.length} œuvres · {l.visibility === "public" ? "public" : "privé"}</p>
             </div>
+            <button onClick={() => openEdit(l)} aria-label="Éditer la liste"
+              className="rounded-full p-2 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-border)] hover:text-[var(--color-primary)]">
+              <Icon name="settings" size={18} />
+            </button>
             <button onClick={() => remove(l.id)} className="text-sm text-[var(--color-text-muted)] transition-colors hover:text-red-500">Supprimer</button>
           </div>
         ))}
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Nouvelle liste">
+      <Modal open={editing !== null} onClose={() => setEditing(null)}
+        title={editing?.mode === "edit" ? "Éditer la liste" : "Nouvelle liste"}>
         <div className="flex flex-col gap-4">
           <label className="text-sm font-semibold">Nom
             <input value={name} onChange={(e) => setName(e.target.value)} autoFocus placeholder="ex. SF culte"
+              className="mt-1 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm font-normal" />
+          </label>
+          <label className="text-sm font-semibold">Description <span className="font-normal text-[var(--color-text-muted)]">(optionnel)</span>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} rows={2}
               className="mt-1 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm font-normal" />
           </label>
           <div>
@@ -73,9 +100,9 @@ export function ListsClient() {
               ))}
             </div>
           </div>
-          <button onClick={create} disabled={busy || !name.trim()}
+          <button onClick={submit} disabled={busy || !name.trim()}
             className="rounded-full bg-[var(--color-primary)] py-2.5 text-sm font-semibold text-white disabled:opacity-50">
-            {busy ? "…" : "Créer la liste"}
+            {busy ? "…" : editing?.mode === "edit" ? "Enregistrer" : "Créer la liste"}
           </button>
         </div>
       </Modal>
