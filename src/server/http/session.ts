@@ -1,0 +1,31 @@
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { getDeps } from "@/server/container";
+import { getCurrentUser } from "@/server/application/get-current-user";
+import { AuthError } from "@/server/domain/errors";
+import type { User } from "@/server/domain/entities";
+
+const COOKIE = "vulu_session";
+
+export async function setSessionCookie(token: string): Promise<void> {
+  (await cookies()).set(COOKIE, token, {
+    httpOnly: true, secure: process.env.NODE_ENV === "production",
+    sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 7,
+  });
+}
+export async function clearSessionCookie(): Promise<void> { (await cookies()).delete(COOKIE); }
+
+export async function currentUser(): Promise<User | null> {
+  const token = (await cookies()).get(COOKIE)?.value;
+  const deps = await getDeps();
+  return getCurrentUser(deps, token);
+}
+
+export async function requireUser(): Promise<User> {
+  const user = await currentUser();
+  if (!user) throw new AuthError("Authentification requise");
+  return user;
+}
+
+export { COOKIE as SESSION_COOKIE };
+export const json = NextResponse.json;
