@@ -1,5 +1,5 @@
 import type { Deps } from "@/server/container";
-import type { Domain, List, ListVisibility, WorkType } from "@/server/domain/entities";
+import type { Domain, List, ListVisibility, Work, WorkType } from "@/server/domain/entities";
 import { ForbiddenError, NotFoundError } from "@/server/domain/errors";
 import { getOrImportWork } from "./get-work";
 
@@ -56,3 +56,15 @@ export async function removeWorkFromList(deps: Deps, userId: string, listId: str
 }
 
 export function listsOf(deps: Deps, userId: string, domain?: Domain) { return deps.lists.listByUser(userId, domain); }
+
+/** Liste + ses œuvres résolues (ordre préservé). Accessible au propriétaire ou si publique. */
+export async function getListWithWorks(
+  deps: Deps, viewerId: string, listId: string,
+): Promise<{ list: List; works: Work[] }> {
+  const list = await deps.lists.findById(listId);
+  if (!list) throw new NotFoundError("Liste introuvable");
+  if (list.visibility === "private" && list.userId !== viewerId) throw new ForbiddenError("Liste privée");
+  const resolved = await Promise.all(list.workIds.map((id) => deps.works.findById(id)));
+  const works = resolved.filter((w): w is Work => w !== null);
+  return { list, works };
+}

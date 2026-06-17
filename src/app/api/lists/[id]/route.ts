@@ -1,8 +1,15 @@
 import { getDeps } from "@/server/container";
-import { updateList, deleteList } from "@/server/application/lists";
+import { updateList, deleteList, getListWithWorks } from "@/server/application/lists";
 import { createListSchema } from "@/lib/zod-schemas";
 import { requireUser, json } from "@/server/http/session";
 import { toErrorResponse } from "@/server/http/errors";
+
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const u = await requireUser(); const { id } = await params;
+    return json(await getListWithWorks(await getDeps(), u.id, id));
+  } catch (e) { return toErrorResponse(e); }
+}
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

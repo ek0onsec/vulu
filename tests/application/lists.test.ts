@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { makeInMemoryDeps, type Deps } from "@/server/container";
 import { FakeCatalog } from "../helpers/fake-catalog";
-import { createList, addWorkToList, removeWorkFromList, updateList, deleteList, listsOf } from "@/server/application/lists";
+import { createList, addWorkToList, removeWorkFromList, updateList, deleteList, listsOf, getListWithWorks } from "@/server/application/lists";
 import { ForbiddenError } from "@/server/domain/errors";
 
 let deps: Deps; const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
@@ -31,5 +31,16 @@ describe("lists", () => {
     const l = await createList(deps, "u1", { name: "SF", domain: "films", description: null, visibility: "public" });
     await expect(updateList(deps, "u2", l.id, { name: "x", description: null, visibility: "private" })).rejects.toThrow(ForbiddenError);
     await expect(deleteList(deps, "u2", l.id)).rejects.toThrow(ForbiddenError);
+  });
+  it("getListWithWorks résout les œuvres dans l'ordre", async () => {
+    const l = await createList(deps, "u1", { name: "SF", domain: "films", description: null, visibility: "public" });
+    await addWorkToList(deps, "u1", l.id, ref);
+    const { works } = await getListWithWorks(deps, "u1", l.id);
+    expect(works).toHaveLength(1);
+    expect(works[0]?.title).toBe("The Matrix");
+  });
+  it("getListWithWorks refuse une liste privée à un tiers", async () => {
+    const l = await createList(deps, "u1", { name: "secret", domain: "films", description: null, visibility: "private" });
+    await expect(getListWithWorks(deps, "u2", l.id)).rejects.toThrow(ForbiddenError);
   });
 });

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
 import { Modal } from "@/components/Modal";
 import { Icon } from "@/components/Icon";
+import { ListDetailModal } from "@/components/ListDetailModal";
 import type { List, ListVisibility } from "@/server/domain/entities";
 
 type Editing = { mode: "create" } | { mode: "edit"; list: List };
@@ -10,6 +11,7 @@ type Editing = { mode: "create" } | { mode: "edit"; list: List };
 export function ListsClient() {
   const [lists, setLists] = useState<List[]>([]);
   const [editing, setEditing] = useState<Editing | null>(null);
+  const [viewing, setViewing] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<ListVisibility>("public");
@@ -63,12 +65,12 @@ export function ListsClient() {
       {lists.length === 0 && <p className="text-sm text-[var(--color-text-muted)]">Aucune liste. Crée ta première collection thématique.</p>}
       <div className="flex flex-col gap-3">
         {lists.map((l) => (
-          <div key={l.id} className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-            <div className="min-w-0 flex-1">
+          <div key={l.id} className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-colors hover:border-[var(--color-primary)]">
+            <button onClick={() => setViewing(l.id)} className="min-w-0 flex-1 text-left" aria-label={`Ouvrir ${l.name}`}>
               <p className="font-semibold">{l.name}</p>
               {l.description && <p className="truncate text-sm text-[var(--color-text)]">{l.description}</p>}
               <p className="text-xs text-[var(--color-text-muted)]">{l.workIds.length} œuvres · {l.visibility === "public" ? "public" : "privé"}</p>
-            </div>
+            </button>
             <button onClick={() => openEdit(l)} aria-label="Éditer la liste"
               className="rounded-full p-2 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-border)] hover:text-[var(--color-primary)]">
               <Icon name="settings" size={18} />
@@ -106,6 +108,14 @@ export function ListsClient() {
           </button>
         </div>
       </Modal>
+
+      {viewing && (
+        <ListDetailModal
+          listId={viewing}
+          onClose={() => setViewing(null)}
+          onChanged={(count) => setLists((prev) => prev.map((l) => (l.id === viewing ? { ...l, workIds: Array.from({ length: count }, (_, i) => l.workIds[i] ?? String(i)) } : l)))}
+        />
+      )}
     </>
   );
 }
