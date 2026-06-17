@@ -1,0 +1,51 @@
+import type { Deps } from "@/server/container";
+import type { EntryStatus, LibraryEntry, Visibility, WorkType } from "@/server/domain/entities";
+import { ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
+import { getOrImportWork } from "./get-work";
+
+type Ref = { source: "tmdb"; externalId: string; type: WorkType };
+
+function isValidRating(r: number): boolean {
+  if (r < 0 || r > 5) return false;
+  return Math.round(r * 10) === r * 10; // pas de 0,1
+}
+
+async function loadOrCreateEntry(deps: Deps, userId: string, ref: Ref): Promise<LibraryEntry> {
+  const work = await getOrImportWork(deps, ref);
+  const existing = await deps.entries.findByUserAndWork(userId, work.id);
+  if (existing) return existing;
+  const now = deps.clock.now();
+  return { id: deps.ids.next(), userId, workId: work.id, domain: work.domain,
+    status: "planned", rating: null, text: null, visibility: "circle", createdAt: now, updatedAt: now };
+}
+
+export async function setEntryStatus(deps: Deps, userId: string, ref: Ref, status: EntryStatus): Promise<LibraryEntry> {
+  const entry = await loadOrCreateEntry(deps, userId, ref);
+  const updated: LibraryEntry = { ...entry, status, updatedAt: deps.clock.now() };
+  await deps.entries.upsert(updated);
+  return updated;
+}
+
+export async function rateOrReviewWork(
+  deps: Deps, userId: string, ref: Ref,
+  input: { rating: number | null; text: string | null; visibility: Visibility },
+): Promise<LibraryEntry> {
+  if (input.rating === null && (input.text === null || input.text.trim() === "")) {
+    throw new ValidationError("Ajoute une note ou un commentaire");
+  }
+  if (input.rating !== null && !isValidRating(input.rating)) {
+    throw new ValidationError("Note invalide (0 à 5, par pas de 0,1)");
+  }
+  const entry = await loadOrCreateEntry(deps, userId, ref);
+  const updated: LibraryEntry = { ...entry, status: "done", rating: input.rating,
+    text: input.text?.trim() ? input.text.trim() : null, visibility: input.visibility, updatedAt: deps.clock.now() };
+  await deps.entries.upsert(updated);
+  return updated;
+}
+
+export async function removeEntry(deps: Deps, userId: string, entryId: string): Promise<void> {
+  const entry = await deps.entries.findById(entryId);
+  if (!entry) throw new NotFoundError("Entrée introuvable");
+  if (entry.userId !== userId) throw new ForbiddenError("Action non autorisée");
+  await deps.entries.remove(entryId);
+}

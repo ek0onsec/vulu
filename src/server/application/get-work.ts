@@ -1,0 +1,31 @@
+import type { Deps } from "@/server/container";
+import type { Work, WorkType } from "@/server/domain/entities";
+import { NotFoundError } from "@/server/domain/errors";
+
+function domainOf(_type: WorkType): "films" { return "films"; } // Phase 2 : 'book' → 'books'
+
+export async function getOrImportWork(
+  deps: Deps, ref: { source: "tmdb"; externalId: string; type: WorkType },
+): Promise<Work> {
+  const cached = await deps.works.findByExternal(ref.source, ref.externalId);
+  if (cached) return cached;
+  const details = await deps.catalog.getWork(ref.externalId, ref.type);
+  if (!details) throw new NotFoundError("Œuvre introuvable dans le catalogue");
+  const work: Work = {
+    id: deps.ids.next(),
+    source: ref.source,
+    externalId: details.externalId,
+    type: details.type,
+    domain: domainOf(details.type),
+    title: details.title,
+    year: details.year,
+    posterUrl: details.posterUrl,
+    backdropUrl: details.backdropUrl,
+    overview: details.overview,
+    genres: details.genres,
+    people: details.people,
+    cachedAt: deps.clock.now(),
+  };
+  await deps.works.upsert(work);
+  return work;
+}

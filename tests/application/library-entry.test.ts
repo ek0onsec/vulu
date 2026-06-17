@@ -1,0 +1,40 @@
+import { describe, it, expect, beforeEach } from "vitest";
+import { makeInMemoryDeps, type Deps } from "@/server/container";
+import { FakeCatalog } from "../helpers/fake-catalog";
+import { setEntryStatus, rateOrReviewWork, removeEntry } from "@/server/application/library-entry";
+import { ValidationError, ForbiddenError } from "@/server/domain/errors";
+
+let deps: Deps; const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+beforeEach(() => { deps = makeInMemoryDeps(new FakeCatalog()); });
+
+describe("library entry", () => {
+  it("setEntryStatus 'planned' crée une watchlist sans note", async () => {
+    const e = await setEntryStatus(deps, "u1", ref, "planned");
+    expect(e.status).toBe("planned");
+    expect(e.rating).toBeNull();
+  });
+  it("rateOrReview force done et enregistre note + visibilité", async () => {
+    const e = await rateOrReviewWork(deps, "u1", ref, { rating: 4.2, text: "top", visibility: "circle" });
+    expect(e.status).toBe("done");
+    expect(e.rating).toBe(4.2);
+    expect(e.visibility).toBe("circle");
+  });
+  it("réutilise la même entrée (unicité user+work)", async () => {
+    const a = await setEntryStatus(deps, "u1", ref, "planned");
+    const b = await rateOrReviewWork(deps, "u1", ref, { rating: 3, text: null, visibility: "public" });
+    expect(b.id).toBe(a.id);
+  });
+  it("rejette une note hors bornes ou non multiple de 0,1", async () => {
+    await expect(rateOrReviewWork(deps, "u1", ref, { rating: 5.5, text: null, visibility: "public" })).rejects.toThrow(ValidationError);
+    await expect(rateOrReviewWork(deps, "u1", ref, { rating: 2.73, text: null, visibility: "public" })).rejects.toThrow(ValidationError);
+  });
+  it("rejette ni note ni texte", async () => {
+    await expect(rateOrReviewWork(deps, "u1", ref, { rating: null, text: null, visibility: "public" })).rejects.toThrow(ValidationError);
+  });
+  it("removeEntry interdit à un autre que le propriétaire", async () => {
+    const e = await setEntryStatus(deps, "u1", ref, "planned");
+    await expect(removeEntry(deps, "u2", e.id)).rejects.toThrow(ForbiddenError);
+    await removeEntry(deps, "u1", e.id);
+    expect(await deps.entries.findById(e.id)).toBeNull();
+  });
+});
