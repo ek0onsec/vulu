@@ -1,0 +1,13 @@
+{
+  "name": "vulu — vu & lu",
+  "short_name": "vulu",
+  "description": "Tes films, séries et livres, entre amis.",
+  "start_url": "/feed",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#16121C",
+  "theme_color": "#9461C0",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
