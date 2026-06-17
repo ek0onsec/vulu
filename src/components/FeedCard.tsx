@@ -1,13 +1,19 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { Avatar } from "./Avatar";
+import { Icon } from "./Icon";
 import { RatingStars } from "./RatingStars";
+import { CommentThread } from "./CommentThread";
+import { relativeTime } from "@/lib/relative-time";
 import { api } from "@/lib/api-client";
 import type { FeedItem } from "@/server/application/feed";
 
 export function FeedCard({ item }: { item: FeedItem }) {
   const [liked, setLiked] = useState(item.likedByMe);
   const [likes, setLikes] = useState(item.likeCount);
+  const [comments, setComments] = useState(item.commentCount);
+  const [open, setOpen] = useState(false);
 
   async function toggleLike() {
     const next = !liked;
@@ -22,51 +28,53 @@ export function FeedCard({ item }: { item: FeedItem }) {
 
   const isPublic = item.entry.visibility === "public";
   return (
-    <article className="mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+    <article className="mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-shadow hover:shadow-[0_2px_20px_rgba(0,0,0,0.05)]">
       <header className="flex items-center gap-3">
-        <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)]" />
-        <div className="text-sm">
-          <Link href={`/u/${item.author.username}`} className="font-semibold text-[var(--color-text)] hover:underline">
-            {item.author.displayName}
-          </Link>
-          <span className="text-[var(--color-text-muted)]"> @{item.author.username}</span>
-          <div className="text-xs text-[var(--color-text-muted)]">
-            <Link href={`/work/${item.work.id}`} className="hover:underline">
-              {item.work.title}{item.work.year ? ` (${item.work.year})` : ""}
-            </Link>
-          </div>
+        <Link href={`/u/${item.author.username}`}><Avatar name={item.author.displayName} src={item.author.avatarUrl} size={42} /></Link>
+        <div className="min-w-0 text-sm">
+          <Link href={`/u/${item.author.username}`} className="font-semibold hover:underline">{item.author.displayName}</Link>
+          <span className="text-[var(--color-text-muted)]"> @{item.author.username} · {relativeTime(item.entry.createdAt)}</span>
+          <p className="text-xs text-[var(--color-text-muted)]">
+            {item.entry.status === "done" ? "a noté" : "veut voir"}
+          </p>
         </div>
+        <span className={`ml-auto rounded-full px-2.5 py-1 text-xs ${
+          isPublic
+            ? "bg-[color-mix(in_srgb,var(--color-accent)_22%,transparent)] text-[var(--color-text)]"
+            : "bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-[var(--color-primary)]"
+        }`}>{isPublic ? "Public" : "Cercle"}</span>
       </header>
 
-      {item.entry.rating !== null && (
-        <div className="mt-2 flex items-center gap-2">
-          <RatingStars value={item.entry.rating} />
-          <span className="font-semibold text-[var(--color-text)]">{item.entry.rating.toFixed(1).replace(".", ",")}/5</span>
+      <Link href={`/work/${item.work.id}`} className="mt-3 flex gap-3">
+        <div className="h-28 w-[74px] shrink-0 overflow-hidden rounded-lg bg-[var(--color-border)]"
+          style={item.work.posterUrl ? { backgroundImage: `url(${item.work.posterUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
+        <div className="min-w-0">
+          <p className="font-display text-lg font-semibold leading-tight">{item.work.title}</p>
+          <p className="text-xs text-[var(--color-text-muted)]">
+            {item.work.year ?? ""}{item.work.type === "tv" ? " · Série" : " · Film"}
+          </p>
+          {item.entry.rating !== null && (
+            <div className="mt-1.5 flex items-center gap-2">
+              <RatingStars value={item.entry.rating} size={16} />
+              <span className="text-sm font-semibold">{item.entry.rating.toFixed(1).replace(".", ",")}/5</span>
+            </div>
+          )}
+          {item.entry.text && <p className="mt-1.5 line-clamp-3 text-sm text-[var(--color-text)]">{item.entry.text}</p>}
         </div>
-      )}
-      {item.entry.text && <p className="mt-1 text-sm text-[var(--color-text)]">{item.entry.text}</p>}
+      </Link>
 
-      <footer className="mt-3 flex items-center gap-2 text-xs">
-        <span
-          className={`rounded-full px-3 py-1 ${
-            isPublic
-              ? "bg-[color-mix(in_srgb,var(--color-accent)_22%,transparent)] text-[var(--color-text)]"
-              : "bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-[var(--color-primary)]"
-          }`}
-        >
-          ● {isPublic ? "Public" : "Cercle"}
-        </span>
-        <button
-          onClick={toggleLike}
-          aria-pressed={liked}
-          className="rounded-full px-3 py-1 text-[var(--color-primary)] transition-colors hover:bg-[var(--color-border)]"
-        >
-          {liked ? "♥" : "♡"} {likes}
+      <footer className="mt-3 flex items-center gap-1 text-[var(--color-text-muted)]">
+        <button onClick={toggleLike} aria-pressed={liked}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)] ${liked ? "text-[var(--color-primary)]" : ""}`}>
+          <Icon name={liked ? "heart-filled" : "heart"} size={19} /> {likes}
         </button>
-        <Link href={`/work/${item.work.id}`} className="rounded-full px-3 py-1 text-[var(--color-primary)] hover:bg-[var(--color-border)]">
-          💬 {item.commentCount}
-        </Link>
+        <button onClick={() => setOpen((o) => !o)}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)] ${open ? "text-[var(--color-primary)]" : ""}`}>
+          <Icon name="comment" size={19} /> {comments}
+        </button>
       </footer>
+
+      {open && <CommentThread entryId={item.entry.id} onCount={setComments} />}
     </article>
   );
 }

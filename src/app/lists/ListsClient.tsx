@@ -1,29 +1,30 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
-import type { List } from "@/server/domain/entities";
+import { Modal } from "@/components/Modal";
+import { Icon } from "@/components/Icon";
+import type { List, ListVisibility } from "@/server/domain/entities";
 
 export function ListsClient() {
   const [lists, setLists] = useState<List[]>([]);
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [creating, setCreating] = useState(false);
+  const [visibility, setVisibility] = useState<ListVisibility>("public");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     api.get<{ lists: List[] }>("/api/lists").then((d) => setLists(d.lists)).catch(() => setLists([]));
   }, []);
 
-  async function create(e: React.FormEvent) {
-    e.preventDefault();
+  async function create() {
     if (!name.trim()) return;
-    setCreating(true);
+    setBusy(true);
     try {
-      const { list } = await api.post<{ list: List }>("/api/lists", {
-        name, domain: "films", description: null, visibility: "public",
-      });
+      const { list } = await api.post<{ list: List }>("/api/lists", { name, domain: "films", description: null, visibility });
       setLists((prev) => [list, ...prev]);
-      setName("");
+      setName(""); setVisibility("public"); setOpen(false);
     } finally {
-      setCreating(false);
+      setBusy(false);
     }
   }
 
@@ -34,14 +35,13 @@ export function ListsClient() {
 
   return (
     <>
-      <h1 className="font-display mb-4 text-2xl font-bold">Mes listes</h1>
-      <form onSubmit={create} className="mb-6 flex gap-2">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nouvelle liste (ex. SF culte)"
-          className="flex-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm" />
-        <button disabled={creating} className="rounded-full bg-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50">
-          Créer
+      <div className="mb-5 flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold">Mes listes</h1>
+        <button onClick={() => setOpen(true)}
+          className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white">
+          <Icon name="plus" size={18} /> Nouvelle liste
         </button>
-      </form>
+      </div>
 
       {lists.length === 0 && <p className="text-sm text-[var(--color-text-muted)]">Aucune liste. Crée ta première collection thématique.</p>}
       <div className="flex flex-col gap-3">
@@ -51,10 +51,34 @@ export function ListsClient() {
               <p className="font-semibold">{l.name}</p>
               <p className="text-xs text-[var(--color-text-muted)]">{l.workIds.length} œuvres · {l.visibility === "public" ? "public" : "privé"}</p>
             </div>
-            <button onClick={() => remove(l.id)} className="text-sm text-[var(--color-text-muted)] hover:text-red-500">Supprimer</button>
+            <button onClick={() => remove(l.id)} className="text-sm text-[var(--color-text-muted)] transition-colors hover:text-red-500">Supprimer</button>
           </div>
         ))}
       </div>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Nouvelle liste">
+        <div className="flex flex-col gap-4">
+          <label className="text-sm font-semibold">Nom
+            <input value={name} onChange={(e) => setName(e.target.value)} autoFocus placeholder="ex. SF culte"
+              className="mt-1 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm font-normal" />
+          </label>
+          <div>
+            <p className="mb-2 text-sm font-semibold">Visibilité</p>
+            <div className="flex gap-2">
+              {(["public", "private"] as ListVisibility[]).map((v) => (
+                <button key={v} onClick={() => setVisibility(v)}
+                  className={`rounded-full border px-4 py-1.5 text-sm ${visibility === v ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>
+                  {v === "public" ? "Public" : "Privé"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button onClick={create} disabled={busy || !name.trim()}
+            className="rounded-full bg-[var(--color-primary)] py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+            {busy ? "…" : "Créer la liste"}
+          </button>
+        </div>
+      </Modal>
     </>
   );
 }

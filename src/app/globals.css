@@ -42,3 +42,6 @@ body {
 .font-display {
   font-family: var(--font-display), Georgia, "Times New Roman", serif;
 }
+
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideup { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

@@ -6,6 +6,8 @@ import { getCircle } from "@/server/application/social";
 import { AppShell } from "@/components/AppShell";
 import { FollowButton } from "@/components/FollowButton";
 import { RatingStars } from "@/components/RatingStars";
+import { Avatar } from "@/components/Avatar";
+import { ProfileEditModal } from "@/components/ProfileEditModal";
 
 export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const viewer = await currentUser();
@@ -29,16 +31,19 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   return (
     <AppShell>
       <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="h-24 bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-primary)] to-[var(--color-accent)]" />
+        <div className="h-28 bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-primary)] to-[var(--color-accent)]"
+          style={target.bannerUrl ? { backgroundImage: `url(${target.bannerUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
         <div className="px-5 pb-5">
           <div className="flex items-end gap-3">
-            <div className="-mt-10 h-20 w-20 rounded-full border-4 border-[var(--color-surface)] bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)]" />
+            <span className="-mt-10 block rounded-full ring-4 ring-[var(--color-surface)]">
+              <Avatar name={target.displayName} src={target.avatarUrl} size={80} />
+            </span>
             <div className="flex-1 pb-1">
               <h1 className="font-display text-xl font-bold">{target.displayName}</h1>
               <p className="text-sm text-[var(--color-text-muted)]">@{target.username}</p>
             </div>
             {isSelf
-              ? <Link href="/lists" className="rounded-full border border-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-primary)]">Mes listes</Link>
+              ? <ProfileEditModal initial={{ username: target.username, displayName: target.displayName, bio: target.bio, avatarUrl: target.avatarUrl, bannerUrl: target.bannerUrl, activeTabs: target.activeTabs }} />
               : <FollowButton username={target.username} initialFollowing={isFollowing} />}
           </div>
           {target.bio && <p className="mt-3 text-sm text-[var(--color-text)]">{target.bio}</p>}
