@@ -15,7 +15,7 @@ const hash = await bcrypt.hash("password1", 6);
 const user = (id, username, displayName, bio, avatarUrl = null, bannerUrl = null, activeTabs = ["films"], plus = false, staff = false, isPrivate = false) => ({
   _id: id, id, email: `${username}@vulu.app`, passwordHash: hash, username, displayName,
   bio, avatarUrl, bannerUrl, activeTabs,
-  tastes: { filmGenreIds: [28, 18, 878], people: [] }, plus, staff, private: isPrivate, twoFactorEnabled: false, deactivatedAt: null, notificationsSeenAt: null, createdAt: now,
+  tastes: { filmGenreIds: [28, 18, 878], people: [] }, showcase: { movie: [], tv: [], book: [] }, plus, staff, private: isPrivate, twoFactorEnabled: false, deactivatedAt: null, notificationsSeenAt: null, createdAt: now,
 });
 
 const work = (id, externalId, type, title, year, seed, overview, genres) => ({
@@ -78,6 +78,8 @@ await db.collection("lists").insertOne({
   description: "Mes incontournables.", bannerUrl: null, visibility: "public", workIds: ["w-dune", "w-matrix", "w-poor"],
   createdAt: now, updatedAt: now,
 });
+
+await db.collection("users").updateOne({ _id: "u-demo" }, { $set: { showcase: { movie: ["w-dune", "w-matrix"], tv: [], book: [] } } });
 
 console.log("SEED_OK");
 await client.close();

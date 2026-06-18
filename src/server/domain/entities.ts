@@ -11,6 +11,13 @@ export interface Tastes {
   people: { tmdbId: number; name: string; role: PersonRole }[];
 }
 
+/** Vitrine : top all-time choisi par l'utilisateur (workIds internes, max 5 par catégorie). */
+export interface Showcase {
+  movie: string[];
+  tv: string[];
+  book: string[];
+}
+
 export interface User {
   id: string;
   email: string;
@@ -22,6 +29,7 @@ export interface User {
   bannerUrl: string | null;
   activeTabs: Domain[];
   tastes: Tastes;
+  showcase: Showcase;
   plus: boolean;
   staff: boolean;
   private: boolean;

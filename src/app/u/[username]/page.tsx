@@ -9,7 +9,7 @@ import { CertifiedBadge } from "@/components/CertifiedBadge";
 import { StaffBadge } from "@/components/StaffBadge";
 import { Icon } from "@/components/Icon";
 import { ProfileEditModal } from "@/components/ProfileEditModal";
-import { ProfileTabs, type PosterItem, type ListItem } from "@/components/ProfileTabs";
+import { ProfileTabs, type PosterItem, type ListItem, type ShowcaseWork } from "@/components/ProfileTabs";
 import type { LibraryEntry } from "@/server/domain/entities";
 
 export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
@@ -45,8 +45,16 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const lists: ListItem[] = canView
     ? (await deps.lists.listByUser(target.id))
         .filter((l) => l.visibility === "public" || isSelf)
-        .map((l) => ({ id: l.id, name: l.name, description: l.description, visibility: l.visibility, count: l.workIds.length }))
+        .map((l) => ({ id: l.id, name: l.name, description: l.description, visibility: l.visibility, bannerUrl: l.bannerUrl, count: l.workIds.length }))
     : [];
+
+  async function resolveShowcase(ids: string[]): Promise<ShowcaseWork[]> {
+    const works = await Promise.all(ids.map((id) => deps.works.findById(id)));
+    return works.filter((w) => w !== null).map((w) => ({ workId: w!.id, title: w!.title, posterUrl: w!.posterUrl }));
+  }
+  const showcase = canView
+    ? { movie: await resolveShowcase(target.showcase.movie), tv: await resolveShowcase(target.showcase.tv), book: await resolveShowcase(target.showcase.book) }
+    : { movie: [], tv: [], book: [] };
 
   const showFilms = target.activeTabs.includes("films");
   const showBooks = target.activeTabs.includes("books");
@@ -87,7 +95,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       </div>
 
       {canView
-        ? <ProfileTabs watched={watched} planned={planned} lists={lists} isSelf={isSelf} showFilms={showFilms} showBooks={showBooks} />
+        ? <ProfileTabs watched={watched} planned={planned} lists={lists} isSelf={isSelf} showFilms={showFilms} showBooks={showBooks} showcase={showcase} />
         : <div className="mt-8 rounded-2xl border border-dashed border-[var(--color-border)] p-10 text-center">
             <p className="font-display text-lg font-bold">Ce compte est privé</p>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">Suis @{target.username} (et qu'il te suive en retour) pour voir sa bibliothèque et ses avis.</p>
