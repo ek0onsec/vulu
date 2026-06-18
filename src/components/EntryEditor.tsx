@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { RatingSlider } from "./RatingSlider";
 import { api, ApiError } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
@@ -8,6 +9,8 @@ import type { LibraryEntry, Visibility, WorkSource, WorkType } from "@/server/do
 interface Ref { source: WorkSource; externalId: string; type: WorkType }
 
 export function EntryEditor({ workRef, initial }: { workRef: Ref; initial: LibraryEntry | null }) {
+  const router = useRouter();
+  const [entryId, setEntryId] = useState<string | null>(initial?.id ?? null);
   const [status, setStatus] = useState<"planned" | "done">(initial?.status ?? "planned");
   const [rating, setRating] = useState<number>(initial?.rating ?? 0);
   const [text, setText] = useState(initial?.text ?? "");
@@ -15,18 +18,32 @@ export function EntryEditor({ workRef, initial }: { workRef: Ref; initial: Libra
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  async function removeEntry() {
+    if (!entryId) return;
+    setBusy(true);
+    try {
+      await api.del("/api/works/entry", { entryId });
+      setEntryId(null); setStatus("planned"); setRating(0); setText("");
+      toast("Retiré de ta bibliothèque");
+      router.refresh();
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Erreur", "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function save() {
     setBusy(true); setMsg(null);
     try {
-      if (status === "planned" && rating === 0 && !text.trim()) {
-        await api.put("/api/works/entry", { ref: workRef, status: "planned" });
-      } else {
-        await api.put("/api/works/entry", {
-          ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, visibility,
-        });
-      }
+      const body = status === "planned" && rating === 0 && !text.trim()
+        ? { ref: workRef, status: "planned" }
+        : { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, visibility };
+      const { entry } = await api.put<{ entry: LibraryEntry }>("/api/works/entry", body);
+      setEntryId(entry.id);
       setMsg("Enregistré ✓");
       toast("Entrée enregistrée");
+      router.refresh();
     } catch (err) {
       const m = err instanceof ApiError ? err.message : "Erreur";
       setMsg(m); toast(m, "error");
@@ -65,6 +82,12 @@ export function EntryEditor({ workRef, initial }: { workRef: Ref; initial: Libra
           {busy ? "…" : "Enregistrer"}
         </button>
       </div>
+      {entryId && (
+        <button onClick={removeEntry} disabled={busy}
+          className="mt-3 text-sm font-medium text-red-500 hover:underline disabled:opacity-50">
+          Retirer de ma bibliothèque
+        </button>
+      )}
       {msg && <p className="mt-2 text-sm text-[var(--color-primary)]">{msg}</p>}
     </section>
   );
