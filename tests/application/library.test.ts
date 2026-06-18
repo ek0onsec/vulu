@@ -20,7 +20,7 @@ describe("getLibrary", () => {
   it("agrège watchlist, vus/lus et playlists avec couvertures", async () => {
     await setEntryStatus(deps, me, book, "planned");
     await rateOrReviewWork(deps, me, film, { rating: 4, text: null, visibility: "public" });
-    const l = await createList(deps, me, { name: "Mix", description: null, visibility: "public" });
+    const l = await createList(deps, me, { name: "Mix", kind: "films", description: null, visibility: "public" });
     await addWorkToList(deps, me, l.id, film);
 
     const lib = await getLibrary(deps, me);

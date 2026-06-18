@@ -14,8 +14,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const u = await requireUser(); const { id } = await params;
-    const { name, description, visibility } = createListSchema.parse(await req.json());
-    return json({ list: await updateList(await getDeps(), u.id, id, { name, description, visibility }) });
+    const { name, kind, description, visibility } = createListSchema.parse(await req.json());
+    return json({ list: await updateList(await getDeps(), u.id, id, { name, kind, description, visibility }) });
   } catch (e) { return toErrorResponse(e); }
 }
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {

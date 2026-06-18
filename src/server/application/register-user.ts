@@ -32,6 +32,7 @@ export async function registerUser(deps: Deps, input: RegisterInput): Promise<Us
     bannerUrl: null,
     activeTabs: [...input.activeTabs],
     tastes: input.tastes,
+    plus: false,
     createdAt: deps.clock.now(),
   };
   await deps.users.create(user);

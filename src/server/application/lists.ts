@@ -1,7 +1,8 @@
 import type { Deps } from "@/server/container";
-import type { List, ListVisibility, Work, WorkSource, WorkType } from "@/server/domain/entities";
-import { ForbiddenError, NotFoundError } from "@/server/domain/errors";
+import type { List, ListKind, ListVisibility, Work, WorkSource, WorkType } from "@/server/domain/entities";
+import { ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
 import { getOrImportWork } from "./get-work";
+import { detectImage } from "./profile-media";
 
 type Ref = { source: WorkSource; externalId: string; type: WorkType };
 
@@ -14,23 +15,36 @@ async function owned(deps: Deps, userId: string, listId: string): Promise<List> 
 
 export async function createList(
   deps: Deps, userId: string,
-  input: { name: string; description: string | null; visibility: ListVisibility },
+  input: { name: string; kind: ListKind; description: string | null; visibility: ListVisibility },
 ): Promise<List> {
   const now = deps.clock.now();
-  const list: List = { id: deps.ids.next(), userId, name: input.name.trim(),
-    description: input.description, visibility: input.visibility, workIds: [], createdAt: now, updatedAt: now };
+  const list: List = { id: deps.ids.next(), userId, name: input.name.trim(), kind: input.kind,
+    description: input.description, bannerUrl: null, visibility: input.visibility, workIds: [], createdAt: now, updatedAt: now };
   await deps.lists.create(list);
   return list;
 }
 
 export async function updateList(
   deps: Deps, userId: string, listId: string,
-  input: { name: string; description: string | null; visibility: ListVisibility },
+  input: { name: string; kind: ListKind; description: string | null; visibility: ListVisibility },
 ): Promise<List> {
   const list = await owned(deps, userId, listId);
-  const updated: List = { ...list, name: input.name.trim(), description: input.description,
+  const updated: List = { ...list, name: input.name.trim(), kind: input.kind, description: input.description,
     visibility: input.visibility, updatedAt: deps.clock.now() };
   await deps.lists.update(updated);
+  return updated;
+}
+
+export async function updateListBanner(deps: Deps, userId: string, listId: string, bytes: Uint8Array): Promise<List> {
+  const list = await owned(deps, userId, listId);
+  if (bytes.length === 0 || bytes.length > 1_536 * 1024) throw new ValidationError("Image vide ou trop lourde");
+  const ext = detectImage(bytes);
+  if (!ext) throw new ValidationError("Format non supporté (JPEG, PNG ou WebP)");
+  const url = await deps.media.save(bytes, ext);
+  const previous = list.bannerUrl;
+  const updated: List = { ...list, bannerUrl: url, updatedAt: deps.clock.now() };
+  await deps.lists.update(updated);
+  if (previous) await deps.media.delete(previous);
   return updated;
 }
 

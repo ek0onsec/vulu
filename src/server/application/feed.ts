@@ -5,7 +5,7 @@ import { getCircle } from "./social";
 
 export interface FeedItem {
   entry: LibraryEntry;
-  author: Pick<User, "id" | "username" | "displayName" | "avatarUrl">;
+  author: Pick<User, "id" | "username" | "displayName" | "avatarUrl" | "plus">;
   work: Pick<Work, "id" | "title" | "year" | "posterUrl" | "type">;
   likeCount: number;
   commentCount: number;
@@ -25,7 +25,7 @@ export async function enrichEntries(deps: Deps, viewerId: string, entries: Libra
     if (!author || !work) throw new NotFoundError("Données de feed incohérentes");
     return {
       entry,
-      author: { id: author.id, username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl },
+      author: { id: author.id, username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl, plus: author.plus },
       work: { id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type },
       likeCount, commentCount, likedByMe: liked.has(entry.id),
     };
@@ -48,6 +48,19 @@ export async function buildFeed(
   });
 
   return enrichEntries(deps, viewerId, entries);
+}
+
+/** Un post (entrée) enrichi, visible pour le viewer (public, cercle, ou le sien). */
+export async function getEntryItem(deps: Deps, viewerId: string, entryId: string): Promise<FeedItem> {
+  const entry = await deps.entries.findById(entryId);
+  if (!entry) throw new NotFoundError("Publication introuvable");
+  if (entry.userId !== viewerId && entry.visibility !== "public") {
+    const circle = await getCircle(deps, viewerId);
+    if (!circle.has(entry.userId)) throw new NotFoundError("Publication introuvable");
+  }
+  const [item] = await enrichEntries(deps, viewerId, [entry]);
+  if (!item) throw new NotFoundError("Publication introuvable");
+  return item;
 }
 
 /** Avis d'autres membres sur une œuvre, visibles pour le viewer (public ou cercle), hors soi. */

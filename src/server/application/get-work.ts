@@ -26,6 +26,8 @@ export async function getOrImportWork(
     overview: details.overview,
     genres: details.genres,
     people: details.people,
+    externalRating: details.externalRating,
+    watchProviders: details.watchProviders,
     cachedAt: deps.clock.now(),
   };
   await deps.works.upsert(work);

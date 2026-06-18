@@ -9,8 +9,8 @@ function present(c: Comment, author: User | null) {
   return {
     id: c.id, text: c.text, createdAt: c.createdAt,
     author: author
-      ? { username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl }
-      : { username: "inconnu", displayName: "Utilisateur", avatarUrl: null },
+      ? { username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl, plus: author.plus }
+      : { username: "inconnu", displayName: "Utilisateur", avatarUrl: null, plus: false },
   };
 }
 

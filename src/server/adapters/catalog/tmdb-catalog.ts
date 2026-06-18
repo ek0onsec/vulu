@@ -5,10 +5,12 @@ export interface TmdbConfig { apiKey: string; baseUrl: string; imageBase: string
 
 interface TmdbSearchItem { media_type?: string; id: number; title?: string; name?: string;
   release_date?: string; first_air_date?: string; poster_path?: string | null; }
+interface TmdbProvider { provider_name: string; logo_path?: string | null }
 interface TmdbDetails { id: number; title?: string; name?: string; release_date?: string; first_air_date?: string;
-  poster_path?: string | null; backdrop_path?: string | null; overview?: string;
+  poster_path?: string | null; backdrop_path?: string | null; overview?: string; vote_average?: number;
   genres?: { id: number; name: string }[];
-  credits?: { cast?: { id: number; name: string }[]; crew?: { id: number; name: string; job: string }[] }; }
+  credits?: { cast?: { id: number; name: string }[]; crew?: { id: number; name: string; job: string }[] };
+  "watch/providers"?: { results?: Record<string, { flatrate?: TmdbProvider[] }> }; }
 
 function yearOf(d?: string): number | null { return d ? Number(d.slice(0, 4)) || null : null; }
 
@@ -46,11 +48,13 @@ export class TmdbCatalog {
   }
 
   async getWork(externalId: string, type: WorkType): Promise<WorkDetails | null> {
-    const d = await this.get<TmdbDetails>(`/${type}/${externalId}`, { append_to_response: "credits" });
+    const d = await this.get<TmdbDetails>(`/${type}/${externalId}`, { append_to_response: "credits,watch/providers" });
     if (!d?.id) return null;
     const cast = (d.credits?.cast ?? []).slice(0, 10).map((c) => ({ tmdbId: c.id, name: c.name, role: "actor" as const }));
     const directors = (d.credits?.crew ?? []).filter((c) => c.job === "Director")
       .map((c) => ({ tmdbId: c.id, name: c.name, role: "director" as const }));
+    const fr = d["watch/providers"]?.results?.FR?.flatrate ?? [];
+    const watchProviders = fr.map((p) => ({ name: p.provider_name, logoUrl: this.img(p.logo_path, "w92") }));
     return {
       source: "tmdb", externalId: String(d.id), type,
       title: d.title ?? d.name ?? "Sans titre",
@@ -60,6 +64,8 @@ export class TmdbCatalog {
       overview: d.overview ?? null,
       genres: (d.genres ?? []).map((g) => g.name),
       people: [...directors, ...cast],
+      externalRating: typeof d.vote_average === "number" && d.vote_average > 0 ? Math.round(d.vote_average * 10) / 10 : null,
+      watchProviders,
     };
   }
 

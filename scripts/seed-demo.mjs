@@ -12,17 +12,19 @@ const db = client.db("vulu");
 const now = new Date();
 const hash = await bcrypt.hash("password1", 6);
 
-const user = (id, username, displayName, bio, avatarUrl = null, bannerUrl = null, activeTabs = ["films"]) => ({
+const user = (id, username, displayName, bio, avatarUrl = null, bannerUrl = null, activeTabs = ["films"], plus = false) => ({
   _id: id, id, email: `${username}@vulu.app`, passwordHash: hash, username, displayName,
   bio, avatarUrl, bannerUrl, activeTabs,
-  tastes: { filmGenreIds: [28, 18, 878], people: [] }, createdAt: now,
+  tastes: { filmGenreIds: [28, 18, 878], people: [] }, plus, createdAt: now,
 });
 
 const work = (id, externalId, type, title, year, seed, overview, genres) => ({
   _id: id, id, source: "tmdb", externalId, type, domain: "films", title, year,
   posterUrl: `https://picsum.photos/seed/${seed}/400/600`,
   backdropUrl: `https://picsum.photos/seed/${seed}-bg/1280/400`,
-  overview, genres, people: [{ tmdbId: 1, name: "Réalisateur Démo", role: "director" }], cachedAt: now,
+  overview, genres, people: [{ tmdbId: 1, name: "Réalisateur Démo", role: "director" }],
+  externalRating: 7.8, watchProviders: [{ name: "Netflix", logoUrl: null }, { name: "Prime Video", logoUrl: null }],
+  cachedAt: now,
 });
 
 const entry = (id, userId, workId, rating, text, visibility, daysAgo) => ({
@@ -37,7 +39,7 @@ for (const c of ["users", "works", "entries", "follows", "likes", "comments", "l
 
 await db.collection("users").insertMany([
   user("u-demo", "demo", "Toi (démo)", "Compte de démonstration vulu.", null, "https://picsum.photos/seed/demo-banner/1500/500", ["films", "books"]),
-  user("u-alice", "alice", "Alice", "Cinéphile du dimanche, dévoreuse de SF.", "https://picsum.photos/seed/alice-av/200/200"),
+  user("u-alice", "alice", "Alice", "Cinéphile du dimanche, dévoreuse de SF.", "https://picsum.photos/seed/alice-av/200/200", null, ["films", "books"], true),
   user("u-bob", "bob", "Bob", "Séries only. Spoilers jamais."),
 ]);
 
@@ -72,8 +74,8 @@ await db.collection("comments").insertOne({
 });
 
 await db.collection("lists").insertOne({
-  _id: "l-1", id: "l-1", userId: "u-demo", name: "SF culte", domain: "films",
-  description: "Mes incontournables.", visibility: "public", workIds: ["w-dune", "w-matrix"],
+  _id: "l-1", id: "l-1", userId: "u-demo", name: "SF culte", kind: "mixed",
+  description: "Mes incontournables.", bannerUrl: null, visibility: "public", workIds: ["w-dune", "w-matrix", "w-poor"],
   createdAt: now, updatedAt: now,
 });
 

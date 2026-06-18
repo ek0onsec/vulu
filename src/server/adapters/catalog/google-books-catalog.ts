@@ -79,6 +79,8 @@ export class GoogleBooksCatalog {
       overview: info.description ?? null,
       genres: info.categories ?? [],
       people: (info.authors ?? []).map((name) => ({ tmdbId: authorId(name), name, role: "author" as const })),
+      externalRating: null,
+      watchProviders: [],
     };
   }
 

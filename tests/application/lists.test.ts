@@ -9,11 +9,11 @@ beforeEach(() => { deps = makeInMemoryDeps(new FakeCatalog()); });
 
 describe("lists", () => {
   it("crée une liste", async () => {
-    const l = await createList(deps, "u1", { name: "SF culte", description: null, visibility: "public" });
+    const l = await createList(deps, "u1", { name: "SF culte", kind: "films", description: null, visibility: "public" });
     expect((await listsOf(deps, "u1")).map((x) => x.id)).toContain(l.id);
   });
   it("ajoute une œuvre sans doublon", async () => {
-    const l = await createList(deps, "u1", { name: "SF", description: null, visibility: "public" });
+    const l = await createList(deps, "u1", { name: "SF", kind: "films", description: null, visibility: "public" });
     const after = await addWorkToList(deps, "u1", l.id, ref);
     await addWorkToList(deps, "u1", l.id, ref);
     const fresh = await deps.lists.findById(l.id);
@@ -21,33 +21,33 @@ describe("lists", () => {
     expect(after.workIds).toHaveLength(1);
   });
   it("retire une œuvre", async () => {
-    const l = await createList(deps, "u1", { name: "SF", description: null, visibility: "public" });
+    const l = await createList(deps, "u1", { name: "SF", kind: "films", description: null, visibility: "public" });
     await addWorkToList(deps, "u1", l.id, ref);
     const work = await deps.works.findByExternal("tmdb", "603");
     await removeWorkFromList(deps, "u1", l.id, work!.id);
     expect((await deps.lists.findById(l.id))?.workIds).toHaveLength(0);
   });
   it("interdit la modif par un non-propriétaire", async () => {
-    const l = await createList(deps, "u1", { name: "SF", description: null, visibility: "public" });
-    await expect(updateList(deps, "u2", l.id, { name: "x", description: null, visibility: "private" })).rejects.toThrow(ForbiddenError);
+    const l = await createList(deps, "u1", { name: "SF", kind: "films", description: null, visibility: "public" });
+    await expect(updateList(deps, "u2", l.id, { name: "x", kind: "films", description: null, visibility: "private" })).rejects.toThrow(ForbiddenError);
     await expect(deleteList(deps, "u2", l.id)).rejects.toThrow(ForbiddenError);
   });
   it("getListWithWorks résout les œuvres dans l'ordre", async () => {
-    const l = await createList(deps, "u1", { name: "SF", description: null, visibility: "public" });
+    const l = await createList(deps, "u1", { name: "SF", kind: "films", description: null, visibility: "public" });
     await addWorkToList(deps, "u1", l.id, ref);
     const { works } = await getListWithWorks(deps, "u1", l.id);
     expect(works).toHaveLength(1);
     expect(works[0]?.title).toBe("The Matrix");
   });
   it("une playlist peut mêler film et livre (cross-domaine)", async () => {
-    const l = await createList(deps, "u1", { name: "Cyberpunk", description: null, visibility: "public" });
+    const l = await createList(deps, "u1", { name: "Cyberpunk", kind: "films", description: null, visibility: "public" });
     await addWorkToList(deps, "u1", l.id, ref);
     await addWorkToList(deps, "u1", l.id, { source: "googlebooks", externalId: "book-1", type: "book" });
     const { works } = await getListWithWorks(deps, "u1", l.id);
     expect(works.map((w) => w.type).sort()).toEqual(["book", "movie"]);
   });
   it("getListWithWorks refuse une liste privée à un tiers", async () => {
-    const l = await createList(deps, "u1", { name: "secret", description: null, visibility: "private" });
+    const l = await createList(deps, "u1", { name: "secret", kind: "films", description: null, visibility: "private" });
     await expect(getListWithWorks(deps, "u2", l.id)).rejects.toThrow(ForbiddenError);
   });
 });

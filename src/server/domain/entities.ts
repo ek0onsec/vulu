@@ -22,6 +22,7 @@ export interface User {
   bannerUrl: string | null;
   activeTabs: Domain[];
   tastes: Tastes;
+  plus: boolean;
   createdAt: Date;
 }
 
@@ -44,6 +45,8 @@ export interface Work {
   overview: string | null;
   genres: string[];
   people: { tmdbId: number; name: string; role: PersonRole }[];
+  externalRating: number | null;
+  watchProviders: { name: string; logoUrl: string | null }[];
   cachedAt: Date;
 }
 
@@ -60,12 +63,16 @@ export interface LibraryEntry {
   updatedAt: Date;
 }
 
-/** Playlist cross-domaine : peut contenir films, séries et livres ensemble. */
+export type ListKind = "films" | "books" | "mixed";
+
+/** Collection : films, séries et/ou livres selon son type (mixed = tout). */
 export interface List {
   id: string;
   userId: string;
   name: string;
+  kind: ListKind;
   description: string | null;
+  bannerUrl: string | null;
   visibility: ListVisibility;
   workIds: string[];
   createdAt: Date;

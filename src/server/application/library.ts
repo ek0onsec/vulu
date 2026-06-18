@@ -3,7 +3,7 @@ import type { LibraryEntry, WorkType } from "@/server/domain/entities";
 import { NotFoundError } from "@/server/domain/errors";
 
 export interface LibraryPoster { id: string; workId: string; title: string; posterUrl: string | null; type: WorkType; rating: number | null }
-export interface LibraryPlaylist { id: string; name: string; description: string | null; visibility: "public" | "private"; count: number; covers: string[] }
+export interface LibraryPlaylist { id: string; name: string; kind: "films" | "books" | "mixed"; description: string | null; bannerUrl: string | null; visibility: "public" | "private"; count: number; covers: string[] }
 export interface Library { playlists: LibraryPlaylist[]; watchlist: LibraryPoster[]; seen: LibraryPoster[] }
 
 export async function getLibrary(deps: Deps, userId: string): Promise<Library> {
@@ -27,7 +27,7 @@ export async function getLibrary(deps: Deps, userId: string): Promise<Library> {
     lists.map(async (l) => {
       const coverWorks = await Promise.all(l.workIds.slice(0, 4).map((id) => deps.works.findById(id)));
       const covers = coverWorks.map((w) => w?.posterUrl).filter((u): u is string => Boolean(u));
-      return { id: l.id, name: l.name, description: l.description, visibility: l.visibility, count: l.workIds.length, covers };
+      return { id: l.id, name: l.name, kind: l.kind, description: l.description, bannerUrl: l.bannerUrl, visibility: l.visibility, count: l.workIds.length, covers };
     }),
   );
 

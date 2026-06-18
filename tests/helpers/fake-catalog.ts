@@ -7,11 +7,13 @@ export class FakeCatalog implements CatalogProvider {
       source: "tmdb", externalId: "603", type: "movie", title: "The Matrix", year: 1999,
       posterUrl: "p.jpg", backdropUrl: "b.jpg", overview: "Neo…",
       genres: ["Science-fiction"], people: [{ tmdbId: 6384, name: "Keanu Reeves", role: "actor" }],
+      externalRating: 8.2, watchProviders: [{ name: "Netflix", logoUrl: "n.jpg" }],
     },
     "book-1": {
       source: "googlebooks", externalId: "book-1", type: "book", title: "Neuromancien", year: 1984,
       posterUrl: "c.jpg", backdropUrl: null, overview: "Cyberpunk fondateur.",
       genres: ["Science-fiction"], people: [{ tmdbId: 99, name: "William Gibson", role: "author" }],
+      externalRating: null, watchProviders: [],
     },
   };
   async searchWorks(_query: string, domain: Domain): Promise<WorkSummary[]> {
