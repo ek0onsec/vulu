@@ -25,8 +25,8 @@
 1. ✅ **SP-Privé — Compte privé & demandes de suivi** (LIVRÉ) : `User.private`, visibilité mutuelle, FollowRequest (envoyer/approuver/refuser via `/demandes`), bouton états (Suivre/Demander/Demande envoyée/Suivi), vue profil verrouillée, toggle dans `/parametres`.
 2. ✅ **SP-Compte — Paramètres compte & sécurité** (LIVRÉ) : changer username/email/mot de passe, 2FA préparée (champ `twoFactorEnabled` + UI « bientôt »), **suppression différée** (`deactivatedAt` : désactivation + déconnexion, réactivable par reconnexion < 48 h, purge `purgeUser` au-delà) avec pop-up « SUPPRIMER MON COMPTE ». + vulu+ mensuel/annuel (-10 %), infobulles badges, réseaux Vulu (Discord/Insta/X) dans Paramètres.
 
-## 🔔 À faire — Notifications (demandé)
-**SP-Notifs** : onglet Notifications + agrégation condensée — quelqu'un a commenté ta review, t'a suivi, a aimé ton avis/commentaire. Regroupement type « Alice a aimé ton avis sur Dune 2 » → « Alice, Bob et 2 autres ont aimé ton avis sur Dune 2 ». (Lié à l'item habitude « Notifications & reco ».)
+## ✅ SP-Notifs (LIVRÉ)
+Onglet Notifications (cloche) + agrégation condensée : likes sur tes avis, commentaires sur tes avis, nouveaux abonnés — « Alice et N autres ont aimé ton avis sur <œuvre> ». Dérivé à la lecture (`buildNotifications`), `/api/notifications`. Reste : like de commentaires (pas de like-sur-commentaire encore), état lu/non-lu + badge compteur, notifs de demandes de suivi/réponses.
 
 ### Reste planifié : changer **username (@)**, **email**, **mot de passe** ; **préparer 2FA** (TOTP appli d'auth — champs + UI « bientôt ») ; **suppression de compte** = pop-up avec saisie « SUPPRIMER MON COMPTE » → **soft-delete** (`deactivatedAt`), déconnexion + message « réactivable en te reconnectant sous 48 h », purge définitive après 48 h (commentaires + listes). Bien prévenir l'utilisateur.
 3. **SP-Intérêts — Centres d'intérêt complets** : genres **films/séries** + genres **littéraires** + cocher **acteurs / réalisateurs / auteurs** favoris (recherche TMDB/Google Books). `tastes` étendu : `bookGenres`, `people` (actor/director/author).
