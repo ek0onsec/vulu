@@ -9,7 +9,7 @@ import { api } from "@/lib/api-client";
 const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/feed", label: "Feed", icon: "home" },
   { href: "/search", label: "Recherche", icon: "search" },
-  { href: "/lists", label: "Mes listes", icon: "lists" },
+  { href: "/bibliotheque", label: "Bibliothèque", icon: "lists" },
   { href: "/u/me", label: "Profil", icon: "profile" },
 ];
 

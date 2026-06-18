@@ -1,5 +1,5 @@
 import type { Deps } from "@/server/container";
-import type { Domain, List, ListVisibility, Work, WorkSource, WorkType } from "@/server/domain/entities";
+import type { List, ListVisibility, Work, WorkSource, WorkType } from "@/server/domain/entities";
 import { ForbiddenError, NotFoundError } from "@/server/domain/errors";
 import { getOrImportWork } from "./get-work";
 
@@ -14,10 +14,10 @@ async function owned(deps: Deps, userId: string, listId: string): Promise<List> 
 
 export async function createList(
   deps: Deps, userId: string,
-  input: { name: string; domain: Domain; description: string | null; visibility: ListVisibility },
+  input: { name: string; description: string | null; visibility: ListVisibility },
 ): Promise<List> {
   const now = deps.clock.now();
-  const list: List = { id: deps.ids.next(), userId, name: input.name.trim(), domain: input.domain,
+  const list: List = { id: deps.ids.next(), userId, name: input.name.trim(),
     description: input.description, visibility: input.visibility, workIds: [], createdAt: now, updatedAt: now };
   await deps.lists.create(list);
   return list;
@@ -55,7 +55,7 @@ export async function removeWorkFromList(deps: Deps, userId: string, listId: str
   return updated;
 }
 
-export function listsOf(deps: Deps, userId: string, domain?: Domain) { return deps.lists.listByUser(userId, domain); }
+export function listsOf(deps: Deps, userId: string) { return deps.lists.listByUser(userId); }
 
 /** Liste + ses œuvres résolues (ordre préservé). Accessible au propriétaire ou si publique. */
 export async function getListWithWorks(

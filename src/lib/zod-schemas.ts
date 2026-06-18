@@ -26,7 +26,7 @@ export const rateSchema = z.object({
   visibility: z.enum(["circle", "public"]),
 });
 export const createListSchema = z.object({
-  name: z.string().min(1).max(60), domain: z.enum(["films", "books"]),
+  name: z.string().min(1).max(60),
   description: z.string().max(300).nullable(), visibility: z.enum(["public", "private"]),
 });
 export const commentSchema = z.object({ text: z.string().min(1).max(1000) });

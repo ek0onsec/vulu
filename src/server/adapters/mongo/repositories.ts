@@ -76,10 +76,8 @@ export class MongoListRepository implements ListRepository {
   private get col() { return this.db.collection<M.WithIdList>("lists"); }
   async create(l: List) { await this.col.insertOne(M.toListDoc(l)); }
   async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromListDoc(d) : null; }
-  async listByUser(userId: string, domain?: string) {
-    const q: Filter<M.WithIdList> = { userId };
-    if (domain) q.domain = domain as M.WithIdList["domain"];
-    return (await this.col.find(q).sort({ updatedAt: -1 }).toArray()).map(M.fromListDoc);
+  async listByUser(userId: string) {
+    return (await this.col.find({ userId }).sort({ updatedAt: -1 }).toArray()).map(M.fromListDoc);
   }
   async update(l: List) { await this.col.replaceOne({ _id: l.id }, M.toListDoc(l)); }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }

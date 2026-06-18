@@ -44,7 +44,7 @@ export interface LibraryEntryRepository {
 export interface ListRepository {
   create(list: List): Promise<void>;
   findById(id: string): Promise<List | null>;
-  listByUser(userId: string, domain?: string): Promise<List[]>;
+  listByUser(userId: string): Promise<List[]>;
   update(list: List): Promise<void>;
   remove(id: string): Promise<void>;
 }

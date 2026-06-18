@@ -79,8 +79,10 @@ export class InMemoryListRepository implements ListRepository {
   private byId = new Map<string, List>();
   async create(l: List) { this.byId.set(l.id, l); }
   async findById(id: string) { return this.byId.get(id) ?? null; }
-  async listByUser(userId: string, domain?: string) {
-    return [...this.byId.values()].filter((l) => l.userId === userId && (domain ? l.domain === domain : true));
+  async listByUser(userId: string) {
+    return [...this.byId.values()]
+      .filter((l) => l.userId === userId)
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
   }
   async update(l: List) { this.byId.set(l.id, l); }
   async remove(id: string) { this.byId.delete(id); }

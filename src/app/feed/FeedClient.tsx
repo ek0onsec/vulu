@@ -2,11 +2,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
 import { FeedCard } from "@/components/FeedCard";
+import { FeedComposer } from "@/components/FeedComposer";
 import { TabSwitcher } from "@/components/TabSwitcher";
 import type { Domain } from "@/server/domain/entities";
 import type { FeedItem } from "@/server/application/feed";
 
-export function FeedClient({ activeTabs }: { activeTabs: Domain[] }) {
+export function FeedClient({ activeTabs, displayName, avatarUrl }: { activeTabs: Domain[]; displayName: string; avatarUrl: string | null }) {
   const [tab, setTab] = useState<Domain>(activeTabs[0] ?? "films");
   const [items, setItems] = useState<FeedItem[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export function FeedClient({ activeTabs }: { activeTabs: Domain[] }) {
   const visible = items.filter((i) => i.entry.domain === tab);
   return (
     <>
+      <FeedComposer displayName={displayName} avatarUrl={avatarUrl} />
       <TabSwitcher active={activeTabs} value={tab} onChange={setTab} />
       {!ready && (
         <div className="space-y-3">

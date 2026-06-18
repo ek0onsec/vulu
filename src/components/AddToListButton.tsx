@@ -52,7 +52,7 @@ export function AddToListButton({ workRef, workId }: { workRef: Ref; workId: str
         {lists === null && <p className="text-sm text-[var(--color-text-muted)]">Chargement…</p>}
         {lists?.length === 0 && (
           <p className="text-sm text-[var(--color-text-muted)]">
-            Aucune liste. <Link href="/lists" className="font-semibold text-[var(--color-primary)]">Créer une liste</Link>.
+            Aucune playlist. <Link href="/bibliotheque" className="font-semibold text-[var(--color-primary)]">Créer une playlist</Link>.
           </p>
         )}
         <ul className="flex flex-col gap-2">

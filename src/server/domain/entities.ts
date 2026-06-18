@@ -60,11 +60,11 @@ export interface LibraryEntry {
   updatedAt: Date;
 }
 
+/** Playlist cross-domaine : peut contenir films, séries et livres ensemble. */
 export interface List {
   id: string;
   userId: string;
   name: string;
-  domain: Domain;
   description: string | null;
   visibility: ListVisibility;
   workIds: string[];
