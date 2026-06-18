@@ -16,6 +16,7 @@ export interface FollowRepository {
   exists(followerId: string, followeeId: string): Promise<boolean>;
   followeeIdsOf(userId: string): Promise<string[]>;
   followerIdsOf(userId: string): Promise<string[]>;
+  listFollowers(userId: string): Promise<Follow[]>;
   countFollowers(userId: string): Promise<number>;
   countFollowing(userId: string): Promise<number>;
   removeAllForUser(userId: string): Promise<void>;
@@ -67,6 +68,7 @@ export interface LikeRepository {
   remove(entryId: string, userId: string): Promise<void>;
   exists(entryId: string, userId: string): Promise<boolean>;
   countByEntry(entryId: string): Promise<number>;
+  listByEntry(entryId: string): Promise<Like[]>;
   likedEntryIds(userId: string, entryIds: string[]): Promise<string[]>;
   removeAllForUser(userId: string): Promise<void>;
 }

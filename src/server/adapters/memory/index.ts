@@ -25,6 +25,7 @@ export class InMemoryFollowRepository implements FollowRepository {
   async exists(a: string, b: string) { return this.edges.some((e) => e.followerId === a && e.followeeId === b); }
   async followeeIdsOf(id: string) { return this.edges.filter((e) => e.followerId === id).map((e) => e.followeeId); }
   async followerIdsOf(id: string) { return this.edges.filter((e) => e.followeeId === id).map((e) => e.followerId); }
+  async listFollowers(id: string) { return this.edges.filter((e) => e.followeeId === id).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); }
   async countFollowers(id: string) { return (await this.followerIdsOf(id)).length; }
   async countFollowing(id: string) { return (await this.followeeIdsOf(id)).length; }
   async removeAllForUser(userId: string) { this.edges = this.edges.filter((e) => e.followerId !== userId && e.followeeId !== userId); }
@@ -109,6 +110,7 @@ export class InMemoryLikeRepository implements LikeRepository {
   async remove(entryId: string, userId: string) { this.likes = this.likes.filter((l) => !(l.entryId === entryId && l.userId === userId)); }
   async exists(entryId: string, userId: string) { return this.likes.some((l) => l.entryId === entryId && l.userId === userId); }
   async countByEntry(entryId: string) { return this.likes.filter((l) => l.entryId === entryId).length; }
+  async listByEntry(entryId: string) { return this.likes.filter((l) => l.entryId === entryId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); }
   async likedEntryIds(userId: string, entryIds: string[]) {
     const s = new Set(entryIds);
     return this.likes.filter((l) => l.userId === userId && s.has(l.entryId)).map((l) => l.entryId);

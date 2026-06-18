@@ -13,6 +13,7 @@ import { api } from "@/lib/api-client";
 const NAV: { href: string; label: string; icon: IconName; pulse?: boolean }[] = [
   { href: "/feed", label: "Feed", icon: "home", pulse: true },
   { href: "/search", label: "Recherche", icon: "search" },
+  { href: "/notifications", label: "Notifications", icon: "bell" },
   { href: "/bibliotheque", label: "Bibliothèque", icon: "lists" },
   { href: "/u/me", label: "Profil", icon: "profile" },
   { href: "/plus", label: "vulu+", icon: "star" },

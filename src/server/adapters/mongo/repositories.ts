@@ -28,6 +28,7 @@ export class MongoFollowRepository implements FollowRepository {
   async exists(a: string, b: string) { return (await this.col.countDocuments({ _id: `${a}:${b}` })) > 0; }
   async followeeIdsOf(id: string) { return (await this.col.find({ followerId: id }).toArray()).map((d) => d.followeeId); }
   async followerIdsOf(id: string) { return (await this.col.find({ followeeId: id }).toArray()).map((d) => d.followerId); }
+  async listFollowers(id: string) { return (await this.col.find({ followeeId: id }).sort({ createdAt: -1 }).toArray()).map(M.fromFollowDoc); }
   async countFollowers(id: string) { return this.col.countDocuments({ followeeId: id }); }
   async countFollowing(id: string) { return this.col.countDocuments({ followerId: id }); }
   async removeAllForUser(userId: string) { await this.col.deleteMany({ $or: [{ followerId: userId }, { followeeId: userId }] }); }
@@ -109,6 +110,7 @@ export class MongoLikeRepository implements LikeRepository {
   async remove(entryId: string, userId: string) { await this.col.deleteOne({ _id: `${entryId}:${userId}` }); }
   async exists(entryId: string, userId: string) { return (await this.col.countDocuments({ _id: `${entryId}:${userId}` })) > 0; }
   async countByEntry(entryId: string) { return this.col.countDocuments({ entryId }); }
+  async listByEntry(entryId: string) { return (await this.col.find({ entryId }).sort({ createdAt: -1 }).toArray()).map(M.fromLikeDoc); }
   async likedEntryIds(userId: string, entryIds: string[]) {
     return (await this.col.find({ userId, entryId: { $in: entryIds } }).toArray()).map((d) => d.entryId);
   }
