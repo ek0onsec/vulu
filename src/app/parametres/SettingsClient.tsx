@@ -80,7 +80,10 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
       <>
         <h2 className="mb-4 font-display text-xl font-bold">Votre compte</h2>
         <label className="mb-1 block text-sm font-semibold">Nom d’utilisateur</label>
-        <input className={`${field} mb-2`} value={uname} onChange={(e) => setUname(e.target.value)} />
+        <div className="relative mb-2">
+          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[var(--color-text-muted)]">@</span>
+          <input className={`${field} pl-8`} value={uname} onChange={(e) => setUname(e.target.value.replace(/^@+/, ""))} />
+        </div>
         <div className="mb-5 flex gap-2">
           <input className={field} type="password" placeholder="Mot de passe actuel" value={unamePwd} onChange={(e) => setUnamePwd(e.target.value)} />
           <button onClick={saveUsername} disabled={busy || !unamePwd || uname === username} className={primaryBtn}>OK</button>

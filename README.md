@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# vulu — vu &amp; lu
 
-## Getting Started
+Réseau social des films, séries et livres. Next.js 16 · React 19 · Tailwind v4 · MongoDB · architecture hexagonale.
 
-First, run the development server:
+## Prérequis
+- Node 20+ et npm
+- Une base MongoDB (Atlas, Docker, ou le Mongo en mémoire de dev ci-dessous)
+- Clés API : **TMDB** (films/séries) et **Google Books** (livres)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Configuration
+Copie `.env.example` vers `.env.local` et renseigne :
+
+```
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB=vulu
+JWT_SECRET=une-chaine-de-32-caracteres-minimum
+TMDB_API_KEY=ta_cle_tmdb            # clé v3 (api_key) ou jeton v4 (Bearer) — les deux marchent
+TMDB_BASE_URL=https://api.themoviedb.org/3
+TMDB_IMAGE_BASE=https://image.tmdb.org/t/p
+GOOGLE_BOOKS_API_KEY=ta_cle_google_books   # recommandé (sinon 429 en anonyme)
+# GOOGLE_BOOKS_BASE_URL a une valeur par défaut, inutile de la définir
+# UPLOADS_DIR=./uploads             # dossier des avatars/bannières (défaut: ./uploads)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Lancer en développement
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Option A — avec ton MongoDB
+```bash
+npm install
+# .env.local pointe vers ton MONGODB_URI
+npm run dev          # http://localhost:3000 (les index Mongo sont créés au démarrage)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Option B — Mongo en mémoire (aucune install Mongo requise)
+Pratique pour tester rapidement. Deux terminaux :
 
-## Learn More
+```bash
+# 1) démarre un MongoDB en mémoire ; écrit l'URI dans /tmp/vulu-smoke-uri et reste ouvert
+node scripts/smoke-mongo.mjs
 
-To learn more about Next.js, take a look at the following resources:
+# 2) injecte un compte démo + du contenu, puis lance l'app sur cette base
+MONGODB_URI="$(cat /tmp/vulu-smoke-uri)" node scripts/seed-demo.mjs
+MONGODB_URI="$(cat /tmp/vulu-smoke-uri)" MONGODB_DB=vulu \
+  JWT_SECRET=dev-only-secret-dev-only-secret-32 \
+  TMDB_API_KEY=$TMDB_API_KEY TMDB_BASE_URL=https://api.themoviedb.org/3 TMDB_IMAGE_BASE=https://image.tmdb.org/t/p \
+  GOOGLE_BOOKS_API_KEY=$GOOGLE_BOOKS_API_KEY \
+  npm run dev
+```
+> Ou plus simple : mets l'`MONGODB_URI` du Mongo mémoire dans `.env.local`, lance le seed, puis `npm run dev`.
+> Données en mémoire : tout disparaît quand `smoke-mongo.mjs` s'arrête.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Compte démo** (après le seed) : `demo@vulu.app` / `password1`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
+- `npm run dev` — serveur de développement (port 3000)
+- `npm run build` / `npm start` — build et serveur de production
+- `npm test` — suite de tests (Vitest)
+- `node_modules/.bin/tsc --noEmit` — vérification de types
 
-## Deploy on Vercel
+## Tests
+Les tests d'intégration utilisent `mongodb-memory-server` (téléchargé au 1er run). Sur certaines distributions (ex. Parrot/Debian) le binaire est épinglé dans `tests/helpers/mongo.ts`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Documentation
+- Roadmap & demandes : `docs/superpowers/ROADMAP.md`
+- Specs : `docs/superpowers/specs/`

@@ -35,7 +35,7 @@ const PATHS: Record<IconName, JSX.Element> = {
 export function Icon({ name, size = 22, className }: { name: IconName; size?: number; className?: string }) {
   return (
     <svg
-      width={size} height={size} viewBox="0 0 24 24" fill="none"
+      width={size} height={size} viewBox="0 0 24 24" fill="none" overflow="visible"
       stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"
       className={className} aria-hidden="true"
     >
