@@ -2,7 +2,8 @@ import { z } from "zod";
 
 export const tastesSchema = z.object({
   filmGenreIds: z.array(z.number().int()).min(3),
-  people: z.array(z.object({ tmdbId: z.number().int(), name: z.string(), role: z.enum(["actor", "director"]) })),
+  bookGenreIds: z.array(z.number().int()).default([]),
+  people: z.array(z.object({ tmdbId: z.number().int(), name: z.string(), role: z.enum(["actor", "director", "author"]) })),
 });
 export const registerSchema = z.object({
   email: z.email(),

@@ -164,7 +164,7 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
     if (cur === "interests") return (
       <>
         <h2 className="mb-4 font-display text-xl font-bold">Centres d’intérêt</h2>
-        <TasteSelector value={tastes} onChange={setTastes} />
+        <TasteSelector value={tastes} onChange={setTastes} showBooks showPeople />
         <button onClick={saveTastes} disabled={busy || tastes.filmGenreIds.length < 3} className={`mt-4 ${primaryBtn}`}>Enregistrer</button>
       </>
     );

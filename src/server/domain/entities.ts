@@ -8,6 +8,7 @@ export type PersonRole = "actor" | "director" | "author";
 
 export interface Tastes {
   filmGenreIds: number[];
+  bookGenreIds?: number[];
   people: { tmdbId: number; name: string; role: PersonRole }[];
 }
 
