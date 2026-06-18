@@ -15,7 +15,7 @@ const hash = await bcrypt.hash("password1", 6);
 const user = (id, username, displayName, bio, avatarUrl = null, bannerUrl = null, activeTabs = ["films"], plus = false, staff = false, isPrivate = false) => ({
   _id: id, id, email: `${username}@vulu.app`, passwordHash: hash, username, displayName,
   bio, avatarUrl, bannerUrl, activeTabs,
-  tastes: { filmGenreIds: [28, 18, 878], people: [] }, plus, staff, private: isPrivate, createdAt: now,
+  tastes: { filmGenreIds: [28, 18, 878], people: [] }, plus, staff, private: isPrivate, twoFactorEnabled: false, deactivatedAt: null, createdAt: now,
 });
 
 const work = (id, externalId, type, title, year, seed, overview, genres) => ({

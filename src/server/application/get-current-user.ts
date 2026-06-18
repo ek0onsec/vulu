@@ -5,5 +5,8 @@ export async function getCurrentUser(deps: Deps, token: string | undefined): Pro
   if (!token) return null;
   const payload = await deps.tokens.verify(token);
   if (!payload) return null;
-  return deps.users.findById(payload.userId);
+  const user = await deps.users.findById(payload.userId);
+  // Un compte désactivé (suppression en cours) est traité comme déconnecté.
+  if (!user || user.deactivatedAt) return null;
+  return user;
 }

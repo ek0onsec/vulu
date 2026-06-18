@@ -6,6 +6,7 @@ export interface UserRepository {
   findByEmail(email: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
   update(user: User): Promise<void>;
+  remove(id: string): Promise<void>;
   /** Utilisateurs récents (pour les suggestions « À suivre »). */
   listRecent(limit: number): Promise<User[]>;
 }
@@ -17,6 +18,7 @@ export interface FollowRepository {
   followerIdsOf(userId: string): Promise<string[]>;
   countFollowers(userId: string): Promise<number>;
   countFollowing(userId: string): Promise<number>;
+  removeAllForUser(userId: string): Promise<void>;
 }
 export interface FollowRequestRepository {
   add(request: FollowRequest): Promise<void>;
@@ -25,6 +27,7 @@ export interface FollowRequestRepository {
   listForTarget(targetId: string): Promise<FollowRequest[]>;
   countForTarget(targetId: string): Promise<number>;
   remove(id: string): Promise<void>;
+  removeAllForUser(userId: string): Promise<void>;
 }
 export interface WorkRepository {
   upsert(work: Work): Promise<void>;
@@ -37,6 +40,7 @@ export interface LibraryEntryRepository {
   findByUserAndWork(userId: string, workId: string): Promise<LibraryEntry | null>;
   listByUser(userId: string, opts: { status?: "planned" | "done"; domain?: string }): Promise<LibraryEntry[]>;
   remove(id: string): Promise<void>;
+  removeAllForUser(userId: string): Promise<void>;
   feed(opts: {
     scope: "foryou" | "circle";
     circleUserIds: string[];
@@ -56,6 +60,7 @@ export interface ListRepository {
   listByUser(userId: string): Promise<List[]>;
   update(list: List): Promise<void>;
   remove(id: string): Promise<void>;
+  removeAllForUser(userId: string): Promise<void>;
 }
 export interface LikeRepository {
   add(like: Like): Promise<void>;
@@ -63,6 +68,7 @@ export interface LikeRepository {
   exists(entryId: string, userId: string): Promise<boolean>;
   countByEntry(entryId: string): Promise<number>;
   likedEntryIds(userId: string, entryIds: string[]): Promise<string[]>;
+  removeAllForUser(userId: string): Promise<void>;
 }
 export interface CommentRepository {
   add(comment: Comment): Promise<void>;
@@ -70,4 +76,5 @@ export interface CommentRepository {
   listByEntry(entryId: string): Promise<Comment[]>;
   countByEntry(entryId: string): Promise<number>;
   remove(id: string): Promise<void>;
+  removeAllForUser(userId: string): Promise<void>;
 }

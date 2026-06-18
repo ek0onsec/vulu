@@ -25,6 +25,8 @@ export interface User {
   plus: boolean;
   staff: boolean;
   private: boolean;
+  twoFactorEnabled: boolean;
+  deactivatedAt: Date | null;
   createdAt: Date;
 }
 

@@ -12,8 +12,8 @@ export async function POST(req: Request) {
     if (!authLimiter.allow(clientIp(req))) throw new AuthError("Trop de tentatives, réessaie plus tard");
     const input = loginSchema.parse(await req.json());
     const deps = await getDeps();
-    const { user, token } = await authenticateUser(deps, input);
+    const { user, token, reactivated } = await authenticateUser(deps, input);
     await setSessionCookie(token);
-    return json({ user: selfUser(user) });
+    return json({ user: selfUser(user), reactivated: Boolean(reactivated) });
   } catch (e) { return toErrorResponse(e); }
 }

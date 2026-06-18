@@ -13,9 +13,13 @@ const PERKS = [
   { icon: "heart" as const, title: "Soutiens vulu", desc: "Tu aides une app indé à grandir sans pub." },
 ];
 
+const MONTHLY = 2;
+const ANNUAL = Math.round(MONTHLY * 12 * 0.9 * 100) / 100; // -10%
+
 export function PlusClient({ active }: { active: boolean }) {
   const router = useRouter();
   const [plus, setPlus] = useState(active);
+  const [period, setPeriod] = useState<"monthly" | "annual">("monthly");
   const [busy, setBusy] = useState(false);
 
   async function toggle() {
@@ -37,7 +41,26 @@ export function PlusClient({ active }: { active: boolean }) {
       <div className="rounded-3xl border border-[color-mix(in_srgb,var(--color-primary)_40%,transparent)] bg-gradient-to-br from-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] to-[color-mix(in_srgb,var(--color-accent)_14%,transparent)] p-6 text-center">
         <p className="font-display text-4xl font-bold text-[var(--color-primary)]">vulu<span className="text-[var(--color-accent)]">+</span></p>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">Passe au niveau supérieur de vu &amp; lu.</p>
-        <p className="mt-4 text-3xl font-extrabold">2&nbsp;€<span className="text-base font-medium text-[var(--color-text-muted)]">/mois</span></p>
+
+        <div className="mx-auto mt-4 inline-flex rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-1">
+          <button onClick={() => setPeriod("monthly")}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold ${period === "monthly" ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-text-muted)]"}`}>
+            Mensuel
+          </button>
+          <button onClick={() => setPeriod("annual")}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold ${period === "annual" ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-text-muted)]"}`}>
+            Annuel <span className="text-[var(--color-accent)]">-10%</span>
+          </button>
+        </div>
+
+        {period === "monthly" ? (
+          <p className="mt-3 text-3xl font-extrabold">{MONTHLY.toFixed(2).replace(".", ",")}&nbsp;€<span className="text-base font-medium text-[var(--color-text-muted)]">/mois</span></p>
+        ) : (
+          <p className="mt-3 text-3xl font-extrabold">
+            {ANNUAL.toFixed(2).replace(".", ",")}&nbsp;€<span className="text-base font-medium text-[var(--color-text-muted)]">/an</span>
+            <span className="mt-1 block text-xs font-medium text-[var(--color-text-muted)]">soit {(ANNUAL / 12).toFixed(2).replace(".", ",")} €/mois — 2 mois offerts</span>
+          </p>
+        )}
         {plus ? (
           <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-primary)]">
             <CertifiedBadge /> Tu es abonné vulu+
@@ -45,7 +68,7 @@ export function PlusClient({ active }: { active: boolean }) {
         ) : null}
         <button onClick={toggle} disabled={busy}
           className={`mt-4 w-full rounded-full py-3 text-sm font-bold disabled:opacity-50 ${plus ? "border border-[var(--color-border)] text-[var(--color-text)]" : "bg-[var(--color-primary)] text-white"}`}>
-          {busy ? "…" : plus ? "Gérer / se désabonner" : "S’abonner à vulu+"}
+          {busy ? "…" : plus ? "Gérer / se désabonner" : period === "annual" ? "S’abonner à l’année" : "S’abonner au mois"}
         </button>
         <p className="mt-2 text-xs text-[var(--color-text-muted)]">Paiement de démonstration — Stripe branché plus tard.</p>
       </div>

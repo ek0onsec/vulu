@@ -12,6 +12,7 @@ export class InMemoryUserRepository implements UserRepository {
   async findByEmail(email: string) { return [...this.byId.values()].find((u) => u.email === email) ?? null; }
   async findByUsername(username: string) { return [...this.byId.values()].find((u) => u.username === username) ?? null; }
   async update(u: User) { this.byId.set(u.id, u); }
+  async remove(id: string) { this.byId.delete(id); }
   async listRecent(limit: number) {
     return [...this.byId.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
   }
@@ -26,6 +27,7 @@ export class InMemoryFollowRepository implements FollowRepository {
   async followerIdsOf(id: string) { return this.edges.filter((e) => e.followeeId === id).map((e) => e.followerId); }
   async countFollowers(id: string) { return (await this.followerIdsOf(id)).length; }
   async countFollowing(id: string) { return (await this.followeeIdsOf(id)).length; }
+  async removeAllForUser(userId: string) { this.edges = this.edges.filter((e) => e.followerId !== userId && e.followeeId !== userId); }
 }
 
 export class InMemoryFollowRequestRepository implements FollowRequestRepository {
@@ -36,6 +38,7 @@ export class InMemoryFollowRequestRepository implements FollowRequestRepository 
   async listForTarget(targetId: string) { return this.reqs.filter((r) => r.targetId === targetId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); }
   async countForTarget(targetId: string) { return this.reqs.filter((r) => r.targetId === targetId).length; }
   async remove(id: string) { this.reqs = this.reqs.filter((r) => r.id !== id); }
+  async removeAllForUser(userId: string) { this.reqs = this.reqs.filter((r) => r.requesterId !== userId && r.targetId !== userId); }
 }
 
 export class InMemoryWorkRepository implements WorkRepository {
@@ -62,6 +65,7 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
     ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
   async remove(id: string) { this.byId.delete(id); }
+  async removeAllForUser(userId: string) { for (const [k, e] of this.byId) if (e.userId === userId) this.byId.delete(k); }
   async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { createdAt: Date; id: string } | null; limit: number; }) {
     const circle = new Set(opts.circleUserIds);
     return [...this.byId.values()]
@@ -96,6 +100,7 @@ export class InMemoryListRepository implements ListRepository {
   }
   async update(l: List) { this.byId.set(l.id, l); }
   async remove(id: string) { this.byId.delete(id); }
+  async removeAllForUser(userId: string) { for (const [k, l] of this.byId) if (l.userId === userId) this.byId.delete(k); }
 }
 
 export class InMemoryLikeRepository implements LikeRepository {
@@ -108,6 +113,7 @@ export class InMemoryLikeRepository implements LikeRepository {
     const s = new Set(entryIds);
     return this.likes.filter((l) => l.userId === userId && s.has(l.entryId)).map((l) => l.entryId);
   }
+  async removeAllForUser(userId: string) { this.likes = this.likes.filter((l) => l.userId !== userId); }
 }
 
 export class InMemoryCommentRepository implements CommentRepository {
@@ -119,4 +125,5 @@ export class InMemoryCommentRepository implements CommentRepository {
   }
   async countByEntry(entryId: string) { return [...this.byId.values()].filter((c) => c.entryId === entryId).length; }
   async remove(id: string) { this.byId.delete(id); }
+  async removeAllForUser(userId: string) { for (const [k, c] of this.byId) if (c.userId === userId) this.byId.delete(k); }
 }

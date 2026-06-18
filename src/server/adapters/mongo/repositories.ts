@@ -14,6 +14,7 @@ export class MongoUserRepository implements UserRepository {
   async findByEmail(email: string) { const d = await this.col.findOne({ email }); return d ? M.fromUserDoc(d) : null; }
   async findByUsername(username: string) { const d = await this.col.findOne({ username }); return d ? M.fromUserDoc(d) : null; }
   async update(u: User) { await this.col.replaceOne({ _id: u.id }, M.toUserDoc(u)); }
+  async remove(id: string) { await this.col.deleteOne({ _id: id }); }
   async listRecent(limit: number) {
     return (await this.col.find({}).sort({ createdAt: -1 }).limit(limit).toArray()).map(M.fromUserDoc);
   }
@@ -29,6 +30,7 @@ export class MongoFollowRepository implements FollowRepository {
   async followerIdsOf(id: string) { return (await this.col.find({ followeeId: id }).toArray()).map((d) => d.followerId); }
   async countFollowers(id: string) { return this.col.countDocuments({ followeeId: id }); }
   async countFollowing(id: string) { return this.col.countDocuments({ followerId: id }); }
+  async removeAllForUser(userId: string) { await this.col.deleteMany({ $or: [{ followerId: userId }, { followeeId: userId }] }); }
 }
 
 export class MongoFollowRequestRepository implements FollowRequestRepository {
@@ -40,6 +42,7 @@ export class MongoFollowRequestRepository implements FollowRequestRepository {
   async listForTarget(targetId: string) { return (await this.col.find({ targetId }).sort({ createdAt: -1 }).toArray()).map(M.fromFollowRequestDoc); }
   async countForTarget(targetId: string) { return this.col.countDocuments({ targetId }); }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }
+  async removeAllForUser(userId: string) { await this.col.deleteMany({ $or: [{ requesterId: userId }, { targetId: userId }] }); }
 }
 
 export class MongoWorkRepository implements WorkRepository {
@@ -63,6 +66,7 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
     return (await this.col.find(q).sort({ createdAt: -1 }).toArray()).map(M.fromEntryDoc);
   }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }
+  async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }
   async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { createdAt: Date; id: string } | null; limit: number; }) {
     const visibility: Filter<M.WithIdEntry> = opts.scope === "circle"
       ? { userId: { $in: opts.circleUserIds } }
@@ -95,6 +99,7 @@ export class MongoListRepository implements ListRepository {
   }
   async update(l: List) { await this.col.replaceOne({ _id: l.id }, M.toListDoc(l)); }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }
+  async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }
 }
 
 export class MongoLikeRepository implements LikeRepository {
@@ -107,6 +112,7 @@ export class MongoLikeRepository implements LikeRepository {
   async likedEntryIds(userId: string, entryIds: string[]) {
     return (await this.col.find({ userId, entryId: { $in: entryIds } }).toArray()).map((d) => d.entryId);
   }
+  async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }
 }
 
 export class MongoCommentRepository implements CommentRepository {
@@ -117,4 +123,5 @@ export class MongoCommentRepository implements CommentRepository {
   async listByEntry(entryId: string) { return (await this.col.find({ entryId }).sort({ createdAt: 1 }).toArray()).map(M.fromCommentDoc); }
   async countByEntry(entryId: string) { return this.col.countDocuments({ entryId }); }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }
+  async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }
 }
