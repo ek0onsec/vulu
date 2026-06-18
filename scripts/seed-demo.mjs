@@ -12,9 +12,9 @@ const db = client.db("vulu");
 const now = new Date();
 const hash = await bcrypt.hash("password1", 6);
 
-const user = (id, username, displayName, bio, avatarUrl = null, bannerUrl = null) => ({
+const user = (id, username, displayName, bio, avatarUrl = null, bannerUrl = null, activeTabs = ["films"]) => ({
   _id: id, id, email: `${username}@vulu.app`, passwordHash: hash, username, displayName,
-  bio, avatarUrl, bannerUrl, activeTabs: ["films"],
+  bio, avatarUrl, bannerUrl, activeTabs,
   tastes: { filmGenreIds: [28, 18, 878], people: [] }, createdAt: now,
 });
 
@@ -36,7 +36,7 @@ for (const c of ["users", "works", "entries", "follows", "likes", "comments", "l
 }
 
 await db.collection("users").insertMany([
-  user("u-demo", "demo", "Toi (démo)", "Compte de démonstration vulu.", null, "https://picsum.photos/seed/demo-banner/1500/500"),
+  user("u-demo", "demo", "Toi (démo)", "Compte de démonstration vulu.", null, "https://picsum.photos/seed/demo-banner/1500/500", ["films", "books"]),
   user("u-alice", "alice", "Alice", "Cinéphile du dimanche, dévoreuse de SF.", "https://picsum.photos/seed/alice-av/200/200"),
   user("u-bob", "bob", "Bob", "Séries only. Spoilers jamais."),
 ]);

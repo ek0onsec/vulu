@@ -22,7 +22,11 @@ export class TmdbCatalog {
     const url = new URL(this.cfg.baseUrl + path);
     url.searchParams.set("language", "fr-FR");
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-    const res = await this.fetchImpl(url.toString(), { headers: { Authorization: `Bearer ${this.cfg.apiKey}` } });
+    // Clé v4 (jeton JWT « eyJ… ») → Bearer ; sinon clé v3 → paramètre api_key.
+    const headers: Record<string, string> = {};
+    if (this.cfg.apiKey.startsWith("eyJ")) headers.Authorization = `Bearer ${this.cfg.apiKey}`;
+    else url.searchParams.set("api_key", this.cfg.apiKey);
+    const res = await this.fetchImpl(url.toString(), { headers });
     if (!res.ok) throw new Error(`TMDB ${res.status}`);
     return res.json() as Promise<T>;
   }

@@ -11,6 +11,7 @@ export function SearchClient({ activeTabs }: { activeTabs: Domain[] }) {
   const [domain, setDomain] = useState<Domain>(activeTabs[0] ?? "films");
   const [q, setQ] = useState("");
   const [results, setResults] = useState<WorkSummary[]>([]);
+  const [unavailable, setUnavailable] = useState(false);
   const [loading, setLoading] = useState(false);
   const [opening, setOpening] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -21,8 +22,9 @@ export function SearchClient({ activeTabs }: { activeTabs: Domain[] }) {
     timer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const data = await api.get<{ results: WorkSummary[] }>(`/api/catalog/search?q=${encodeURIComponent(q)}&domain=${domain}`);
+        const data = await api.get<{ results: WorkSummary[]; unavailable?: boolean }>(`/api/catalog/search?q=${encodeURIComponent(q)}&domain=${domain}`);
         setResults(data.results);
+        setUnavailable(Boolean(data.unavailable));
       } finally {
         setLoading(false);
       }
@@ -51,6 +53,13 @@ export function SearchClient({ activeTabs }: { activeTabs: Domain[] }) {
         className="mb-5 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm" />
 
       {loading && <p className="text-sm text-[var(--color-text-muted)]">Recherche…</p>}
+      {unavailable && !loading && (
+        <p className="rounded-xl border border-dashed border-[var(--color-border)] p-4 text-sm text-[var(--color-text-muted)]">
+          {domain === "books"
+            ? "Catalogue livres momentanément indisponible (limite Google Books). Ajoute une clé GOOGLE_BOOKS_API_KEY pour fiabiliser."
+            : "Catalogue momentanément indisponible. Réessaie dans un instant."}
+        </p>
+      )}
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
         {results.map((r) => (
           <button key={`${r.source}-${r.externalId}`} onClick={() => open(r)} disabled={opening === r.externalId} className="text-left">
