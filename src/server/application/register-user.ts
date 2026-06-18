@@ -37,6 +37,7 @@ export async function registerUser(deps: Deps, input: RegisterInput): Promise<Us
     private: false,
     twoFactorEnabled: false,
     deactivatedAt: null,
+    notificationsSeenAt: null,
     createdAt: deps.clock.now(),
   };
   await deps.users.create(user);

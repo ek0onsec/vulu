@@ -27,10 +27,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const active = (href: string) => path === href || path.startsWith(href + "/");
   const [me, setMe] = useState<Me | null>(null);
+  const [unread, setUnread] = useState(0);
 
   useEffect(() => {
     api.get<{ user: Me }>("/api/me").then((d) => setMe(d.user)).catch(() => setMe(null));
   }, []);
+
+  // Compteur de notifications non lues, rafraîchi à chaque navigation.
+  useEffect(() => {
+    api.get<{ unreadCount: number }>("/api/notifications/count").then((d) => setUnread(d.unreadCount)).catch(() => {});
+  }, [path]);
 
   async function logout() {
     await api.post("/api/auth/logout").catch(() => {});
@@ -55,6 +61,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-accent)] opacity-75" />
                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--color-accent)]" />
                 </span>
+              )}
+              {n.icon === "bell" && unread > 0 && (
+                <span className="absolute -right-2 -top-2 flex min-w-[1.1rem] items-center justify-center rounded-full bg-[var(--color-primary)] px-1 text-[0.65rem] font-bold leading-4 text-white">{unread > 9 ? "9+" : unread}</span>
               )}
             </span>
             {n.label}

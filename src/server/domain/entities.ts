@@ -27,6 +27,7 @@ export interface User {
   private: boolean;
   twoFactorEnabled: boolean;
   deactivatedAt: Date | null;
+  notificationsSeenAt: Date | null;
   createdAt: Date;
 }
 

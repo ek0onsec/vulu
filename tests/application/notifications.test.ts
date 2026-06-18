@@ -5,7 +5,7 @@ import { registerUser } from "@/server/application/register-user";
 import { rateOrReviewWork } from "@/server/application/library-entry";
 import { likeEntry, commentOnEntry } from "@/server/application/engagement";
 import { followUser } from "@/server/application/social";
-import { buildNotifications } from "@/server/application/notifications";
+import { buildNotifications, markNotificationsSeen, countUnreadNotifications } from "@/server/application/notifications";
 
 const tastes = { filmGenreIds: [1, 2, 3], people: [] };
 const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
@@ -37,5 +37,13 @@ describe("buildNotifications", () => {
     const entry = await rateOrReviewWork(deps, me, ref, { rating: 4, text: "top", visibility: "public" });
     await likeEntry(deps, me, entry.id);
     expect(await buildNotifications(deps, me)).toHaveLength(0);
+  });
+  it("non-lu jusqu'au markNotificationsSeen", async () => {
+    const entry = await rateOrReviewWork(deps, me, ref, { rating: 4, text: "top", visibility: "public" });
+    await likeEntry(deps, alice, entry.id);
+    expect(await countUnreadNotifications(deps, me)).toBe(1);
+    await markNotificationsSeen(deps, me);
+    expect(await countUnreadNotifications(deps, me)).toBe(0);
+    expect((await buildNotifications(deps, me))[0]?.unread).toBe(false);
   });
 });

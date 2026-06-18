@@ -31,7 +31,9 @@ export function NotificationsClient() {
   const [notifs, setNotifs] = useState<Notification[] | null>(null);
 
   useEffect(() => {
-    api.get<{ notifications: Notification[] }>("/api/notifications").then((d) => setNotifs(d.notifications)).catch(() => setNotifs([]));
+    api.get<{ notifications: Notification[] }>("/api/notifications")
+      .then((d) => { setNotifs(d.notifications); api.post("/api/notifications/seen").catch(() => {}); })
+      .catch(() => setNotifs([]));
   }, []);
 
   return (
@@ -44,7 +46,7 @@ export function NotificationsClient() {
           const href = n.kind === "follow" ? `/u/${n.actors[0]?.username ?? ""}` : `/post/${n.entryId}`;
           return (
             <li key={n.id}>
-              <Link href={href} className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-colors hover:border-[var(--color-primary)]">
+              <Link href={href} className={`flex items-center gap-3 rounded-2xl border p-4 transition-colors hover:border-[var(--color-primary)] ${n.unread ? "border-[color-mix(in_srgb,var(--color-primary)_45%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]" : "border-[var(--color-border)] bg-[var(--color-surface)]"}`}>
                 <span className="shrink-0 text-[var(--color-primary)]"><Icon name={ICON[n.kind]} size={20} /></span>
                 <span className="flex -space-x-2">
                   {n.actors.map((a) => <Avatar key={a.username} name={a.displayName} src={a.avatarUrl} size={32} />)}

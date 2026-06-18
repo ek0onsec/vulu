@@ -4,7 +4,7 @@ import type { User, LibraryEntry } from "@/server/domain/entities";
 
 function user(id: string, over: Partial<User> = {}): User {
   return { id, email: `${id}@x.io`, passwordHash: "h", username: id, displayName: id,
-    bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"], tastes: { filmGenreIds: [], people: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, deactivatedAt: null,
+    bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"], tastes: { filmGenreIds: [], people: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, deactivatedAt: null, notificationsSeenAt: null,
     createdAt: new Date(), ...over };
 }
 function entry(id: string, over: Partial<LibraryEntry> = {}): LibraryEntry {

@@ -1,4 +1,6 @@
 import type { Deps } from "@/server/container";
+import type { User } from "@/server/domain/entities";
+import { NotFoundError } from "@/server/domain/errors";
 
 export interface NotifActor { username: string; displayName: string; avatarUrl: string | null }
 export interface Notification {
@@ -9,9 +11,12 @@ export interface Notification {
   work?: { id: string; title: string };
   entryId?: string;
   createdAt: string;         // ISO, événement le plus récent du groupe
+  unread: boolean;
 }
 
 export async function buildNotifications(deps: Deps, userId: string): Promise<Notification[]> {
+  const me = await deps.users.findById(userId);
+  const seenAt = me?.notificationsSeenAt ?? null;
   const myEntries = await deps.entries.listByUser(userId, {});
   const cache = new Map<string, NotifActor | null>();
   async function actor(id: string): Promise<NotifActor | null> {
@@ -25,7 +30,7 @@ export async function buildNotifications(deps: Deps, userId: string): Promise<No
     return (await Promise.all(ids.map(actor))).filter((a): a is NotifActor => a !== null);
   }
 
-  const notifs: Notification[] = [];
+  const notifs: Omit<Notification, "unread">[] = [];
 
   for (const entry of myEntries) {
     const work = await deps.works.findById(entry.workId);
@@ -64,5 +69,20 @@ export async function buildNotifications(deps: Deps, userId: string): Promise<No
     });
   }
 
-  return notifs.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 40);
+  const seenIso = seenAt ? seenAt.toISOString() : null;
+  return notifs
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 40)
+    .map((n) => ({ ...n, unread: seenIso === null || n.createdAt > seenIso }));
+}
+
+export async function markNotificationsSeen(deps: Deps, userId: string): Promise<void> {
+  const user = await deps.users.findById(userId);
+  if (!user) throw new NotFoundError("Utilisateur introuvable");
+  const updated: User = { ...user, notificationsSeenAt: deps.clock.now() };
+  await deps.users.update(updated);
+}
+
+export async function countUnreadNotifications(deps: Deps, userId: string): Promise<number> {
+  return (await buildNotifications(deps, userId)).filter((n) => n.unread).length;
 }
