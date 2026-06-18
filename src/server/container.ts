@@ -22,6 +22,8 @@ import {
   MongoListRepository, MongoLikeRepository, MongoCommentRepository,
 } from "@/server/adapters/mongo/repositories";
 import { TmdbCatalog } from "@/server/adapters/catalog/tmdb-catalog";
+import { GoogleBooksCatalog } from "@/server/adapters/catalog/google-books-catalog";
+import { CompositeCatalog } from "@/server/adapters/catalog/composite-catalog";
 import { getEnv } from "@/lib/env";
 
 export interface Deps {
@@ -74,7 +76,10 @@ export async function getDeps(): Promise<Deps> {
     lists: new MongoListRepository(db),
     likes: new MongoLikeRepository(db),
     comments: new MongoCommentRepository(db),
-    catalog: new TmdbCatalog({ apiKey: env.TMDB_API_KEY, baseUrl: env.TMDB_BASE_URL, imageBase: env.TMDB_IMAGE_BASE }),
+    catalog: new CompositeCatalog(
+      new TmdbCatalog({ apiKey: env.TMDB_API_KEY, baseUrl: env.TMDB_BASE_URL, imageBase: env.TMDB_IMAGE_BASE }),
+      new GoogleBooksCatalog({ baseUrl: env.GOOGLE_BOOKS_BASE_URL, apiKey: env.GOOGLE_BOOKS_API_KEY }),
+    ),
     media: new LocalDiskStorage(env.UPLOADS_DIR),
     hasher: new BcryptHasher(12),
     tokens: new JwtTokenService(env.JWT_SECRET),

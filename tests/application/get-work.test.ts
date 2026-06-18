@@ -22,4 +22,9 @@ describe("getOrImportWork", () => {
   it("NotFound si absent du catalogue", async () => {
     await expect(getOrImportWork(deps, { source: "tmdb", externalId: "999", type: "movie" })).rejects.toThrow(NotFoundError);
   });
+  it("importe un livre avec le domaine 'books'", async () => {
+    const w = await getOrImportWork(deps, { source: "googlebooks", externalId: "book-1", type: "book" });
+    expect(w.domain).toBe("books");
+    expect(w.people[0]?.role).toBe("author");
+  });
 });

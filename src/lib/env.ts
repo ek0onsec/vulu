@@ -7,6 +7,8 @@ const schema = z.object({
   TMDB_API_KEY: z.string().min(1),
   TMDB_BASE_URL: z.url(),
   TMDB_IMAGE_BASE: z.url(),
+  GOOGLE_BOOKS_BASE_URL: z.url().default("https://www.googleapis.com/books/v1"),
+  GOOGLE_BOOKS_API_KEY: z.string().optional(),
   UPLOADS_DIR: z.string().default(`${process.cwd()}/uploads`),
 });
 

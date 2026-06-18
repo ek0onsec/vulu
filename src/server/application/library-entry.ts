@@ -1,9 +1,9 @@
 import type { Deps } from "@/server/container";
-import type { EntryStatus, LibraryEntry, Visibility, WorkType } from "@/server/domain/entities";
+import type { EntryStatus, LibraryEntry, Visibility, WorkSource, WorkType } from "@/server/domain/entities";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
 import { getOrImportWork } from "./get-work";
 
-type Ref = { source: "tmdb"; externalId: string; type: WorkType };
+type Ref = { source: WorkSource; externalId: string; type: WorkType };
 
 function isValidRating(r: number): boolean {
   if (r < 0 || r > 5) return false;

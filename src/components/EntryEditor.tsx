@@ -3,9 +3,9 @@ import { useState } from "react";
 import { RatingSlider } from "./RatingSlider";
 import { api, ApiError } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
-import type { LibraryEntry, Visibility, WorkType } from "@/server/domain/entities";
+import type { LibraryEntry, Visibility, WorkSource, WorkType } from "@/server/domain/entities";
 
-interface Ref { source: "tmdb"; externalId: string; type: WorkType }
+interface Ref { source: WorkSource; externalId: string; type: WorkType }
 
 export function EntryEditor({ workRef, initial }: { workRef: Ref; initial: LibraryEntry | null }) {
   const [status, setStatus] = useState<"planned" | "done">(initial?.status ?? "planned");

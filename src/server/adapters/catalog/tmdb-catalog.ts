@@ -1,4 +1,4 @@
-import type { CatalogProvider, WorkSummary, WorkDetails, Genre, Person } from "@/server/ports/catalog";
+import type { WorkSummary, WorkDetails, Genre, Person } from "@/server/ports/catalog";
 import type { WorkType } from "@/server/domain/entities";
 
 export interface TmdbConfig { apiKey: string; baseUrl: string; imageBase: string; }
@@ -12,7 +12,7 @@ interface TmdbDetails { id: number; title?: string; name?: string; release_date?
 
 function yearOf(d?: string): number | null { return d ? Number(d.slice(0, 4)) || null : null; }
 
-export class TmdbCatalog implements CatalogProvider {
+export class TmdbCatalog {
   constructor(private cfg: TmdbConfig, private fetchImpl: typeof fetch = fetch) {}
 
   private img(path: string | null | undefined, size: string): string | null {
@@ -32,6 +32,7 @@ export class TmdbCatalog implements CatalogProvider {
     return data.results
       .filter((r) => r.media_type === "movie" || r.media_type === "tv")
       .map((r) => ({
+        source: "tmdb" as const,
         externalId: String(r.id),
         type: (r.media_type === "tv" ? "tv" : "movie") as WorkType,
         title: r.title ?? r.name ?? "Sans titre",
@@ -47,7 +48,7 @@ export class TmdbCatalog implements CatalogProvider {
     const directors = (d.credits?.crew ?? []).filter((c) => c.job === "Director")
       .map((c) => ({ tmdbId: c.id, name: c.name, role: "director" as const }));
     return {
-      externalId: String(d.id), type,
+      source: "tmdb", externalId: String(d.id), type,
       title: d.title ?? d.name ?? "Sans titre",
       year: yearOf(d.release_date ?? d.first_air_date),
       posterUrl: this.img(d.poster_path, "w500"),

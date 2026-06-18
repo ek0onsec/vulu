@@ -1,11 +1,13 @@
 import type { Deps } from "@/server/container";
-import type { Work, WorkType } from "@/server/domain/entities";
+import type { Domain, Work, WorkSource, WorkType } from "@/server/domain/entities";
 import { NotFoundError } from "@/server/domain/errors";
 
-function domainOf(_type: WorkType): "films" { return "films"; } // Phase 2 : 'book' → 'books'
+export function domainOf(type: WorkType): Domain {
+  return type === "book" ? "books" : "films";
+}
 
 export async function getOrImportWork(
-  deps: Deps, ref: { source: "tmdb"; externalId: string; type: WorkType },
+  deps: Deps, ref: { source: WorkSource; externalId: string; type: WorkType },
 ): Promise<Work> {
   const cached = await deps.works.findByExternal(ref.source, ref.externalId);
   if (cached) return cached;

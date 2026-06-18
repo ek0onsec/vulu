@@ -2,7 +2,7 @@ import type {
   UserRepository, FollowRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, Work, LibraryEntry, List, Like, Comment } from "@/server/domain/entities";
+import type { User, Follow, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
 import { isPublishable } from "@/server/domain/feed-rules";
 
 export class InMemoryUserRepository implements UserRepository {
@@ -32,7 +32,7 @@ export class InMemoryWorkRepository implements WorkRepository {
   private byId = new Map<string, Work>();
   async upsert(w: Work) { this.byId.set(w.id, w); }
   async findById(id: string) { return this.byId.get(id) ?? null; }
-  async findByExternal(source: "tmdb", externalId: string) {
+  async findByExternal(source: WorkSource, externalId: string) {
     return [...this.byId.values()].find((w) => w.source === source && w.externalId === externalId) ?? null;
   }
 }

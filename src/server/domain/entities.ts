@@ -1,9 +1,10 @@
 export type Domain = "films" | "books";
-export type WorkType = "movie" | "tv";
+export type WorkType = "movie" | "tv" | "book";
+export type WorkSource = "tmdb" | "googlebooks";
 export type EntryStatus = "planned" | "done";
 export type Visibility = "circle" | "public";
 export type ListVisibility = "public" | "private";
-export type PersonRole = "actor" | "director";
+export type PersonRole = "actor" | "director" | "author";
 
 export interface Tastes {
   filmGenreIds: number[];
@@ -32,7 +33,7 @@ export interface Follow {
 
 export interface Work {
   id: string;
-  source: "tmdb";
+  source: WorkSource;
   externalId: string;
   type: WorkType;
   domain: Domain;

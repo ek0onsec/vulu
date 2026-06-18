@@ -1,4 +1,4 @@
-import type { User, Follow, Work, LibraryEntry, List, Like, Comment } from "@/server/domain/entities";
+import type { User, Follow, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
 
 export interface UserRepository {
   create(user: User): Promise<void>;
@@ -21,7 +21,7 @@ export interface FollowRepository {
 export interface WorkRepository {
   upsert(work: Work): Promise<void>;
   findById(id: string): Promise<Work | null>;
-  findByExternal(source: "tmdb", externalId: string): Promise<Work | null>;
+  findByExternal(source: WorkSource, externalId: string): Promise<Work | null>;
 }
 export interface LibraryEntryRepository {
   upsert(entry: LibraryEntry): Promise<void>;

@@ -15,7 +15,11 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
   const work = await deps.works.findById(id);
   if (!work) notFound();
   const entry = await deps.entries.findByUserAndWork(user.id, work.id);
-  const directors = work.people.filter((p) => p.role === "director").map((p) => p.name).join(", ");
+  const isBook = work.type === "book";
+  const creators = work.people
+    .filter((p) => (isBook ? p.role === "author" : p.role === "director"))
+    .map((p) => p.name).join(", ");
+  const typeLabel = isBook ? "Livre" : work.type === "tv" ? "Série" : "Film";
 
   return (
     <AppShell>
@@ -28,7 +32,7 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
           <div className="pt-3">
             <h1 className="font-display text-2xl font-bold leading-tight">{work.title}</h1>
             <p className="text-sm text-[var(--color-text-muted)]">
-              {[work.year, work.type === "tv" ? "Série" : "Film", directors].filter(Boolean).join(" · ")}
+              {[work.year, typeLabel, creators].filter(Boolean).join(" · ")}
             </p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {work.genres.map((g) => (

@@ -1,9 +1,9 @@
 import type { Deps } from "@/server/container";
-import type { Domain, List, ListVisibility, Work, WorkType } from "@/server/domain/entities";
+import type { Domain, List, ListVisibility, Work, WorkSource, WorkType } from "@/server/domain/entities";
 import { ForbiddenError, NotFoundError } from "@/server/domain/errors";
 import { getOrImportWork } from "./get-work";
 
-type Ref = { source: "tmdb"; externalId: string; type: WorkType };
+type Ref = { source: WorkSource; externalId: string; type: WorkType };
 
 async function owned(deps: Deps, userId: string, listId: string): Promise<List> {
   const list = await deps.lists.findById(listId);

@@ -51,7 +51,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
         <div className="min-w-0">
           <p className="font-display text-lg font-semibold leading-tight">{item.work.title}</p>
           <p className="text-xs text-[var(--color-text-muted)]">
-            {item.work.year ?? ""}{item.work.type === "tv" ? " · Série" : " · Film"}
+            {item.work.year ?? ""}{item.work.type === "book" ? " · Livre" : item.work.type === "tv" ? " · Série" : " · Film"}
           </p>
           {item.entry.rating !== null && (
             <div className="mt-1.5 flex items-center gap-2">

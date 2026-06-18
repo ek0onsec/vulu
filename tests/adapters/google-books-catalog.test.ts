@@ -1,0 +1,41 @@
+import { describe, it, expect } from "vitest";
+import { GoogleBooksCatalog } from "@/server/adapters/catalog/google-books-catalog";
+
+function fakeFetch(routes: Record<string, unknown>): typeof fetch {
+  return (async (url: string | URL | Request) => {
+    const u = url.toString();
+    const key = Object.keys(routes).find((k) => u.includes(k));
+    if (!key) throw new Error("route inattendue: " + u);
+    return { ok: true, json: async () => routes[key] } as Response;
+  }) as typeof fetch;
+}
+
+const cfg = { baseUrl: "https://www.googleapis.com/books/v1" };
+
+describe("GoogleBooksCatalog", () => {
+  it("searchWorks mappe les volumes", async () => {
+    const c = new GoogleBooksCatalog(cfg, fakeFetch({
+      "/volumes": { items: [
+        { id: "abc", volumeInfo: { title: "Neuromancien", authors: ["William Gibson"], publishedDate: "1984-07-01", imageLinks: { thumbnail: "http://x/c.jpg" } } },
+      ] },
+    }));
+    const res = await c.searchWorks("neuro");
+    expect(res[0]).toMatchObject({ source: "googlebooks", type: "book", title: "Neuromancien", year: 1984 });
+    expect(res[0]?.posterUrl).toBe("https://x/c.jpg"); // http → https
+  });
+  it("getWork renvoie les auteurs comme people 'author'", async () => {
+    const c = new GoogleBooksCatalog(cfg, fakeFetch({
+      "/volumes/abc": { id: "abc", volumeInfo: { title: "Dune", authors: ["Frank Herbert"], categories: ["Science-fiction"], description: "..." } },
+    }));
+    const w = await c.getWork("abc");
+    expect(w?.type).toBe("book");
+    expect(w?.people[0]).toMatchObject({ name: "Frank Herbert", role: "author" });
+    expect(w?.genres).toContain("Science-fiction");
+  });
+  it("listGenres renvoie une liste littéraire curée", async () => {
+    const c = new GoogleBooksCatalog(cfg, fakeFetch({}));
+    const g = await c.listGenres();
+    expect(g.length).toBeGreaterThan(5);
+    expect(g.map((x) => x.name)).toContain("Science-fiction");
+  });
+});

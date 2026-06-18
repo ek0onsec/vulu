@@ -5,9 +5,9 @@ import { Modal } from "./Modal";
 import { Icon } from "./Icon";
 import { api } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
-import type { List, WorkType } from "@/server/domain/entities";
+import type { List, WorkSource, WorkType } from "@/server/domain/entities";
 
-interface Ref { source: "tmdb"; externalId: string; type: WorkType }
+interface Ref { source: WorkSource; externalId: string; type: WorkType }
 
 export function AddToListButton({ workRef, workId }: { workRef: Ref; workId: string }) {
   const [open, setOpen] = useState(false);

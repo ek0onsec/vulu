@@ -6,5 +6,5 @@ import { SearchClient } from "./SearchClient";
 export default async function SearchPage() {
   const user = await currentUser();
   if (!user) redirect("/login");
-  return <AppShell><SearchClient /></AppShell>;
+  return <AppShell><SearchClient activeTabs={user.activeTabs} /></AppShell>;
 }

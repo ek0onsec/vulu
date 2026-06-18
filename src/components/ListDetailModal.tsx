@@ -46,7 +46,7 @@ export function ListDetailModal({ listId, onClose, onChanged, editable = true }:
 
   async function addWork(r: WorkSummary) {
     const { list: updated } = await api.post<{ list: List }>(`/api/lists/${listId}/items`, {
-      source: "tmdb", externalId: r.externalId, type: r.type,
+      source: r.source, externalId: r.externalId, type: r.type,
     });
     const { works: fresh } = await api.get<{ works: Work[] }>(`/api/lists/${listId}`);
     setWorks(fresh); onChanged?.(updated.workIds.length);

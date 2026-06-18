@@ -3,7 +3,7 @@ import type {
   UserRepository, FollowRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, Work, LibraryEntry, List, Like, Comment } from "@/server/domain/entities";
+import type { User, Follow, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
 import * as M from "./mappers";
 
 export class MongoUserRepository implements UserRepository {
@@ -36,7 +36,7 @@ export class MongoWorkRepository implements WorkRepository {
   private get col() { return this.db.collection<M.WithIdWork>("works"); }
   async upsert(w: Work) { await this.col.replaceOne({ _id: w.id }, M.toWorkDoc(w), { upsert: true }); }
   async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromWorkDoc(d) : null; }
-  async findByExternal(source: "tmdb", externalId: string) { const d = await this.col.findOne({ source, externalId }); return d ? M.fromWorkDoc(d) : null; }
+  async findByExternal(source: WorkSource, externalId: string) { const d = await this.col.findOne({ source, externalId }); return d ? M.fromWorkDoc(d) : null; }
 }
 
 export class MongoLibraryEntryRepository implements LibraryEntryRepository {
