@@ -1,8 +1,8 @@
 import type {
-  UserRepository, FollowRepository, WorkRepository, LibraryEntryRepository,
+  UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
 import { isPublishable } from "@/server/domain/feed-rules";
 
 export class InMemoryUserRepository implements UserRepository {
@@ -26,6 +26,16 @@ export class InMemoryFollowRepository implements FollowRepository {
   async followerIdsOf(id: string) { return this.edges.filter((e) => e.followeeId === id).map((e) => e.followerId); }
   async countFollowers(id: string) { return (await this.followerIdsOf(id)).length; }
   async countFollowing(id: string) { return (await this.followeeIdsOf(id)).length; }
+}
+
+export class InMemoryFollowRequestRepository implements FollowRequestRepository {
+  private reqs: FollowRequest[] = [];
+  async add(r: FollowRequest) { if (!(await this.findPair(r.requesterId, r.targetId))) this.reqs.push(r); }
+  async findById(id: string) { return this.reqs.find((r) => r.id === id) ?? null; }
+  async findPair(requesterId: string, targetId: string) { return this.reqs.find((r) => r.requesterId === requesterId && r.targetId === targetId) ?? null; }
+  async listForTarget(targetId: string) { return this.reqs.filter((r) => r.targetId === targetId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); }
+  async countForTarget(targetId: string) { return this.reqs.filter((r) => r.targetId === targetId).length; }
+  async remove(id: string) { this.reqs = this.reqs.filter((r) => r.id !== id); }
 }
 
 export class InMemoryWorkRepository implements WorkRepository {

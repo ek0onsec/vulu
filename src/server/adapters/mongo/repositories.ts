@@ -1,9 +1,9 @@
 import type { Db, Filter } from "mongodb";
 import type {
-  UserRepository, FollowRepository, WorkRepository, LibraryEntryRepository,
+  UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
 import * as M from "./mappers";
 
 export class MongoUserRepository implements UserRepository {
@@ -29,6 +29,17 @@ export class MongoFollowRepository implements FollowRepository {
   async followerIdsOf(id: string) { return (await this.col.find({ followeeId: id }).toArray()).map((d) => d.followerId); }
   async countFollowers(id: string) { return this.col.countDocuments({ followeeId: id }); }
   async countFollowing(id: string) { return this.col.countDocuments({ followerId: id }); }
+}
+
+export class MongoFollowRequestRepository implements FollowRequestRepository {
+  constructor(private db: Db) {}
+  private get col() { return this.db.collection<M.WithIdFollowRequest>("follow_requests"); }
+  async add(r: FollowRequest) { await this.col.updateOne({ requesterId: r.requesterId, targetId: r.targetId }, { $setOnInsert: M.toFollowRequestDoc(r) }, { upsert: true }); }
+  async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromFollowRequestDoc(d) : null; }
+  async findPair(requesterId: string, targetId: string) { const d = await this.col.findOne({ requesterId, targetId }); return d ? M.fromFollowRequestDoc(d) : null; }
+  async listForTarget(targetId: string) { return (await this.col.find({ targetId }).sort({ createdAt: -1 }).toArray()).map(M.fromFollowRequestDoc); }
+  async countForTarget(targetId: string) { return this.col.countDocuments({ targetId }); }
+  async remove(id: string) { await this.col.deleteOne({ _id: id }); }
 }
 
 export class MongoWorkRepository implements WorkRepository {

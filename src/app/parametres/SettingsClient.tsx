@@ -18,10 +18,23 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function SettingsClient({ initialTastes }: { initialTastes: Tastes }) {
+export function SettingsClient({ initialTastes, initialPrivate }: { initialTastes: Tastes; initialPrivate: boolean }) {
   const router = useRouter();
   const [tastes, setTastes] = useState<Tastes>(initialTastes);
+  const [isPrivate, setIsPrivate] = useState(initialPrivate);
   const [busy, setBusy] = useState(false);
+
+  async function togglePrivate() {
+    const next = !isPrivate;
+    setIsPrivate(next);
+    try {
+      await api.post("/api/me/privacy", { private: next });
+      toast(next ? "Compte passé en privé" : "Compte repassé en public");
+    } catch (e) {
+      setIsPrivate(!next);
+      toast(e instanceof ApiError ? e.message : "Erreur", "error");
+    }
+  }
 
   async function saveTastes() {
     setBusy(true);
@@ -61,13 +74,20 @@ export function SettingsClient({ initialTastes }: { initialTastes: Tastes }) {
       </Section>
 
       <Section title="Confidentialité & sécurité">
-        <div className="flex items-center justify-between opacity-70">
-          <div>
+        <div className="flex items-center justify-between">
+          <div className="pr-4">
             <p className="text-sm font-medium">Compte privé</p>
-            <p className="text-xs text-[var(--color-text-muted)]">Seuls tes abonnés mutuels verront ton profil (demandes à approuver).</p>
+            <p className="text-xs text-[var(--color-text-muted)]">Seuls tes abonnés mutuels verront ton profil. Les nouveaux abonnés devront envoyer une demande.</p>
           </div>
-          <span className="rounded-full bg-[var(--color-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">Bientôt</span>
+          <button onClick={togglePrivate} role="switch" aria-checked={isPrivate}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${isPrivate ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}>
+            <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white transition-all ${isPrivate ? "left-[1.4rem]" : "left-0.5"}`} />
+          </button>
         </div>
+        <Link href="/demandes" className="mt-4 flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)]">
+          <Icon name="user-plus" size={18} /> Demandes de suivi
+        </Link>
+        <p className="mt-3 text-xs text-[var(--color-text-muted)]">Changer l’email, le mot de passe et activer la 2FA : bientôt.</p>
       </Section>
 
       <Section title="Compte">

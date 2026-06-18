@@ -1,4 +1,4 @@
-import type { User, Follow, Work, LibraryEntry, List, Like, Comment } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment } from "@/server/domain/entities";
 
 type WithId<T> = T & { _id: string };
 const strip = <T>(d: WithId<T>): T => { const { _id, ...rest } = d as WithId<T> & Record<string, unknown>; void _id; return rest as T; };
@@ -10,12 +10,16 @@ export type WithIdEntry = WithId<LibraryEntry>;
 export type WithIdList = WithId<List>;
 export type WithIdLike = WithId<Like>;
 export type WithIdComment = WithId<Comment>;
+export type WithIdFollowRequest = WithId<FollowRequest>;
 
 export const toUserDoc = (u: User): WithIdUser => ({ _id: u.id, ...u });
 export const fromUserDoc = (d: WithIdUser): User => strip(d);
 
 export const toFollowDoc = (f: Follow): WithIdFollow => ({ _id: `${f.followerId}:${f.followeeId}`, ...f });
 export const fromFollowDoc = (d: WithIdFollow): Follow => strip(d);
+
+export const toFollowRequestDoc = (r: FollowRequest): WithIdFollowRequest => ({ _id: r.id, ...r });
+export const fromFollowRequestDoc = (d: WithIdFollowRequest): FollowRequest => strip(d);
 
 export const toWorkDoc = (w: Work): WithIdWork => ({ _id: w.id, ...w });
 export const fromWorkDoc = (d: WithIdWork): Work => strip(d);

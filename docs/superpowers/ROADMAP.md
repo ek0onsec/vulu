@@ -21,10 +21,18 @@
 - **vulu+** : page `/plus` (2 €/mois, stub), **badge certifié** + **badge staff Vulu** partout (feed, profil, commentaires, sidebar).
 - **Sidebar** : chip compte (nom + @ + badges) en bas + déconnexion ; onglet **Paramètres** (`/parametres` : intérêts éditables, thème, confidentialité placeholder, déconnexion).
 
-## 🗺️ Planifié (prochains sous-projets)
-1. **SP-Privé — Compte privé & demandes de suivi** (demandé, prioritaire) : `User.private`, profil/biblio visibles uniquement aux abonnés mutuels, **demandes de suivi à approuver/refuser** (entité FollowRequest + file d'attente), bouton « Suivre » → « Demande envoyée », notifications de demande. Le toggle « Compte privé » est déjà en placeholder dans `/parametres`.
-2. **SP3 — Filtres par personne** : explorer œuvres/bibliothèque par acteur / réalisateur / auteur.
-3. **SP4 — Centre de paramètres (complément)** : sécurité (changer mot de passe, sessions, suppression compte), préférences avancées (langue, densité), **intérêts livres** (genres littéraires + auteurs favoris). (Intérêts films + thème déjà dans `/parametres`.)
+## 🗺️ Planifié (prochains sous-projets) — réorganisé 2026-06-18
+1. **SP-Privé — Compte privé & demandes de suivi** (EN COURS) : `User.private`, profil/biblio visibles uniquement aux **abonnés mutuels**, **demandes de suivi** (entité FollowRequest : envoyer/approuver/refuser, file `/demandes`), bouton « Suivre » → « Demande envoyée », vue profil verrouillée pour les non-mutuels.
+2. **SP-Compte — Paramètres compte & sécurité** : changer **username (@)**, **email**, **mot de passe** ; **préparer 2FA** (TOTP appli d'auth — champs + UI « bientôt ») ; **suppression de compte** = pop-up avec saisie « SUPPRIMER MON COMPTE » → **soft-delete** (`deactivatedAt`), déconnexion + message « réactivable en te reconnectant sous 48 h », purge définitive après 48 h (commentaires + listes). Bien prévenir l'utilisateur.
+3. **SP-Intérêts — Centres d'intérêt complets** : genres **films/séries** + genres **littéraires** + cocher **acteurs / réalisateurs / auteurs** favoris (recherche TMDB/Google Books). `tastes` étendu : `bookGenres`, `people` (actor/director/author).
+4. **SP-Vitrine — Profil** : afficher la **bannière de collection** sur le profil ; onglet **« Vitrine »** (1er onglet vu) = top all-time **5 films / 5 séries / 5 livres** choisis par l'utilisateur.
+5. **SP-Communautés** : créer des communautés (type X), les rejoindre, **épingler une communauté** comme onglet du feed (à côté de Pour vous / Mon cercle / <nom commu>), **partage ciblé** public / cercle / communauté.
+6. **SP-vulu+ features** :
+   - **Filtre anti-spoiler IA** : détecte et masque les spoilers (flou + « spoiler potentiel », clic pour révéler).
+   - **Thèmes de couleur supplémentaires** : visibles par tous dans Préférences d'affichage mais **verrouillés** pour les non-vulu+ (prévisualisables, non sauvegardables).
+   - paiement réel (Stripe).
+7. **SP3 — Filtres par personne** : explorer œuvres/bibliothèque par acteur / réalisateur / auteur.
+8. **Mécaniques d'habitude** : Wrapped/Rétrospective, Journal & cartes partageables, Notifications in-app & reco perso.
 3. **Communautés (gros sous-système)** : créer des communautés (type Twitter Communities), onglet timeline des communautés publiques pour les rejoindre, ajouter un onglet de communauté rejointe sur le feed principal, et **partage ciblé** d'une activité en **public / cercle / communauté précise**.
 4. **Mécaniques d'habitude (priorisées par l'utilisateur)** :
    - **Rétrospective / Wrapped** (bilan animé annuel/mensuel à partager, façon Spotify Wrapped).

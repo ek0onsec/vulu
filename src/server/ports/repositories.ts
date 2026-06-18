@@ -1,4 +1,4 @@
-import type { User, Follow, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
 
 export interface UserRepository {
   create(user: User): Promise<void>;
@@ -17,6 +17,14 @@ export interface FollowRepository {
   followerIdsOf(userId: string): Promise<string[]>;
   countFollowers(userId: string): Promise<number>;
   countFollowing(userId: string): Promise<number>;
+}
+export interface FollowRequestRepository {
+  add(request: FollowRequest): Promise<void>;
+  findById(id: string): Promise<FollowRequest | null>;
+  findPair(requesterId: string, targetId: string): Promise<FollowRequest | null>;
+  listForTarget(targetId: string): Promise<FollowRequest[]>;
+  countForTarget(targetId: string): Promise<number>;
+  remove(id: string): Promise<void>;
 }
 export interface WorkRepository {
   upsert(work: Work): Promise<void>;

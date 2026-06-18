@@ -24,12 +24,21 @@ export interface User {
   tastes: Tastes;
   plus: boolean;
   staff: boolean;
+  private: boolean;
   createdAt: Date;
 }
 
 export interface Follow {
   followerId: string;
   followeeId: string;
+  createdAt: Date;
+}
+
+/** Demande de suivi en attente (comptes privés). */
+export interface FollowRequest {
+  id: string;
+  requesterId: string;
+  targetId: string;
   createdAt: Date;
 }
 

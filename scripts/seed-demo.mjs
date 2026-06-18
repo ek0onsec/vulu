@@ -12,10 +12,10 @@ const db = client.db("vulu");
 const now = new Date();
 const hash = await bcrypt.hash("password1", 6);
 
-const user = (id, username, displayName, bio, avatarUrl = null, bannerUrl = null, activeTabs = ["films"], plus = false, staff = false) => ({
+const user = (id, username, displayName, bio, avatarUrl = null, bannerUrl = null, activeTabs = ["films"], plus = false, staff = false, isPrivate = false) => ({
   _id: id, id, email: `${username}@vulu.app`, passwordHash: hash, username, displayName,
   bio, avatarUrl, bannerUrl, activeTabs,
-  tastes: { filmGenreIds: [28, 18, 878], people: [] }, plus, staff, createdAt: now,
+  tastes: { filmGenreIds: [28, 18, 878], people: [] }, plus, staff, private: isPrivate, createdAt: now,
 });
 
 const work = (id, externalId, type, title, year, seed, overview, genres) => ({

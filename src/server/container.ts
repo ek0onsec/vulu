@@ -1,13 +1,14 @@
 import {
   InMemoryUserRepository, InMemoryFollowRepository, InMemoryWorkRepository,
   InMemoryLibraryEntryRepository, InMemoryListRepository, InMemoryLikeRepository, InMemoryCommentRepository,
+  InMemoryFollowRequestRepository,
 } from "@/server/adapters/memory";
 import { BcryptHasher } from "@/server/adapters/security/bcrypt-hasher";
 import { JwtTokenService } from "@/server/adapters/security/jwt-token-service";
 import { UuidIdGenerator } from "@/server/adapters/security/uuid-id-generator";
 import { SystemClock } from "@/server/adapters/security/system-clock";
 import type {
-  UserRepository, FollowRepository, WorkRepository, LibraryEntryRepository,
+  UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository,
 } from "@/server/ports/repositories";
 import type { CatalogProvider } from "@/server/ports/catalog";
@@ -19,7 +20,7 @@ import { join } from "node:path";
 import { getDb } from "@/server/adapters/mongo/client";
 import {
   MongoUserRepository, MongoFollowRepository, MongoWorkRepository, MongoLibraryEntryRepository,
-  MongoListRepository, MongoLikeRepository, MongoCommentRepository,
+  MongoListRepository, MongoLikeRepository, MongoCommentRepository, MongoFollowRequestRepository,
 } from "@/server/adapters/mongo/repositories";
 import { TmdbCatalog } from "@/server/adapters/catalog/tmdb-catalog";
 import { GoogleBooksCatalog } from "@/server/adapters/catalog/google-books-catalog";
@@ -29,6 +30,7 @@ import { getEnv } from "@/lib/env";
 export interface Deps {
   users: UserRepository;
   follows: FollowRepository;
+  followRequests: FollowRequestRepository;
   works: WorkRepository;
   entries: LibraryEntryRepository;
   lists: ListRepository;
@@ -47,6 +49,7 @@ export function makeInMemoryDeps(catalog: CatalogProvider): Deps {
   return {
     users: new InMemoryUserRepository(),
     follows: new InMemoryFollowRepository(),
+    followRequests: new InMemoryFollowRequestRepository(),
     works: new InMemoryWorkRepository(),
     entries: new InMemoryLibraryEntryRepository(),
     lists: new InMemoryListRepository(),
@@ -71,6 +74,7 @@ export async function getDeps(): Promise<Deps> {
   realDeps = {
     users: new MongoUserRepository(db),
     follows: new MongoFollowRepository(db),
+    followRequests: new MongoFollowRequestRepository(db),
     works: new MongoWorkRepository(db),
     entries: new MongoLibraryEntryRepository(db),
     lists: new MongoListRepository(db),

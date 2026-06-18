@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { currentUser } from "@/server/http/session";
 import { getDeps } from "@/server/container";
-import { getCircle } from "@/server/application/social";
+import { getCircle, canViewProfile } from "@/server/application/social";
 import { AppShell } from "@/components/AppShell";
 import { FollowButton } from "@/components/FollowButton";
 import { Avatar } from "@/components/Avatar";
@@ -23,6 +23,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
 
   const isSelf = viewer.id === target.id;
   const inCircle = (await getCircle(deps, viewer.id)).has(target.id);
+  const canView = await canViewProfile(deps, viewer.id, target);
+  const isFollowing = await deps.follows.exists(viewer.id, target.id);
+  const requested = !isSelf && Boolean(await deps.followRequests.findPair(viewer.id, target.id));
+  const [followers, following] = await Promise.all([deps.follows.countFollowers(target.id), deps.follows.countFollowing(target.id)]);
 
   async function toPosters(entries: LibraryEntry[]): Promise<PosterItem[]> {
     const resolved = await Promise.all(entries.map(async (e) => ({ e, w: await deps.works.findById(e.workId) })));
@@ -31,17 +35,18 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       .map(({ e, w }) => ({ id: e.id, workId: w!.id, posterUrl: w!.posterUrl, title: w!.title, rating: e.rating, type: w!.type }));
   }
 
-  const watchedEntries = (await deps.entries.listByUser(target.id, { status: "done" }))
-    .filter((e) => e.visibility === "public" || isSelf || inCircle);
+  const watchedEntries = canView
+    ? (await deps.entries.listByUser(target.id, { status: "done" })).filter((e) => e.visibility === "public" || isSelf || inCircle)
+    : [];
   const watched = await toPosters(watchedEntries);
   const planned = isSelf ? await toPosters(await deps.entries.listByUser(target.id, { status: "planned" })) : null;
 
-  const lists: ListItem[] = (await deps.lists.listByUser(target.id))
-    .filter((l) => l.visibility === "public" || isSelf)
-    .map((l) => ({ id: l.id, name: l.name, description: l.description, visibility: l.visibility, count: l.workIds.length }));
+  const lists: ListItem[] = canView
+    ? (await deps.lists.listByUser(target.id))
+        .filter((l) => l.visibility === "public" || isSelf)
+        .map((l) => ({ id: l.id, name: l.name, description: l.description, visibility: l.visibility, count: l.workIds.length }))
+    : [];
 
-  const [followers, following] = await Promise.all([deps.follows.countFollowers(target.id), deps.follows.countFollowing(target.id)]);
-  const isFollowing = await deps.follows.exists(viewer.id, target.id);
   const showFilms = target.activeTabs.includes("films");
   const showBooks = target.activeTabs.includes("books");
   const vusCount = watched.filter((w) => w.type !== "book").length;
@@ -65,7 +70,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
             </div>
             {isSelf
               ? <ProfileEditModal initial={{ username: target.username, displayName: target.displayName, bio: target.bio, avatarUrl: target.avatarUrl, bannerUrl: target.bannerUrl, activeTabs: target.activeTabs }} />
-              : <FollowButton username={target.username} initialFollowing={isFollowing} />}
+              : <FollowButton username={target.username} initialFollowing={isFollowing} isPrivate={target.private} initialRequested={requested} />}
           </div>
           {target.bio && <p className="mt-3 text-sm text-[var(--color-text)]">{target.bio}</p>}
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
@@ -77,7 +82,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
         </div>
       </div>
 
-      <ProfileTabs watched={watched} planned={planned} lists={lists} isSelf={isSelf} showFilms={showFilms} showBooks={showBooks} />
+      {canView
+        ? <ProfileTabs watched={watched} planned={planned} lists={lists} isSelf={isSelf} showFilms={showFilms} showBooks={showBooks} />
+        : <div className="mt-8 rounded-2xl border border-dashed border-[var(--color-border)] p-10 text-center">
+            <p className="font-display text-lg font-bold">Ce compte est privé</p>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">Suis @{target.username} (et qu'il te suive en retour) pour voir sa bibliothèque et ses avis.</p>
+          </div>}
     </AppShell>
   );
 }
