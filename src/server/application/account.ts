@@ -6,11 +6,12 @@ export const DELETION_GRACE_MS = 48 * 60 * 60 * 1000;
 
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/i;
 
-export async function changeUsername(deps: Deps, userId: string, raw: string): Promise<User> {
+export async function changeUsername(deps: Deps, userId: string, raw: string, currentPassword: string): Promise<User> {
   const username = raw.trim().toLowerCase();
   if (!USERNAME_RE.test(username)) throw new ValidationError("Nom d'utilisateur invalide (3–20 caractères, lettres/chiffres/_)");
   const user = await deps.users.findById(userId);
   if (!user) throw new NotFoundError("Utilisateur introuvable");
+  if (!(await deps.hasher.verify(currentPassword, user.passwordHash))) throw new AuthError("Mot de passe incorrect");
   if (username !== user.username) {
     const taken = await deps.users.findByUsername(username);
     if (taken) throw new ConflictError("Ce nom d'utilisateur est pris");
@@ -55,6 +56,19 @@ export async function cancelAccountDeletion(deps: Deps, userId: string): Promise
   const updated: User = { ...user, deactivatedAt: null };
   await deps.users.update(updated);
   return updated;
+}
+
+/** Archive des données de l'utilisateur (export RGPD léger). */
+export async function exportUserData(deps: Deps, userId: string) {
+  const user = await deps.users.findById(userId);
+  if (!user) throw new NotFoundError("Utilisateur introuvable");
+  const [entries, lists] = await Promise.all([
+    deps.entries.listByUser(userId, {}),
+    deps.lists.listByUser(userId),
+  ]);
+  const { passwordHash, ...profile } = user;
+  void passwordHash;
+  return { exportedAt: deps.clock.now().toISOString(), profile, entries, lists };
 }
 
 /** Suppression définitive : retire l'utilisateur et toutes ses données. */

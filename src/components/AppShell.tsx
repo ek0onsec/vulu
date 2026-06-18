@@ -19,7 +19,7 @@ const NAV: { href: string; label: string; icon: IconName; pulse?: boolean }[] = 
   { href: "/parametres", label: "Paramètres", icon: "settings" },
 ];
 
-interface Me { username: string; displayName: string; avatarUrl: string | null; plus: boolean; staff: boolean }
+interface Me { username: string; displayName: string; avatarUrl: string | null; plus: boolean; staff: boolean; private: boolean }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
@@ -69,7 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="block truncate text-sm font-semibold">
                     {me.displayName}{me.staff && <StaffBadge size={13} />}{me.plus && <CertifiedBadge size={13} />}
                   </span>
-                  <span className="block truncate text-xs text-[var(--color-text-muted)]">@{me.username}</span>
+                  <span className="flex items-center gap-1 truncate text-xs text-[var(--color-text-muted)]">@{me.username}{me.private && <Icon name="lock" size={11} />}</span>
                 </span>
               </Link>
               <button onClick={logout} aria-label="Se déconnecter"

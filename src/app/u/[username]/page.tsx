@@ -7,6 +7,7 @@ import { FollowButton } from "@/components/FollowButton";
 import { Avatar } from "@/components/Avatar";
 import { CertifiedBadge } from "@/components/CertifiedBadge";
 import { StaffBadge } from "@/components/StaffBadge";
+import { Icon } from "@/components/Icon";
 import { ProfileEditModal } from "@/components/ProfileEditModal";
 import { ProfileTabs, type PosterItem, type ListItem } from "@/components/ProfileTabs";
 import type { LibraryEntry } from "@/server/domain/entities";
@@ -66,7 +67,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
               <h1 className="font-display flex items-center gap-1 text-xl font-bold">
                 {target.displayName}{target.staff && <StaffBadge />}{target.plus && <CertifiedBadge />}
               </h1>
-              <p className="text-sm text-[var(--color-text-muted)]">@{target.username}</p>
+              <p className="flex items-center gap-1 text-sm text-[var(--color-text-muted)]">
+                @{target.username}
+                {target.private && <span title="Compte privé" className="inline-flex"><Icon name="lock" size={14} /></span>}
+              </p>
             </div>
             {isSelf
               ? <ProfileEditModal initial={{ username: target.username, displayName: target.displayName, bio: target.bio, avatarUrl: target.avatarUrl, bannerUrl: target.bannerUrl, activeTabs: target.activeTabs }} />

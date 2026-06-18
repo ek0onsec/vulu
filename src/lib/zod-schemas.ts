@@ -31,6 +31,6 @@ export const createListSchema = z.object({
   description: z.string().max(300).nullable(), visibility: z.enum(["public", "private"]),
 });
 export const commentSchema = z.object({ text: z.string().min(1).max(1000) });
-export const changeUsernameSchema = z.object({ username: z.string().min(3).max(20).regex(/^[a-z0-9_]+$/i) });
+export const changeUsernameSchema = z.object({ username: z.string().min(3).max(20).regex(/^[a-z0-9_]+$/i), currentPassword: z.string().min(1) });
 export const changeEmailSchema = z.object({ email: z.email(), currentPassword: z.string().min(1) });
 export const changePasswordSchema = z.object({ currentPassword: z.string().min(1), newPassword: z.string().min(8) });

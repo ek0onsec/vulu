@@ -19,8 +19,8 @@ beforeEach(async () => {
 describe("compte & sécurité", () => {
   it("changeUsername refuse un username pris", async () => {
     await registerUser(deps, { email: "a@x.io", username: "alice", displayName: "A", password: "password1", activeTabs: ["films"], tastes });
-    await expect(changeUsername(deps, meId, "alice")).rejects.toThrow(ConflictError);
-    const u = await changeUsername(deps, meId, "newname");
+    await expect(changeUsername(deps, meId, "alice", "password1")).rejects.toThrow(ConflictError);
+    const u = await changeUsername(deps, meId, "newname", "password1");
     expect(u.username).toBe("newname");
   });
   it("changePassword exige le bon mot de passe actuel", async () => {

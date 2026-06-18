@@ -3,7 +3,7 @@ import type { JSX } from "react";
 export type IconName =
   | "home" | "search" | "lists" | "profile" | "sun" | "moon"
   | "heart" | "heart-filled" | "comment" | "star" | "star-filled"
-  | "plus" | "settings" | "camera" | "check" | "trending" | "user-plus" | "back" | "dots" | "logout";
+  | "plus" | "settings" | "camera" | "check" | "trending" | "user-plus" | "back" | "dots" | "logout" | "lock" | "bell" | "download" | "shield";
 
 const PATHS: Record<IconName, JSX.Element> = {
   home: <><path d="M3.5 11.5 12 4l8.5 7.5" /><path d="M5.5 10v9.5a.5.5 0 0 0 .5.5h12a.5.5 0 0 0 .5-.5V10" /></>,
@@ -26,6 +26,10 @@ const PATHS: Record<IconName, JSX.Element> = {
   back: <path d="M14 6l-6 6 6 6" />,
   dots: <><circle cx="6" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="18" cy="12" r="1.4" fill="currentColor" stroke="none" /></>,
   logout: <><path d="M14 4.5H6a1.5 1.5 0 0 0-1.5 1.5v12A1.5 1.5 0 0 0 6 19.5h8" /><path d="M17 8.5 20.5 12 17 15.5M9.5 12h11" /></>,
+  lock: <><rect x="5" y="10.5" width="14" height="9.5" rx="2" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></>,
+  bell: <><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" /><path d="M10 19a2 2 0 0 0 4 0" /></>,
+  download: <><path d="M12 4v10m0 0 4-4m-4 4-4-4" /><path d="M5 19.5h14" /></>,
+  shield: <path d="M12 3 5 5.5v5c0 4.2 2.9 7.8 7 9 4.1-1.2 7-4.8 7-9v-5L12 3Z" />,
 };
 
 export function Icon({ name, size = 22, className }: { name: IconName; size?: number; className?: string }) {

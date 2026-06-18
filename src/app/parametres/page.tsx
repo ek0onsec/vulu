@@ -6,5 +6,5 @@ import { SettingsClient } from "./SettingsClient";
 export default async function SettingsPage() {
   const user = await currentUser();
   if (!user) redirect("/login");
-  return <AppShell><SettingsClient initialTastes={user.tastes} initialPrivate={user.private} username={user.username} email={user.email} twoFactorEnabled={user.twoFactorEnabled} /></AppShell>;
+  return <AppShell><SettingsClient initialTastes={user.tastes} initialPrivate={user.private} username={user.username} email={user.email} twoFactorEnabled={user.twoFactorEnabled} plus={user.plus} /></AppShell>;
 }
