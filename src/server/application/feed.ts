@@ -5,7 +5,7 @@ import { getCircle } from "./social";
 
 export interface FeedItem {
   entry: LibraryEntry;
-  author: Pick<User, "id" | "username" | "displayName" | "avatarUrl" | "plus">;
+  author: Pick<User, "id" | "username" | "displayName" | "avatarUrl" | "plus" | "staff">;
   work: Pick<Work, "id" | "title" | "year" | "posterUrl" | "type">;
   likeCount: number;
   commentCount: number;
@@ -25,7 +25,7 @@ export async function enrichEntries(deps: Deps, viewerId: string, entries: Libra
     if (!author || !work) throw new NotFoundError("Données de feed incohérentes");
     return {
       entry,
-      author: { id: author.id, username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl, plus: author.plus },
+      author: { id: author.id, username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl, plus: author.plus, staff: author.staff },
       work: { id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type },
       likeCount, commentCount, likedByMe: liked.has(entry.id),
     };
@@ -33,13 +33,14 @@ export async function enrichEntries(deps: Deps, viewerId: string, entries: Libra
 }
 
 export async function buildFeed(
-  deps: Deps, viewerId: string, opts: { cursor: { createdAt: Date; id: string } | null; limit: number },
+  deps: Deps, viewerId: string, opts: { scope: "foryou" | "circle"; cursor: { createdAt: Date; id: string } | null; limit: number },
 ): Promise<FeedItem[]> {
   const viewer = await deps.users.findById(viewerId);
   if (!viewer) throw new NotFoundError("Utilisateur introuvable");
   const circle = await getCircle(deps, viewerId);
 
   const entries = await deps.entries.feed({
+    scope: opts.scope,
     circleUserIds: [...circle],
     viewerId,
     domains: viewer.activeTabs,

@@ -5,6 +5,8 @@ import { getCircle } from "@/server/application/social";
 import { AppShell } from "@/components/AppShell";
 import { FollowButton } from "@/components/FollowButton";
 import { Avatar } from "@/components/Avatar";
+import { CertifiedBadge } from "@/components/CertifiedBadge";
+import { StaffBadge } from "@/components/StaffBadge";
 import { ProfileEditModal } from "@/components/ProfileEditModal";
 import { ProfileTabs, type PosterItem, type ListItem } from "@/components/ProfileTabs";
 import type { LibraryEntry } from "@/server/domain/entities";
@@ -26,7 +28,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
     const resolved = await Promise.all(entries.map(async (e) => ({ e, w: await deps.works.findById(e.workId) })));
     return resolved
       .filter((x) => x.w !== null)
-      .map(({ e, w }) => ({ id: e.id, workId: w!.id, posterUrl: w!.posterUrl, title: w!.title, rating: e.rating }));
+      .map(({ e, w }) => ({ id: e.id, workId: w!.id, posterUrl: w!.posterUrl, title: w!.title, rating: e.rating, type: w!.type }));
   }
 
   const watchedEntries = (await deps.entries.listByUser(target.id, { status: "done" }))
@@ -40,6 +42,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
 
   const [followers, following] = await Promise.all([deps.follows.countFollowers(target.id), deps.follows.countFollowing(target.id)]);
   const isFollowing = await deps.follows.exists(viewer.id, target.id);
+  const showFilms = target.activeTabs.includes("films");
+  const showBooks = target.activeTabs.includes("books");
+  const vusCount = watched.filter((w) => w.type !== "book").length;
+  const lusCount = watched.filter((w) => w.type === "book").length;
 
   return (
     <AppShell>
@@ -52,7 +58,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
               <Avatar name={target.displayName} src={target.avatarUrl} size={80} />
             </span>
             <div className="flex-1 pb-1">
-              <h1 className="font-display text-xl font-bold">{target.displayName}</h1>
+              <h1 className="font-display flex items-center gap-1 text-xl font-bold">
+                {target.displayName}{target.staff && <StaffBadge />}{target.plus && <CertifiedBadge />}
+              </h1>
               <p className="text-sm text-[var(--color-text-muted)]">@{target.username}</p>
             </div>
             {isSelf
@@ -60,15 +68,16 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
               : <FollowButton username={target.username} initialFollowing={isFollowing} />}
           </div>
           {target.bio && <p className="mt-3 text-sm text-[var(--color-text)]">{target.bio}</p>}
-          <div className="mt-3 flex gap-5 text-sm">
-            <span><b>{watched.length}</b> <span className="text-[var(--color-text-muted)]">vus</span></span>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+            {showFilms && <span><b>{vusCount}</b> <span className="text-[var(--color-text-muted)]">vus</span></span>}
+            {showBooks && <span><b>{lusCount}</b> <span className="text-[var(--color-text-muted)]">lus</span></span>}
             <span><b>{followers}</b> <span className="text-[var(--color-text-muted)]">abonnés</span></span>
             <span><b>{following}</b> <span className="text-[var(--color-text-muted)]">abonnements</span></span>
           </div>
         </div>
       </div>
 
-      <ProfileTabs watched={watched} planned={planned} lists={lists} isSelf={isSelf} />
+      <ProfileTabs watched={watched} planned={planned} lists={lists} isSelf={isSelf} showFilms={showFilms} showBooks={showBooks} />
     </AppShell>
   );
 }

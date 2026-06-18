@@ -52,9 +52,12 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
     return (await this.col.find(q).sort({ createdAt: -1 }).toArray()).map(M.fromEntryDoc);
   }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }
-  async feed(opts: { circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { createdAt: Date; id: string } | null; limit: number; }) {
+  async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { createdAt: Date; id: string } | null; limit: number; }) {
+    const visibility: Filter<M.WithIdEntry> = opts.scope === "circle"
+      ? { userId: { $in: opts.circleUserIds } }
+      : { $or: [{ visibility: "public" }, { userId: { $in: opts.circleUserIds } }] };
     const and: Filter<M.WithIdEntry>[] = [
-      { $or: [{ visibility: "public" }, { userId: { $in: opts.circleUserIds } }] },
+      visibility,
       { status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] },
       { domain: { $in: opts.domains as M.WithIdEntry["domain"][] } },
     ];

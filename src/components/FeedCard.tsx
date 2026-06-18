@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Avatar } from "./Avatar";
 import { Icon } from "./Icon";
 import { RatingStars } from "./RatingStars";
-import { CommentThread } from "./CommentThread";
+import { CertifiedBadge } from "./CertifiedBadge";
+import { StaffBadge } from "./StaffBadge";
 import { relativeTime } from "@/lib/relative-time";
 import { api } from "@/lib/api-client";
 import type { FeedItem } from "@/server/application/feed";
@@ -12,8 +13,6 @@ import type { FeedItem } from "@/server/application/feed";
 export function FeedCard({ item }: { item: FeedItem }) {
   const [liked, setLiked] = useState(item.likedByMe);
   const [likes, setLikes] = useState(item.likeCount);
-  const [comments, setComments] = useState(item.commentCount);
-  const [open, setOpen] = useState(false);
 
   async function toggleLike() {
     const next = !liked;
@@ -27,16 +26,19 @@ export function FeedCard({ item }: { item: FeedItem }) {
   }
 
   const isPublic = item.entry.visibility === "public";
+  const typeLabel = item.work.type === "book" ? "Livre" : item.work.type === "tv" ? "Série" : "Film";
   return (
     <article className="mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-shadow hover:shadow-[0_2px_20px_rgba(0,0,0,0.05)]">
       <header className="flex items-center gap-3">
         <Link href={`/u/${item.author.username}`}><Avatar name={item.author.displayName} src={item.author.avatarUrl} size={42} /></Link>
         <div className="min-w-0 text-sm">
-          <Link href={`/u/${item.author.username}`} className="font-semibold hover:underline">{item.author.displayName}</Link>
+          <span className="font-semibold">
+            <Link href={`/u/${item.author.username}`} className="hover:underline">{item.author.displayName}</Link>
+            {item.author.staff && <StaffBadge />}
+            {item.author.plus && <CertifiedBadge />}
+          </span>
           <span className="text-[var(--color-text-muted)]"> @{item.author.username} · {relativeTime(item.entry.createdAt)}</span>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            {item.entry.status === "done" ? "a noté" : "veut voir"}
-          </p>
+          <p className="text-xs text-[var(--color-text-muted)]">{item.entry.status === "done" ? "a noté" : "veut voir"}</p>
         </div>
         <span className={`ml-auto rounded-full px-2.5 py-1 text-xs ${
           isPublic
@@ -50,9 +52,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
           style={item.work.posterUrl ? { backgroundImage: `url(${item.work.posterUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
         <div className="min-w-0">
           <p className="font-display text-lg font-semibold leading-tight">{item.work.title}</p>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            {item.work.year ?? ""}{item.work.type === "book" ? " · Livre" : item.work.type === "tv" ? " · Série" : " · Film"}
-          </p>
+          <p className="text-xs text-[var(--color-text-muted)]">{item.work.year ?? ""} · {typeLabel}</p>
           {item.entry.rating !== null && (
             <div className="mt-1.5 flex items-center gap-2">
               <RatingStars value={item.entry.rating} size={16} />
@@ -68,13 +68,11 @@ export function FeedCard({ item }: { item: FeedItem }) {
           className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)] ${liked ? "text-[var(--color-primary)]" : ""}`}>
           <Icon name={liked ? "heart-filled" : "heart"} size={19} /> {likes}
         </button>
-        <button onClick={() => setOpen((o) => !o)}
-          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)] ${open ? "text-[var(--color-primary)]" : ""}`}>
-          <Icon name="comment" size={19} /> {comments}
-        </button>
+        <Link href={`/post/${item.entry.id}`}
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)]">
+          <Icon name="comment" size={19} /> {item.commentCount}
+        </Link>
       </footer>
-
-      {open && <CommentThread entryId={item.entry.id} onCount={setComments} />}
     </article>
   );
 }

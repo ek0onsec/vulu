@@ -12,10 +12,10 @@ const db = client.db("vulu");
 const now = new Date();
 const hash = await bcrypt.hash("password1", 6);
 
-const user = (id, username, displayName, bio, avatarUrl = null, bannerUrl = null, activeTabs = ["films"], plus = false) => ({
+const user = (id, username, displayName, bio, avatarUrl = null, bannerUrl = null, activeTabs = ["films"], plus = false, staff = false) => ({
   _id: id, id, email: `${username}@vulu.app`, passwordHash: hash, username, displayName,
   bio, avatarUrl, bannerUrl, activeTabs,
-  tastes: { filmGenreIds: [28, 18, 878], people: [] }, plus, createdAt: now,
+  tastes: { filmGenreIds: [28, 18, 878], people: [] }, plus, staff, createdAt: now,
 });
 
 const work = (id, externalId, type, title, year, seed, overview, genres) => ({
@@ -38,7 +38,7 @@ for (const c of ["users", "works", "entries", "follows", "likes", "comments", "l
 }
 
 await db.collection("users").insertMany([
-  user("u-demo", "demo", "Toi (démo)", "Compte de démonstration vulu.", null, "https://picsum.photos/seed/demo-banner/1500/500", ["films", "books"]),
+  user("u-demo", "demo", "Toi (démo)", "Compte de démonstration vulu.", null, "https://picsum.photos/seed/demo-banner/1500/500", ["films", "books"], true, true),
   user("u-alice", "alice", "Alice", "Cinéphile du dimanche, dévoreuse de SF.", "https://picsum.photos/seed/alice-av/200/200", null, ["films", "books"], true),
   user("u-bob", "bob", "Bob", "Séries only. Spoilers jamais."),
 ]);

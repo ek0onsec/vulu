@@ -4,7 +4,7 @@ import type { User, LibraryEntry } from "@/server/domain/entities";
 
 function user(id: string, over: Partial<User> = {}): User {
   return { id, email: `${id}@x.io`, passwordHash: "h", username: id, displayName: id,
-    bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"], tastes: { filmGenreIds: [], people: [] }, plus: false,
+    bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"], tastes: { filmGenreIds: [], people: [] }, plus: false, staff: false,
     createdAt: new Date(), ...over };
 }
 function entry(id: string, over: Partial<LibraryEntry> = {}): LibraryEntry {
@@ -36,7 +36,7 @@ describe("InMemory repos", () => {
     await r.upsert(entry("e_circle", { userId: "friend", visibility: "circle", createdAt: t1 }));
     await r.upsert(entry("e_hidden", { userId: "stranger", visibility: "circle", createdAt: t2 }));
     await r.upsert(entry("e_planned", { userId: "friend", status: "planned", rating: null, text: null, createdAt: t2 }));
-    const res = await r.feed({ circleUserIds: ["friend"], viewerId: "me", domains: ["films"], cursor: null, limit: 10 });
+    const res = await r.feed({ scope: "foryou", circleUserIds: ["friend"], viewerId: "me", domains: ["films"], cursor: null, limit: 10 });
     expect(res.map((e) => e.id)).toEqual(["e_circle", "e_pub"]);
   });
 });

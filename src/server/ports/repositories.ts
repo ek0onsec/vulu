@@ -30,6 +30,7 @@ export interface LibraryEntryRepository {
   listByUser(userId: string, opts: { status?: "planned" | "done"; domain?: string }): Promise<LibraryEntry[]>;
   remove(id: string): Promise<void>;
   feed(opts: {
+    scope: "foryou" | "circle";
     circleUserIds: string[];
     viewerId: string;
     domains: string[];

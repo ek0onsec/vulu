@@ -38,6 +38,8 @@ export function LibraryClient() {
   const [filter, setFilter] = useState<TypeFilter>("all");
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [kind, setKind] = useState<"films" | "books" | "mixed">("mixed");
   const [visibility, setVisibility] = useState<ListVisibility>("public");
   const [busy, setBusy] = useState(false);
   const [viewing, setViewing] = useState<string | null>(null);
@@ -53,8 +55,9 @@ export function LibraryClient() {
     if (!name.trim()) return;
     setBusy(true);
     try {
-      await api.post("/api/lists", { name, description: null, visibility });
-      setName(""); setVisibility("public"); setCreating(false); toast("Playlist créée"); load();
+      await api.post("/api/lists", { name, kind, description: description.trim() || null, visibility });
+      setName(""); setDescription(""); setKind("mixed"); setVisibility("public"); setCreating(false);
+      toast("Collection créée"); load();
     } catch { toast("Action impossible", "error"); } finally { setBusy(false); }
   }
 
@@ -70,7 +73,7 @@ export function LibraryClient() {
       <div className="mb-5 flex items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">Bibliothèque</h1>
         <button onClick={() => setCreating(true)} className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white">
-          <Icon name="plus" size={18} /> Playlist
+          <Icon name="plus" size={18} /> Collection
         </button>
       </div>
 
@@ -85,11 +88,11 @@ export function LibraryClient() {
 
       <section className="mb-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold">Mes playlists</h2>
+          <h2 className="font-display text-lg font-bold">Mes collections</h2>
           <span className="text-xs text-[var(--color-text-muted)]">{data.playlists.length}</span>
         </div>
         {data.playlists.length === 0
-          ? <p className="text-sm text-[var(--color-text-muted)]">Crée ta première playlist (films, séries et livres peuvent cohabiter).</p>
+          ? <p className="text-sm text-[var(--color-text-muted)]">Crée ta première collection (films, séries et livres peuvent cohabiter).</p>
           : <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
               {data.playlists.map((p) => <PlaylistCard key={p.id} playlist={p} onOpen={() => setViewing(p.id)} />)}
             </div>}
@@ -105,12 +108,27 @@ export function LibraryClient() {
         <PosterRow items={seen} empty="Aucune œuvre terminée pour ce filtre." />
       </section>
 
-      <Modal open={creating} onClose={() => setCreating(false)} title="Nouvelle playlist">
+      <Modal open={creating} onClose={() => setCreating(false)} title="Nouvelle collection">
         <div className="flex flex-col gap-4">
           <label className="text-sm font-semibold">Nom
             <input value={name} onChange={(e) => setName(e.target.value)} autoFocus placeholder="ex. Cyberpunk"
               className="mt-1 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm font-normal" />
           </label>
+          <label className="text-sm font-semibold">Description <span className="font-normal text-[var(--color-text-muted)]">(optionnel)</span>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} rows={2}
+              className="mt-1 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm font-normal" />
+          </label>
+          <div>
+            <p className="mb-2 text-sm font-semibold">Type</p>
+            <div className="flex gap-2">
+              {([["films", "Films & Séries"], ["books", "Livres"], ["mixed", "Mixte"]] as const).map(([k, label]) => (
+                <button key={k} onClick={() => setKind(k)}
+                  className={`rounded-full border px-4 py-1.5 text-sm ${kind === k ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div>
             <p className="mb-2 text-sm font-semibold">Visibilité</p>
             <div className="flex gap-2">
@@ -123,7 +141,7 @@ export function LibraryClient() {
             </div>
           </div>
           <button onClick={create} disabled={busy || !name.trim()} className="rounded-full bg-[var(--color-primary)] py-2.5 text-sm font-semibold text-white disabled:opacity-50">
-            {busy ? "…" : "Créer la playlist"}
+            {busy ? "…" : "Créer la collection"}
           </button>
         </div>
       </Modal>

@@ -1,15 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api-client";
 import { Avatar } from "./Avatar";
+import { CertifiedBadge } from "./CertifiedBadge";
+import { StaffBadge } from "./StaffBadge";
 import { relativeTime } from "@/lib/relative-time";
 
 interface PresentedComment {
   id: string; text: string; createdAt: string;
-  author: { username: string; displayName: string; avatarUrl: string | null };
+  author: { username: string; displayName: string; avatarUrl: string | null; plus: boolean; staff: boolean };
 }
 
-export function CommentThread({ entryId, onCount }: { entryId: string; onCount: (n: number) => void }) {
+export function CommentThread({ entryId, onCount }: { entryId: string; onCount?: (n: number) => void }) {
   const [comments, setComments] = useState<PresentedComment[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,7 +29,7 @@ export function CommentThread({ entryId, onCount }: { entryId: string; onCount: 
     setBusy(true);
     try {
       const { comment } = await api.post<{ comment: PresentedComment }>(`/api/entries/${entryId}/comments`, { text: value });
-      setComments((prev) => { const next = [...prev, comment]; onCount(next.length); return next; });
+      setComments((prev) => { const next = [...prev, comment]; onCount?.(next.length); return next; });
       setText("");
     } finally {
       setBusy(false);
@@ -41,7 +44,9 @@ export function CommentThread({ entryId, onCount }: { entryId: string; onCount: 
             <Avatar name={c.author.displayName} src={c.author.avatarUrl} size={28} />
             <div className="min-w-0">
               <p className="text-sm">
-                <span className="font-semibold">{c.author.displayName}</span>{" "}
+                <Link href={`/u/${c.author.username}`} className="font-semibold hover:underline">{c.author.displayName}</Link>
+                {c.author.staff && <StaffBadge size={14} />}
+                {c.author.plus && <CertifiedBadge size={14} />}{" "}
                 <span className="text-xs text-[var(--color-text-muted)]">@{c.author.username} · {relativeTime(c.createdAt)}</span>
               </p>
               <p className="text-sm text-[var(--color-text)]">{c.text}</p>

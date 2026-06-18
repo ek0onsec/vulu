@@ -24,7 +24,7 @@ describe("buildFeed", () => {
     await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "public", visibility: "public" });
     await likeEntry(deps, me, fe.id);
 
-    const items = await buildFeed(deps, me, { cursor: null, limit: 10 });
+    const items = await buildFeed(deps, me, { scope: "foryou", cursor: null, limit: 10 });
     expect(items).toHaveLength(2);
     const circleItem = items.find((i) => i.entry.visibility === "circle")!;
     expect(circleItem.author.username).toBe("friend");
@@ -35,7 +35,7 @@ describe("buildFeed", () => {
   it("exclut les entrées 'circle' d'un inconnu", async () => {
     const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
     await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "hidden", visibility: "circle" });
-    const items = await buildFeed(deps, me, { cursor: null, limit: 10 });
+    const items = await buildFeed(deps, me, { scope: "foryou", cursor: null, limit: 10 });
     expect(items).toHaveLength(0);
   });
 });

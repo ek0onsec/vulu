@@ -6,6 +6,7 @@ import { EntryEditor } from "@/components/EntryEditor";
 import { AddToListButton } from "@/components/AddToListButton";
 import { WorkReviews } from "@/components/WorkReviews";
 import { RatingStars } from "@/components/RatingStars";
+import { BackButton } from "@/components/BackButton";
 
 export default async function WorkPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await currentUser();
@@ -23,6 +24,7 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
 
   return (
     <AppShell>
+      <BackButton />
       <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className="h-32 w-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)]"
           style={work.backdropUrl ? { backgroundImage: `url(${work.backdropUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
@@ -34,6 +36,11 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
             <p className="text-sm text-[var(--color-text-muted)]">
               {[work.year, typeLabel, creators].filter(Boolean).join(" · ")}
             </p>
+            {work.externalRating !== null && (
+              <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--color-accent)_22%,transparent)] px-2.5 py-1 text-xs font-semibold text-[var(--color-text)]">
+                ★ {work.externalRating.toFixed(1)}/10 <span className="font-normal text-[var(--color-text-muted)]">TMDB</span>
+              </p>
+            )}
             <div className="mt-2 flex flex-wrap gap-1.5">
               {work.genres.map((g) => (
                 <span key={g} className="rounded-full bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-2.5 py-0.5 text-xs text-[var(--color-primary)]">{g}</span>
@@ -41,7 +48,20 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
         </div>
-        {work.overview && <p className="px-5 pb-5 text-sm leading-relaxed text-[var(--color-text)]">{work.overview}</p>}
+        {work.overview && <p className="px-5 pb-4 text-sm leading-relaxed text-[var(--color-text)]">{work.overview}</p>}
+        {work.watchProviders.length > 0 && (
+          <div className="px-5 pb-5">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Où regarder</p>
+            <div className="flex flex-wrap gap-2">
+              {work.watchProviders.map((p) => (
+                <span key={p.name} className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1 text-xs font-medium">
+                  {p.logoUrl && <img src={p.logoUrl} alt="" width={18} height={18} className="rounded" />}
+                  {p.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-4">

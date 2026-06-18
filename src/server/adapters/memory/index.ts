@@ -52,12 +52,12 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
     ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
   async remove(id: string) { this.byId.delete(id); }
-  async feed(opts: { circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { createdAt: Date; id: string } | null; limit: number; }) {
+  async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { createdAt: Date; id: string } | null; limit: number; }) {
     const circle = new Set(opts.circleUserIds);
     return [...this.byId.values()]
       .filter((e) => isPublishable(e))
       .filter((e) => opts.domains.includes(e.domain))
-      .filter((e) => e.visibility === "public" || circle.has(e.userId))
+      .filter((e) => opts.scope === "circle" ? circle.has(e.userId) : (e.visibility === "public" || circle.has(e.userId)))
       .filter((e) => !opts.cursor || e.createdAt.getTime() < opts.cursor.createdAt.getTime())
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, opts.limit);

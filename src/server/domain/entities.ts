@@ -23,6 +23,7 @@ export interface User {
   activeTabs: Domain[];
   tastes: Tastes;
   plus: boolean;
+  staff: boolean;
   createdAt: Date;
 }
 
