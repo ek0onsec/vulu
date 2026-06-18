@@ -30,7 +30,7 @@ Onglet Notifications (cloche) + agrégation condensée : likes sur tes avis, com
 
 ### Reste planifié : changer **username (@)**, **email**, **mot de passe** ; **préparer 2FA** (TOTP appli d'auth — champs + UI « bientôt ») ; **suppression de compte** = pop-up avec saisie « SUPPRIMER MON COMPTE » → **soft-delete** (`deactivatedAt`), déconnexion + message « réactivable en te reconnectant sous 48 h », purge définitive après 48 h (commentaires + listes). Bien prévenir l'utilisateur.
 3. **SP-Intérêts — Centres d'intérêt complets** : genres **films/séries** + genres **littéraires** + cocher **acteurs / réalisateurs / auteurs** favoris (recherche TMDB/Google Books). `tastes` étendu : `bookGenres`, `people` (actor/director/author).
-4. **SP-Vitrine — Profil** : afficher la **bannière de collection** sur le profil ; onglet **« Vitrine »** (1er onglet vu) = top all-time **5 films / 5 séries / 5 livres** choisis par l'utilisateur.
+4. ✅ **SP-Vitrine — Profil** (LIVRÉ) : onglet **« Vitrine »** en 1er (top all-time 5 films / 5 séries / 5 livres, `User.showcase`, gestionnaire avec recherche+import, `PUT /api/me/showcase`) + **bannière de collection** affichée sur les cartes du profil.
 5. **SP-Communautés** : créer des communautés (type X), les rejoindre, **épingler une communauté** comme onglet du feed (à côté de Pour vous / Mon cercle / <nom commu>), **partage ciblé** public / cercle / communauté.
 6. **SP-vulu+ features** :
    - **Filtre anti-spoiler IA** : détecte et masque les spoilers (flou + « spoiler potentiel », clic pour révéler).
