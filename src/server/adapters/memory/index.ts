@@ -1,8 +1,8 @@
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership } from "@/server/domain/entities";
 import { isPublishable } from "@/server/domain/feed-rules";
 
 export class InMemoryUserRepository implements UserRepository {
@@ -88,6 +88,32 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
       .filter((e) => e.workId === workId && isPublishable(e))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
+  async feedByCommunity(communityId: string, cursor: { createdAt: Date; id: string } | null, limit: number) {
+    return [...this.byId.values()]
+      .filter((e) => e.communityId === communityId && isPublishable(e))
+      .filter((e) => !cursor || e.createdAt.getTime() < cursor.createdAt.getTime())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+}
+
+export class InMemoryCommunityRepository implements CommunityRepository {
+  private byId = new Map<string, Community>();
+  async create(c: Community) { this.byId.set(c.id, c); }
+  async findById(id: string) { return this.byId.get(id) ?? null; }
+  async findBySlug(slug: string) { return [...this.byId.values()].find((c) => c.slug === slug) ?? null; }
+  async listPublic(limit: number) { return [...this.byId.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit); }
+  async listByIds(ids: string[]) { const s = new Set(ids); return [...this.byId.values()].filter((c) => s.has(c.id)); }
+}
+
+export class InMemoryMembershipRepository implements MembershipRepository {
+  private rows: Membership[] = [];
+  async add(m: Membership) { if (!(await this.find(m.communityId, m.userId))) this.rows.push(m); }
+  async remove(communityId: string, userId: string) { this.rows = this.rows.filter((m) => !(m.communityId === communityId && m.userId === userId)); }
+  async find(communityId: string, userId: string) { return this.rows.find((m) => m.communityId === communityId && m.userId === userId) ?? null; }
+  async listForUser(userId: string) { return this.rows.filter((m) => m.userId === userId); }
+  async setPinned(communityId: string, userId: string, pinned: boolean) { const m = await this.find(communityId, userId); if (m) m.pinned = pinned; }
+  async countForCommunity(communityId: string) { return this.rows.filter((m) => m.communityId === communityId).length; }
 }
 
 export class InMemoryListRepository implements ListRepository {

@@ -1,12 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RatingSlider } from "./RatingSlider";
 import { api, ApiError } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
-import type { LibraryEntry, Visibility, WorkSource, WorkType } from "@/server/domain/entities";
+import type { LibraryEntry, WorkSource, WorkType } from "@/server/domain/entities";
 
 interface Ref { source: WorkSource; externalId: string; type: WorkType }
+// Cible de partage : "circle" | "public" | id de communauté.
+type Target = string;
 
 export function EntryEditor({ workRef, initial }: { workRef: Ref; initial: LibraryEntry | null }) {
   const router = useRouter();
@@ -14,9 +16,12 @@ export function EntryEditor({ workRef, initial }: { workRef: Ref; initial: Libra
   const [status, setStatus] = useState<"planned" | "done">(initial?.status ?? "planned");
   const [rating, setRating] = useState<number>(initial?.rating ?? 0);
   const [text, setText] = useState(initial?.text ?? "");
-  const [visibility, setVisibility] = useState<Visibility>(initial?.visibility ?? "circle");
+  const [target, setTarget] = useState<Target>(initial?.communityId ?? initial?.visibility ?? "circle");
+  const [communities, setCommunities] = useState<{ id: string; name: string }[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => { api.get<{ communities: { id: string; name: string }[] }>("/api/communities/mine").then((d) => setCommunities(d.communities)).catch(() => {}); }, []);
 
   async function removeEntry() {
     if (!entryId) return;
@@ -36,9 +41,12 @@ export function EntryEditor({ workRef, initial }: { workRef: Ref; initial: Libra
   async function save() {
     setBusy(true); setMsg(null);
     try {
+      const isTargetCommunity = target !== "circle" && target !== "public";
+      const visibility = isTargetCommunity ? "public" : target;
+      const communityId = isTargetCommunity ? target : null;
       const body = status === "planned" && rating === 0 && !text.trim()
         ? { ref: workRef, status: "planned" }
-        : { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, visibility };
+        : { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, visibility, communityId };
       const { entry } = await api.put<{ entry: LibraryEntry }>("/api/works/entry", body);
       setEntryId(entry.id);
       setMsg("Enregistré ✓");
@@ -72,16 +80,21 @@ export function EntryEditor({ workRef, initial }: { workRef: Ref; initial: Libra
         className="mt-4 min-h-20 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3 text-sm"
       />
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <div className="inline-flex overflow-hidden rounded-full border border-[var(--color-border)]">
-          <button className={seg(visibility === "circle")} onClick={() => setVisibility("circle")}>● Cercle</button>
-          <button className={seg(visibility === "public")} onClick={() => setVisibility("public")}>● Public</button>
-        </div>
-        <button onClick={save} disabled={busy}
-          className="ml-auto rounded-full bg-[var(--color-primary)] px-6 py-2 text-sm font-semibold text-white disabled:opacity-50">
-          {busy ? "…" : "Enregistrer"}
-        </button>
+      <p className="mt-4 mb-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Partager dans</p>
+      <div className="flex flex-wrap gap-2">
+        {([["circle", "● Cercle"], ["public", "● Public"]] as const).map(([v, label]) => (
+          <button key={v} onClick={() => setTarget(v)}
+            className={`rounded-full border px-4 py-1.5 text-sm ${target === v ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>{label}</button>
+        ))}
+        {communities.map((c) => (
+          <button key={c.id} onClick={() => setTarget(c.id)}
+            className={`rounded-full border px-4 py-1.5 text-sm ${target === c.id ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>◆ {c.name}</button>
+        ))}
       </div>
+      <button onClick={save} disabled={busy}
+        className="mt-4 rounded-full bg-[var(--color-primary)] px-6 py-2 text-sm font-semibold text-white disabled:opacity-50">
+        {busy ? "…" : "Enregistrer"}
+      </button>
       {entryId && (
         <button onClick={removeEntry} disabled={busy}
           className="mt-3 text-sm font-medium text-red-500 hover:underline disabled:opacity-50">

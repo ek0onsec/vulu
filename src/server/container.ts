@@ -1,7 +1,7 @@
 import {
   InMemoryUserRepository, InMemoryFollowRepository, InMemoryWorkRepository,
   InMemoryLibraryEntryRepository, InMemoryListRepository, InMemoryLikeRepository, InMemoryCommentRepository,
-  InMemoryFollowRequestRepository,
+  InMemoryFollowRequestRepository, InMemoryCommunityRepository, InMemoryMembershipRepository,
 } from "@/server/adapters/memory";
 import { BcryptHasher } from "@/server/adapters/security/bcrypt-hasher";
 import { JwtTokenService } from "@/server/adapters/security/jwt-token-service";
@@ -9,7 +9,7 @@ import { UuidIdGenerator } from "@/server/adapters/security/uuid-id-generator";
 import { SystemClock } from "@/server/adapters/security/system-clock";
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository,
 } from "@/server/ports/repositories";
 import type { CatalogProvider } from "@/server/ports/catalog";
 import type { PasswordHasher, TokenService, IdGenerator, Clock } from "@/server/ports/security";
@@ -21,6 +21,7 @@ import { getDb } from "@/server/adapters/mongo/client";
 import {
   MongoUserRepository, MongoFollowRepository, MongoWorkRepository, MongoLibraryEntryRepository,
   MongoListRepository, MongoLikeRepository, MongoCommentRepository, MongoFollowRequestRepository,
+  MongoCommunityRepository, MongoMembershipRepository,
 } from "@/server/adapters/mongo/repositories";
 import { TmdbCatalog } from "@/server/adapters/catalog/tmdb-catalog";
 import { GoogleBooksCatalog } from "@/server/adapters/catalog/google-books-catalog";
@@ -31,6 +32,8 @@ export interface Deps {
   users: UserRepository;
   follows: FollowRepository;
   followRequests: FollowRequestRepository;
+  communities: CommunityRepository;
+  memberships: MembershipRepository;
   works: WorkRepository;
   entries: LibraryEntryRepository;
   lists: ListRepository;
@@ -50,6 +53,8 @@ export function makeInMemoryDeps(catalog: CatalogProvider): Deps {
     users: new InMemoryUserRepository(),
     follows: new InMemoryFollowRepository(),
     followRequests: new InMemoryFollowRequestRepository(),
+    communities: new InMemoryCommunityRepository(),
+    memberships: new InMemoryMembershipRepository(),
     works: new InMemoryWorkRepository(),
     entries: new InMemoryLibraryEntryRepository(),
     lists: new InMemoryListRepository(),
@@ -75,6 +80,8 @@ export async function getDeps(): Promise<Deps> {
     users: new MongoUserRepository(db),
     follows: new MongoFollowRepository(db),
     followRequests: new MongoFollowRequestRepository(db),
+    communities: new MongoCommunityRepository(db),
+    memberships: new MongoMembershipRepository(db),
     works: new MongoWorkRepository(db),
     entries: new MongoLibraryEntryRepository(db),
     lists: new MongoListRepository(db),

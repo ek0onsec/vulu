@@ -81,8 +81,27 @@ export interface LibraryEntry {
   rating: number | null;
   text: string | null;
   visibility: Visibility;
+  communityId: string | null;   // si partagé dans une communauté
   createdAt: Date;
   updatedAt: Date;
+}
+
+/** Communauté publique (type X Communities). */
+export interface Community {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  bannerUrl: string | null;
+  ownerId: string;
+  createdAt: Date;
+}
+
+export interface Membership {
+  communityId: string;
+  userId: string;
+  pinned: boolean;       // épinglée comme onglet du feed
+  createdAt: Date;
 }
 
 export type ListKind = "films" | "books" | "mixed";

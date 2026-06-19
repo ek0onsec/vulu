@@ -20,6 +20,12 @@ export async function ensureIndexes(db: Db): Promise<void> {
     { key: { requesterId: 1, targetId: 1 }, unique: true, name: "uniq_request" },
     { key: { targetId: 1, createdAt: -1 }, name: "by_target" },
   ]);
+  await db.collection("communities").createIndex({ slug: 1 }, { unique: true, name: "uniq_slug" });
+  await db.collection("memberships").createIndexes([
+    { key: { communityId: 1, userId: 1 }, unique: true, name: "uniq_member" },
+    { key: { userId: 1 }, name: "by_user" },
+  ]);
+  await db.collection("entries").createIndex({ communityId: 1, createdAt: -1 }, { name: "by_community" });
   await db.collection("lists").createIndex({ userId: 1 }, { name: "by_user" });
   await db.collection("likes").createIndex({ entryId: 1, userId: 1 }, { unique: true, name: "uniq_like" });
   await db.collection("comments").createIndex({ entryId: 1, createdAt: 1 }, { name: "by_entry" });

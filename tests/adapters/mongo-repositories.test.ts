@@ -13,7 +13,7 @@ const user = (id: string, over: Partial<User> = {}): User => ({ id, email: `${id
   username: id, displayName: id, bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"],
   tastes: { filmGenreIds: [1, 2, 3], people: [] }, showcase: { movie: [], tv: [], book: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, deactivatedAt: null, notificationsSeenAt: null, createdAt: new Date(), ...over });
 const entry = (id: string, over: Partial<LibraryEntry> = {}): LibraryEntry => ({ id, userId: "u1", workId: "w1",
-  domain: "films", status: "done", rating: 4, text: "x", visibility: "public",
+  domain: "films", status: "done", rating: 4, text: "x", visibility: "public", communityId: null,
   createdAt: new Date(), updatedAt: new Date(), ...over });
 
 describe("Mongo repositories", () => {
@@ -30,7 +30,7 @@ describe("Mongo repositories", () => {
   });
   it("feed: public OU cercle, trié desc", async () => {
     const r = new MongoLibraryEntryRepository(m.db);
-    await r.upsert(entry("e_pub", { userId: "stranger", visibility: "public", createdAt: new Date(2024, 0, 1) }));
+    await r.upsert(entry("e_pub", { userId: "stranger", visibility: "public", communityId: null, createdAt: new Date(2024, 0, 1) }));
     await r.upsert(entry("e_cir", { userId: "friend", visibility: "circle", createdAt: new Date(2024, 0, 2) }));
     const res = await r.feed({ scope: "foryou", circleUserIds: ["friend"], viewerId: "me", domains: ["films"], cursor: null, limit: 10 });
     expect(res.map((e) => e.id)).toEqual(["e_cir", "e_pub"]);

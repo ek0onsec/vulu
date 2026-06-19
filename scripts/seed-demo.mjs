@@ -28,7 +28,7 @@ const work = (id, externalId, type, title, year, seed, overview, genres) => ({
 });
 
 const entry = (id, userId, workId, rating, text, visibility, daysAgo) => ({
-  _id: id, id, userId, workId, domain: "films", status: "done", rating, text, visibility,
+  _id: id, id, userId, workId, domain: "films", status: "done", rating, text, visibility, communityId: null,
   createdAt: new Date(now.getTime() - daysAgo * 86400000),
   updatedAt: new Date(now.getTime() - daysAgo * 86400000),
 });

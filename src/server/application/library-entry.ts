@@ -16,7 +16,7 @@ async function loadOrCreateEntry(deps: Deps, userId: string, ref: Ref): Promise<
   if (existing) return existing;
   const now = deps.clock.now();
   return { id: deps.ids.next(), userId, workId: work.id, domain: work.domain,
-    status: "planned", rating: null, text: null, visibility: "circle", createdAt: now, updatedAt: now };
+    status: "planned", rating: null, text: null, visibility: "circle", communityId: null, createdAt: now, updatedAt: now };
 }
 
 export async function setEntryStatus(deps: Deps, userId: string, ref: Ref, status: EntryStatus): Promise<LibraryEntry> {
@@ -28,7 +28,7 @@ export async function setEntryStatus(deps: Deps, userId: string, ref: Ref, statu
 
 export async function rateOrReviewWork(
   deps: Deps, userId: string, ref: Ref,
-  input: { rating: number | null; text: string | null; visibility: Visibility },
+  input: { rating: number | null; text: string | null; visibility: Visibility; communityId?: string | null },
 ): Promise<LibraryEntry> {
   if (input.rating === null && (input.text === null || input.text.trim() === "")) {
     throw new ValidationError("Ajoute une note ou un commentaire");
@@ -36,9 +36,15 @@ export async function rateOrReviewWork(
   if (input.rating !== null && !isValidRating(input.rating)) {
     throw new ValidationError("Note invalide (0 à 5, par pas de 0,1)");
   }
+  // Si partagé dans une communauté, l'auteur doit en être membre.
+  if (input.communityId) {
+    const member = await deps.memberships.find(input.communityId, userId);
+    if (!member) throw new ForbiddenError("Tu n'es pas membre de cette communauté");
+  }
   const entry = await loadOrCreateEntry(deps, userId, ref);
   const updated: LibraryEntry = { ...entry, status: "done", rating: input.rating,
-    text: input.text?.trim() ? input.text.trim() : null, visibility: input.visibility, updatedAt: deps.clock.now() };
+    text: input.text?.trim() ? input.text.trim() : null, visibility: input.visibility,
+    communityId: input.communityId ?? null, updatedAt: deps.clock.now() };
   await deps.entries.upsert(updated);
   return updated;
 }

@@ -1,4 +1,4 @@
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership } from "@/server/domain/entities";
 
 export interface UserRepository {
   create(user: User): Promise<void>;
@@ -54,6 +54,25 @@ export interface LibraryEntryRepository {
   listRecentPublic(limit: number): Promise<LibraryEntry[]>;
   /** Entrées publiables (vues + notées/commentées) d'une œuvre, tous publics confondus. */
   listByWork(workId: string): Promise<LibraryEntry[]>;
+  /** Fil d'une communauté : entrées publiables partagées dans cette communauté, paginé. */
+  feedByCommunity(communityId: string, cursor: { createdAt: Date; id: string } | null, limit: number): Promise<LibraryEntry[]>;
+}
+
+export interface CommunityRepository {
+  create(community: Community): Promise<void>;
+  findById(id: string): Promise<Community | null>;
+  findBySlug(slug: string): Promise<Community | null>;
+  listPublic(limit: number): Promise<Community[]>;
+  listByIds(ids: string[]): Promise<Community[]>;
+}
+
+export interface MembershipRepository {
+  add(m: Membership): Promise<void>;
+  remove(communityId: string, userId: string): Promise<void>;
+  find(communityId: string, userId: string): Promise<Membership | null>;
+  listForUser(userId: string): Promise<Membership[]>;
+  setPinned(communityId: string, userId: string, pinned: boolean): Promise<void>;
+  countForCommunity(communityId: string): Promise<number>;
 }
 export interface ListRepository {
   create(list: List): Promise<void>;

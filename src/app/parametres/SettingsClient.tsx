@@ -209,7 +209,7 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
 
       <div className={`${section ? "block" : "hidden"} md:block`}>
         {section && <button onClick={() => setSection(null)} className="mb-3 flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-muted)] md:hidden"><Icon name="back" size={18} /> Paramètres</button>}
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5"><Panel /></div>
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">{Panel()}</div>
       </div>
 
       <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Supprimer mon compte">

@@ -1,9 +1,9 @@
 import type { Db, Filter } from "mongodb";
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership } from "@/server/domain/entities";
 import * as M from "./mappers";
 
 export class MongoUserRepository implements UserRepository {
@@ -88,6 +88,35 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
     const q: Filter<M.WithIdEntry> = { workId, status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] };
     return (await this.col.find(q).sort({ createdAt: -1 }).toArray()).map(M.fromEntryDoc);
   }
+  async feedByCommunity(communityId: string, cursor: { createdAt: Date; id: string } | null, limit: number) {
+    const and: Filter<M.WithIdEntry>[] = [
+      { communityId },
+      { status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] },
+    ];
+    if (cursor) and.push({ createdAt: { $lt: cursor.createdAt } });
+    return (await this.col.find({ $and: and }).sort({ createdAt: -1, _id: -1 }).limit(limit).toArray()).map(M.fromEntryDoc);
+  }
+}
+
+export class MongoCommunityRepository implements CommunityRepository {
+  constructor(private db: Db) {}
+  private get col() { return this.db.collection<M.WithIdCommunity>("communities"); }
+  async create(c: Community) { await this.col.insertOne(M.toCommunityDoc(c)); }
+  async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromCommunityDoc(d) : null; }
+  async findBySlug(slug: string) { const d = await this.col.findOne({ slug }); return d ? M.fromCommunityDoc(d) : null; }
+  async listPublic(limit: number) { return (await this.col.find({}).sort({ createdAt: -1 }).limit(limit).toArray()).map(M.fromCommunityDoc); }
+  async listByIds(ids: string[]) { return (await this.col.find({ _id: { $in: ids } }).toArray()).map(M.fromCommunityDoc); }
+}
+
+export class MongoMembershipRepository implements MembershipRepository {
+  constructor(private db: Db) {}
+  private get col() { return this.db.collection<M.WithIdMembership>("memberships"); }
+  async add(m: Membership) { await this.col.updateOne({ _id: `${m.communityId}:${m.userId}` }, { $setOnInsert: M.toMembershipDoc(m) }, { upsert: true }); }
+  async remove(communityId: string, userId: string) { await this.col.deleteOne({ _id: `${communityId}:${userId}` }); }
+  async find(communityId: string, userId: string) { const d = await this.col.findOne({ _id: `${communityId}:${userId}` }); return d ? M.fromMembershipDoc(d) : null; }
+  async listForUser(userId: string) { return (await this.col.find({ userId }).toArray()).map(M.fromMembershipDoc); }
+  async setPinned(communityId: string, userId: string, pinned: boolean) { await this.col.updateOne({ _id: `${communityId}:${userId}` }, { $set: { pinned } }); }
+  async countForCommunity(communityId: string) { return this.col.countDocuments({ communityId }); }
 }
 
 export class MongoListRepository implements ListRepository {
