@@ -1,4 +1,5 @@
 import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, Community, Membership } from "@/server/domain/entities";
+import { isPublishable } from "@/server/domain/feed-rules";
 
 type WithId<T> = T & { _id: string };
 const strip = <T>(d: WithId<T>): T => { const { _id, ...rest } = d as WithId<T> & Record<string, unknown>; void _id; return rest as T; };
@@ -30,10 +31,18 @@ export const toMembershipDoc = (m: Membership): WithIdMembership => ({ _id: `${m
 export const fromMembershipDoc = (d: WithIdMembership): Membership => strip(d);
 
 export const toWorkDoc = (w: Work): WithIdWork => ({ _id: w.id, ...w });
-export const fromWorkDoc = (d: WithIdWork): Work => strip(d);
+export const fromWorkDoc = (d: WithIdWork): Work => {
+  const w = strip(d);
+  return { ...w, episodeCounts: w.episodeCounts ?? null, pageCount: w.pageCount ?? null };
+};
 
 export const toEntryDoc = (e: LibraryEntry): WithIdEntry => ({ _id: e.id, ...e });
-export const fromEntryDoc = (d: WithIdEntry): LibraryEntry => strip(d);
+export const fromEntryDoc = (d: WithIdEntry): LibraryEntry => {
+  const e = strip(d);
+  const progress = e.progress ?? null;
+  const activityAt = e.activityAt ?? (isPublishable({ ...e, progress, activityAt: null }) ? e.createdAt : null);
+  return { ...e, progress, activityAt };
+};
 
 export const toListDoc = (l: List): WithIdList => ({ _id: l.id, ...l });
 export const fromListDoc = (d: WithIdList): List => strip(d);

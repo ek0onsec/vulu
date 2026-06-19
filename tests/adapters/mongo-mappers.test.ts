@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toUserDoc, fromUserDoc, toEntryDoc, fromEntryDoc } from "@/server/adapters/mongo/mappers";
+import { toUserDoc, fromUserDoc, toEntryDoc, fromEntryDoc, fromWorkDoc } from "@/server/adapters/mongo/mappers";
 import type { User, LibraryEntry } from "@/server/domain/entities";
 
 const user: User = { id: "u1", email: "a@x.io", passwordHash: "h", username: "alice",
@@ -14,4 +14,32 @@ describe("mongo mappers", () => {
   it("user round-trip", () => { expect(fromUserDoc(toUserDoc(user))).toEqual(user); });
   it("entry round-trip", () => { expect(fromEntryDoc(toEntryDoc(entry))).toEqual(entry); });
   it("user doc utilise _id = id", () => { expect(toUserDoc(user)._id).toBe("u1"); });
+});
+
+describe("mappers — rétro-compat progression", () => {
+  it("fromEntryDoc backfille un ancien doc (avis) avec activityAt = createdAt", () => {
+    const created = new Date("2025-01-01");
+    // @ts-expect-error doc legacy sans progress/activityAt
+    const e = fromEntryDoc({ _id: "e", id: "e", userId: "u", workId: "w", domain: "films",
+      status: "done", rating: 4, text: null, visibility: "public", communityId: null,
+      createdAt: created, updatedAt: created });
+    expect(e.progress).toBeNull();
+    expect(e.activityAt).toEqual(created);
+  });
+  it("fromEntryDoc laisse activityAt null pour un ancien doc non publiable", () => {
+    const created = new Date("2025-01-01");
+    // @ts-expect-error doc legacy
+    const e = fromEntryDoc({ _id: "e", id: "e", userId: "u", workId: "w", domain: "films",
+      status: "planned", rating: null, text: null, visibility: "circle", communityId: null,
+      createdAt: created, updatedAt: created });
+    expect(e.activityAt).toBeNull();
+  });
+  it("fromWorkDoc backfille episodeCounts/pageCount à null", () => {
+    // @ts-expect-error doc legacy
+    const w = fromWorkDoc({ _id: "w", id: "w", source: "tmdb", externalId: "1", type: "movie",
+      domain: "films", title: "X", year: 2000, posterUrl: null, backdropUrl: null, overview: null,
+      genres: [], people: [], externalRating: null, watchProviders: [], cachedAt: new Date() });
+    expect(w.episodeCounts).toBeNull();
+    expect(w.pageCount).toBeNull();
+  });
 });
