@@ -16,7 +16,8 @@ async function loadOrCreateEntry(deps: Deps, userId: string, ref: Ref): Promise<
   if (existing) return existing;
   const now = deps.clock.now();
   return { id: deps.ids.next(), userId, workId: work.id, domain: work.domain,
-    status: "planned", rating: null, text: null, visibility: "circle", communityId: null, createdAt: now, updatedAt: now };
+    status: "planned", rating: null, text: null, visibility: "circle", communityId: null,
+    progress: null, activityAt: null, createdAt: now, updatedAt: now };
 }
 
 export async function setEntryStatus(deps: Deps, userId: string, ref: Ref, status: EntryStatus): Promise<LibraryEntry> {
@@ -44,7 +45,7 @@ export async function rateOrReviewWork(
   const entry = await loadOrCreateEntry(deps, userId, ref);
   const updated: LibraryEntry = { ...entry, status: "done", rating: input.rating,
     text: input.text?.trim() ? input.text.trim() : null, visibility: input.visibility,
-    communityId: input.communityId ?? null, updatedAt: deps.clock.now() };
+    communityId: input.communityId ?? null, activityAt: deps.clock.now(), updatedAt: deps.clock.now() };
   await deps.entries.upsert(updated);
   return updated;
 }

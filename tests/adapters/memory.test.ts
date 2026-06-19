@@ -9,7 +9,7 @@ function user(id: string, over: Partial<User> = {}): User {
 }
 function entry(id: string, over: Partial<LibraryEntry> = {}): LibraryEntry {
   return { id, userId: "u1", workId: "w1", domain: "films", status: "done", rating: 4,
-    text: null, visibility: "public", communityId: null, createdAt: new Date(), updatedAt: new Date(), ...over };
+    text: null, visibility: "public", communityId: null, progress: null, activityAt: null, createdAt: new Date(), updatedAt: new Date(), ...over };
 }
 
 describe("InMemory repos", () => {

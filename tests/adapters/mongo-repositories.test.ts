@@ -14,7 +14,7 @@ const user = (id: string, over: Partial<User> = {}): User => ({ id, email: `${id
   tastes: { filmGenreIds: [1, 2, 3], people: [] }, showcase: { movie: [], tv: [], book: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, deactivatedAt: null, notificationsSeenAt: null, createdAt: new Date(), ...over });
 const entry = (id: string, over: Partial<LibraryEntry> = {}): LibraryEntry => ({ id, userId: "u1", workId: "w1",
   domain: "films", status: "done", rating: 4, text: "x", visibility: "public", communityId: null,
-  createdAt: new Date(), updatedAt: new Date(), ...over });
+  progress: null, activityAt: null, createdAt: new Date(), updatedAt: new Date(), ...over });
 
 describe("Mongo repositories", () => {
   it("UserRepository persiste et retrouve par email", async () => {

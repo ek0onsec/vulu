@@ -13,7 +13,7 @@ type Target = string;
 export function EntryEditor({ workRef, initial }: { workRef: Ref; initial: LibraryEntry | null }) {
   const router = useRouter();
   const [entryId, setEntryId] = useState<string | null>(initial?.id ?? null);
-  const [status, setStatus] = useState<"planned" | "done">(initial?.status ?? "planned");
+  const [status, setStatus] = useState<"planned" | "in_progress" | "done">(initial?.status ?? "planned");
   const [rating, setRating] = useState<number>(initial?.rating ?? 0);
   const [text, setText] = useState(initial?.text ?? "");
   const [target, setTarget] = useState<Target>(initial?.communityId ?? initial?.visibility ?? "circle");

@@ -1,8 +1,15 @@
 export type Domain = "films" | "books";
 export type WorkType = "movie" | "tv" | "book";
 export type WorkSource = "tmdb" | "googlebooks";
-export type EntryStatus = "planned" | "done";
+export type EntryStatus = "planned" | "in_progress" | "done";
 export type Visibility = "circle" | "public";
+
+export interface EntryProgress {
+  season: number | null;   // séries
+  episode: number | null;  // séries
+  tome: number | null;     // livres
+  page: number | null;     // livres
+}
 export type ListVisibility = "public" | "private";
 export type PersonRole = "actor" | "director" | "author";
 
@@ -69,6 +76,8 @@ export interface Work {
   people: { tmdbId: number; name: string; role: PersonRole }[];
   externalRating: number | null;
   watchProviders: { name: string; logoUrl: string | null }[];
+  episodeCounts: number[] | null;  // tv : nb d'épisodes par saison ; total = somme
+  pageCount: number | null;        // livre : pages totales
   cachedAt: Date;
 }
 
@@ -82,6 +91,8 @@ export interface LibraryEntry {
   text: string | null;
   visibility: Visibility;
   communityId: string | null;   // si partagé dans une communauté
+  progress: EntryProgress | null;  // null pour les films « en cours » (statut seul)
+  activityAt: Date | null;         // date d'apparition/remontée dans le feed (null = absent du feed)
   createdAt: Date;
   updatedAt: Date;
 }
