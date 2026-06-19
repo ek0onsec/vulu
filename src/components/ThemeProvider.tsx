@@ -1,9 +1,9 @@
 "use client";
 import { useEffect } from "react";
-import { initialTheme, applyTheme } from "@/lib/theme";
+import { initialTheme, applyTheme, restoreSavedPalette } from "@/lib/theme";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => { applyTheme(initialTheme()); }, []);
+  useEffect(() => { applyTheme(initialTheme()); restoreSavedPalette(); }, []);
   return <>{children}</>;
 }
 
@@ -15,4 +15,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export const themeNoFlashScript =
   `(function(){try{var t=localStorage.getItem('vulu-theme');` +
   `if(!t){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}` +
-  `document.documentElement.classList.toggle('dark',t==='dark');}catch(e){}})();`;
+  `document.documentElement.classList.toggle('dark',t==='dark');` +
+  `var p=localStorage.getItem('vulu-palette');` +
+  `if(p&&p!=='vulu'){document.documentElement.setAttribute('data-palette',p);}}catch(e){}})();`;

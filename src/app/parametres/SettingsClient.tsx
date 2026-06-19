@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
 import { TasteSelector } from "@/components/TasteSelector";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemePicker } from "@/components/ThemePicker";
 import { Modal } from "@/components/Modal";
 import { Icon, type IconName } from "@/components/Icon";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -149,16 +150,8 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
         <div className="mb-4 flex items-center justify-between rounded-xl border border-[var(--color-border)] p-3">
           <span className="text-sm font-medium">Thème clair / sombre</span><ThemeToggle />
         </div>
-        <p className="mb-2 text-sm font-semibold">Thèmes vulu+ {!plus && <span className="text-xs font-normal text-[var(--color-text-muted)]">(aperçu — sauvegarde réservée à vulu+)</span>}</p>
-        <div className="flex gap-3">
-          {[["Aurore", "#7C3AED", "#22D3EE"], ["Forêt", "#15803D", "#F59E0B"], ["Rétro", "#DB2777", "#FACC15"]].map(([name, a, b]) => (
-            <button key={name} onClick={() => toast(plus ? `Thème « ${name} » — bientôt` : "Réservé à vulu+ (aperçu bientôt)")}
-              className="flex-1 rounded-xl border border-[var(--color-border)] p-2 text-center">
-              <span className="mx-auto mb-1 block h-8 w-full rounded-md" style={{ background: `linear-gradient(135deg, ${a}, ${b})` }} />
-              <span className="text-xs font-medium">{name}{!plus && " 🔒"}</span>
-            </button>
-          ))}
-        </div>
+        <p className="mb-2 text-sm font-semibold">Thèmes de couleur {!plus && <span className="text-xs font-normal text-[var(--color-text-muted)]">(aperçu — sauvegarde réservée à vulu+)</span>}</p>
+        <ThemePicker plus={plus} />
       </>
     );
     if (cur === "interests") return (

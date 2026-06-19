@@ -22,6 +22,19 @@
   --color-text-muted: #9C93AB;
 }
 
+/* Thèmes de couleur vulu+ — surchargent l'accent de marque par-dessus clair/sombre.
+   Source de vérité des libellés/aperçus : src/lib/theme.ts (PALETTES). */
+:root[data-palette="aurore"] { --color-primary: #7C3AED; --color-accent: #06B6D4; }
+.dark[data-palette="aurore"] { --color-primary: #A78BFA; --color-accent: #22D3EE; }
+:root[data-palette="foret"]  { --color-primary: #15803D; --color-accent: #F59E0B; }
+.dark[data-palette="foret"]  { --color-primary: #4ADE80; --color-accent: #FBBF24; }
+:root[data-palette="retro"]  { --color-primary: #DB2777; --color-accent: #FACC15; }
+.dark[data-palette="retro"]  { --color-primary: #F472B6; --color-accent: #FDE047; }
+:root[data-palette="ocean"]  { --color-primary: #0E7490; --color-accent: #F472B6; }
+.dark[data-palette="ocean"]  { --color-primary: #22D3EE; --color-accent: #FB7185; }
+:root[data-palette="crepuscule"] { --color-primary: #C2410C; --color-accent: #7C3AED; }
+.dark[data-palette="crepuscule"] { --color-primary: #FB923C; --color-accent: #A78BFA; }
+
 @theme inline {
   --color-primary: var(--color-primary);
   --color-accent: var(--color-accent);
