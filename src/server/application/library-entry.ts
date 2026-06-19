@@ -87,6 +87,15 @@ export async function updateProgress(
   return updated;
 }
 
+export async function shareMilestone(deps: Deps, userId: string, entryId: string): Promise<LibraryEntry> {
+  const entry = await deps.entries.findById(entryId);
+  if (!entry) throw new NotFoundError("Entrée introuvable");
+  if (entry.userId !== userId) throw new ForbiddenError("Action non autorisée");
+  const updated: LibraryEntry = { ...entry, activityAt: deps.clock.now(), updatedAt: deps.clock.now() };
+  await deps.entries.upsert(updated);
+  return updated;
+}
+
 export async function removeEntry(deps: Deps, userId: string, entryId: string): Promise<void> {
   const entry = await deps.entries.findById(entryId);
   if (!entry) throw new NotFoundError("Entrée introuvable");
