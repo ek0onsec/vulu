@@ -32,11 +32,34 @@ describe("InMemory repos", () => {
   it("feed: publiables, public OU cercle, filtré domaine, trié desc", async () => {
     const r = new InMemoryLibraryEntryRepository();
     const t0 = new Date(2024, 0, 1), t1 = new Date(2024, 0, 2), t2 = new Date(2024, 0, 3);
-    await r.upsert(entry("e_pub", { userId: "stranger", visibility: "public", communityId: null, createdAt: t0 }));
-    await r.upsert(entry("e_circle", { userId: "friend", visibility: "circle", createdAt: t1 }));
-    await r.upsert(entry("e_hidden", { userId: "stranger", visibility: "circle", createdAt: t2 }));
-    await r.upsert(entry("e_planned", { userId: "friend", status: "planned", rating: null, text: null, createdAt: t2 }));
+    await r.upsert(entry("e_pub", { userId: "stranger", visibility: "public", communityId: null, createdAt: t0, activityAt: t0 }));
+    await r.upsert(entry("e_circle", { userId: "friend", visibility: "circle", createdAt: t1, activityAt: t1 }));
+    await r.upsert(entry("e_hidden", { userId: "stranger", visibility: "circle", createdAt: t2, activityAt: t2 }));
+    await r.upsert(entry("e_planned", { userId: "friend", status: "planned", rating: null, text: null, createdAt: t2, activityAt: null }));
     const res = await r.feed({ scope: "foryou", circleUserIds: ["friend"], viewerId: "me", domains: ["films"], cursor: null, limit: 10 });
     expect(res.map((e) => e.id)).toEqual(["e_circle", "e_pub"]);
+  });
+});
+
+describe("InMemoryLibraryEntryRepository — feed activityAt", () => {
+  const mk = (id: string, activityAt: Date | null, over: Partial<LibraryEntry> = {}): LibraryEntry => ({
+    id, userId: "u", workId: "w-" + id, domain: "films", status: "done",
+    rating: 4, text: null, visibility: "public", communityId: null, progress: null,
+    activityAt, createdAt: new Date(2020, 0, 1), updatedAt: new Date(2020, 0, 1), ...over,
+  });
+  it("exclut les entrées sans activityAt et trie par activityAt desc", async () => {
+    const repo = new InMemoryLibraryEntryRepository();
+    await repo.upsert(mk("a", new Date(2021, 0, 1)));
+    await repo.upsert(mk("b", new Date(2023, 0, 1)));
+    await repo.upsert(mk("c", null, { status: "in_progress", rating: null }));
+    const out = await repo.feed({ scope: "foryou", circleUserIds: [], viewerId: "u", domains: ["films"], cursor: null, limit: 10 });
+    expect(out.map((e) => e.id)).toEqual(["b", "a"]);
+  });
+  it("pagine via le curseur activityAt", async () => {
+    const repo = new InMemoryLibraryEntryRepository();
+    await repo.upsert(mk("a", new Date(2021, 0, 1)));
+    await repo.upsert(mk("b", new Date(2023, 0, 1)));
+    const out = await repo.feed({ scope: "foryou", circleUserIds: [], viewerId: "u", domains: ["films"], cursor: { activityAt: new Date(2023, 0, 1), id: "b" }, limit: 10 });
+    expect(out.map((e) => e.id)).toEqual(["a"]);
   });
 });

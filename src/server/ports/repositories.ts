@@ -39,7 +39,7 @@ export interface LibraryEntryRepository {
   upsert(entry: LibraryEntry): Promise<void>;
   findById(id: string): Promise<LibraryEntry | null>;
   findByUserAndWork(userId: string, workId: string): Promise<LibraryEntry | null>;
-  listByUser(userId: string, opts: { status?: "planned" | "done"; domain?: string }): Promise<LibraryEntry[]>;
+  listByUser(userId: string, opts: { status?: "planned" | "in_progress" | "done"; domain?: string }): Promise<LibraryEntry[]>;
   remove(id: string): Promise<void>;
   removeAllForUser(userId: string): Promise<void>;
   feed(opts: {
@@ -47,7 +47,7 @@ export interface LibraryEntryRepository {
     circleUserIds: string[];
     viewerId: string;
     domains: string[];
-    cursor: { createdAt: Date; id: string } | null;
+    cursor: { activityAt: Date; id: string } | null;
     limit: number;
   }): Promise<LibraryEntry[]>;
   /** Entrées publiques et publiables récentes (pour les tendances). */
@@ -55,7 +55,7 @@ export interface LibraryEntryRepository {
   /** Entrées publiables (vues + notées/commentées) d'une œuvre, tous publics confondus. */
   listByWork(workId: string): Promise<LibraryEntry[]>;
   /** Fil d'une communauté : entrées publiables partagées dans cette communauté, paginé. */
-  feedByCommunity(communityId: string, cursor: { createdAt: Date; id: string } | null, limit: number): Promise<LibraryEntry[]>;
+  feedByCommunity(communityId: string, cursor: { activityAt: Date; id: string } | null, limit: number): Promise<LibraryEntry[]>;
 }
 
 export interface CommunityRepository {

@@ -30,8 +30,8 @@ describe("Mongo repositories", () => {
   });
   it("feed: public OU cercle, trié desc", async () => {
     const r = new MongoLibraryEntryRepository(m.db);
-    await r.upsert(entry("e_pub", { userId: "stranger", visibility: "public", communityId: null, createdAt: new Date(2024, 0, 1) }));
-    await r.upsert(entry("e_cir", { userId: "friend", visibility: "circle", createdAt: new Date(2024, 0, 2) }));
+    await r.upsert(entry("e_pub", { userId: "stranger", visibility: "public", communityId: null, createdAt: new Date(2024, 0, 1), activityAt: new Date(2024, 0, 1) }));
+    await r.upsert(entry("e_cir", { userId: "friend", visibility: "circle", createdAt: new Date(2024, 0, 2), activityAt: new Date(2024, 0, 2) }));
     const res = await r.feed({ scope: "foryou", circleUserIds: ["friend"], viewerId: "me", domains: ["films"], cursor: null, limit: 10 });
     expect(res.map((e) => e.id)).toEqual(["e_cir", "e_pub"]);
   });

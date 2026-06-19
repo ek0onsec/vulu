@@ -3,7 +3,7 @@ import type {
   ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository,
 } from "@/server/ports/repositories";
 import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership } from "@/server/domain/entities";
-import { isPublishable } from "@/server/domain/feed-rules";
+import { isPublishable, isFeedVisible } from "@/server/domain/feed-rules";
 
 export class InMemoryUserRepository implements UserRepository {
   private byId = new Map<string, User>();
@@ -58,7 +58,7 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
   async findByUserAndWork(userId: string, workId: string) {
     return [...this.byId.values()].find((e) => e.userId === userId && e.workId === workId) ?? null;
   }
-  async listByUser(userId: string, opts: { status?: "planned" | "done"; domain?: string }) {
+  async listByUser(userId: string, opts: { status?: "planned" | "in_progress" | "done"; domain?: string }) {
     return [...this.byId.values()].filter((e) =>
       e.userId === userId &&
       (opts.status ? e.status === opts.status : true) &&
@@ -67,14 +67,14 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
   }
   async remove(id: string) { this.byId.delete(id); }
   async removeAllForUser(userId: string) { for (const [k, e] of this.byId) if (e.userId === userId) this.byId.delete(k); }
-  async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { createdAt: Date; id: string } | null; limit: number; }) {
+  async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { activityAt: Date; id: string } | null; limit: number; }) {
     const circle = new Set(opts.circleUserIds);
     return [...this.byId.values()]
-      .filter((e) => isPublishable(e))
+      .filter((e) => isFeedVisible(e))
       .filter((e) => opts.domains.includes(e.domain))
       .filter((e) => opts.scope === "circle" ? circle.has(e.userId) : (e.visibility === "public" || circle.has(e.userId)))
-      .filter((e) => !opts.cursor || e.createdAt.getTime() < opts.cursor.createdAt.getTime())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .filter((e) => !opts.cursor || e.activityAt!.getTime() < opts.cursor.activityAt.getTime())
+      .sort((a, b) => b.activityAt!.getTime() - a.activityAt!.getTime())
       .slice(0, opts.limit);
   }
   async listRecentPublic(limit: number) {
@@ -88,11 +88,11 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
       .filter((e) => e.workId === workId && isPublishable(e))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
-  async feedByCommunity(communityId: string, cursor: { createdAt: Date; id: string } | null, limit: number) {
+  async feedByCommunity(communityId: string, cursor: { activityAt: Date; id: string } | null, limit: number) {
     return [...this.byId.values()]
-      .filter((e) => e.communityId === communityId && isPublishable(e))
-      .filter((e) => !cursor || e.createdAt.getTime() < cursor.createdAt.getTime())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .filter((e) => e.communityId === communityId && isFeedVisible(e))
+      .filter((e) => !cursor || e.activityAt!.getTime() < cursor.activityAt.getTime())
+      .sort((a, b) => b.activityAt!.getTime() - a.activityAt!.getTime())
       .slice(0, limit);
   }
 }

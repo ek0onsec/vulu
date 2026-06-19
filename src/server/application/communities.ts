@@ -73,7 +73,7 @@ export async function pinnedCommunities(deps: Deps, userId: string): Promise<{ i
   return communities.map((c) => ({ id: c.id, name: c.name }));
 }
 
-export async function communityFeed(deps: Deps, viewerId: string, communityId: string, cursor: { createdAt: Date; id: string } | null): Promise<FeedItem[]> {
+export async function communityFeed(deps: Deps, viewerId: string, communityId: string, cursor: { activityAt: Date; id: string } | null): Promise<FeedItem[]> {
   const entries = await deps.entries.feedByCommunity(communityId, cursor, 20);
   return enrichEntries(deps, viewerId, entries);
 }

@@ -13,6 +13,7 @@ export async function ensureIndexes(db: Db): Promise<void> {
   await db.collection("entries").createIndexes([
     { key: { userId: 1, workId: 1 }, unique: true, name: "uniq_user_work" },
     { key: { visibility: 1, domain: 1, createdAt: -1 }, name: "feed" },
+    { key: { activityAt: -1, _id: -1 }, name: "feed_activity" },
     { key: { userId: 1, status: 1 }, name: "by_user_status" },
     { key: { userId: 1, createdAt: -1 }, name: "by_user_date" },
   ]);

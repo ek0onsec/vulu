@@ -33,7 +33,7 @@ export async function enrichEntries(deps: Deps, viewerId: string, entries: Libra
 }
 
 export async function buildFeed(
-  deps: Deps, viewerId: string, opts: { scope: "foryou" | "circle"; cursor: { createdAt: Date; id: string } | null; limit: number },
+  deps: Deps, viewerId: string, opts: { scope: "foryou" | "circle"; cursor: { activityAt: Date; id: string } | null; limit: number },
 ): Promise<FeedItem[]> {
   const viewer = await deps.users.findById(viewerId);
   if (!viewer) throw new NotFoundError("Utilisateur introuvable");

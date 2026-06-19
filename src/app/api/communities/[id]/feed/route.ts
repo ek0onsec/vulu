@@ -6,10 +6,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const u = await requireUser(); const { id } = await params;
     const cursorRaw = new URL(req.url).searchParams.get("cursor");
-    const cursor = cursorRaw ? JSON.parse(cursorRaw) as { createdAt: string; id: string } : null;
-    const items = await communityFeed(await getDeps(), u.id, id, cursor ? { createdAt: new Date(cursor.createdAt), id: cursor.id } : null);
+    const cursor = cursorRaw ? JSON.parse(cursorRaw) as { activityAt: string; id: string } : null;
+    const items = await communityFeed(await getDeps(), u.id, id, cursor ? { activityAt: new Date(cursor.activityAt), id: cursor.id } : null);
     const last = items.at(-1);
-    const nextCursor = last ? JSON.stringify({ createdAt: last.entry.createdAt, id: last.entry.id }) : null;
+    const nextCursor = last ? JSON.stringify({ activityAt: last.entry.activityAt ?? last.entry.createdAt, id: last.entry.id }) : null;
     return json({ items, nextCursor });
   } catch (e) { return toErrorResponse(e); }
 }

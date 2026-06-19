@@ -60,7 +60,7 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
   async upsert(e: LibraryEntry) { await this.col.replaceOne({ userId: e.userId, workId: e.workId }, M.toEntryDoc(e), { upsert: true }); }
   async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromEntryDoc(d) : null; }
   async findByUserAndWork(userId: string, workId: string) { const d = await this.col.findOne({ userId, workId }); return d ? M.fromEntryDoc(d) : null; }
-  async listByUser(userId: string, opts: { status?: "planned" | "done"; domain?: string }) {
+  async listByUser(userId: string, opts: { status?: "planned" | "in_progress" | "done"; domain?: string }) {
     const q: Filter<M.WithIdEntry> = { userId };
     if (opts.status) q.status = opts.status;
     if (opts.domain) q.domain = opts.domain as M.WithIdEntry["domain"];
@@ -68,17 +68,17 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
   }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }
   async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }
-  async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { createdAt: Date; id: string } | null; limit: number; }) {
+  async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { activityAt: Date; id: string } | null; limit: number; }) {
     const visibility: Filter<M.WithIdEntry> = opts.scope === "circle"
       ? { userId: { $in: opts.circleUserIds } }
       : { $or: [{ visibility: "public" }, { userId: { $in: opts.circleUserIds } }] };
     const and: Filter<M.WithIdEntry>[] = [
       visibility,
-      { status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] },
+      { activityAt: { $ne: null } },
       { domain: { $in: opts.domains as M.WithIdEntry["domain"][] } },
     ];
-    if (opts.cursor) and.push({ createdAt: { $lt: opts.cursor.createdAt } });
-    return (await this.col.find({ $and: and }).sort({ createdAt: -1, _id: -1 }).limit(opts.limit).toArray()).map(M.fromEntryDoc);
+    if (opts.cursor) and.push({ activityAt: { $lt: opts.cursor.activityAt } });
+    return (await this.col.find({ $and: and }).sort({ activityAt: -1, _id: -1 }).limit(opts.limit).toArray()).map(M.fromEntryDoc);
   }
   async listRecentPublic(limit: number) {
     const q: Filter<M.WithIdEntry> = { visibility: "public", status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] };
@@ -88,13 +88,13 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
     const q: Filter<M.WithIdEntry> = { workId, status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] };
     return (await this.col.find(q).sort({ createdAt: -1 }).toArray()).map(M.fromEntryDoc);
   }
-  async feedByCommunity(communityId: string, cursor: { createdAt: Date; id: string } | null, limit: number) {
+  async feedByCommunity(communityId: string, cursor: { activityAt: Date; id: string } | null, limit: number) {
     const and: Filter<M.WithIdEntry>[] = [
       { communityId },
-      { status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] },
+      { activityAt: { $ne: null } },
     ];
-    if (cursor) and.push({ createdAt: { $lt: cursor.createdAt } });
-    return (await this.col.find({ $and: and }).sort({ createdAt: -1, _id: -1 }).limit(limit).toArray()).map(M.fromEntryDoc);
+    if (cursor) and.push({ activityAt: { $lt: cursor.activityAt } });
+    return (await this.col.find({ $and: and }).sort({ activityAt: -1, _id: -1 }).limit(limit).toArray()).map(M.fromEntryDoc);
   }
 }
 

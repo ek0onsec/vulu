@@ -9,14 +9,14 @@ export async function GET(req: Request) {
     const sp = new URL(req.url).searchParams;
     const scope = sp.get("scope") === "circle" ? "circle" : "foryou";
     const cursorRaw = sp.get("cursor");
-    const cursor = cursorRaw ? JSON.parse(cursorRaw) as { createdAt: string; id: string } : null;
+    const cursor = cursorRaw ? JSON.parse(cursorRaw) as { activityAt: string; id: string } : null;
     const items = await buildFeed(await getDeps(), user.id, {
       scope,
-      cursor: cursor ? { createdAt: new Date(cursor.createdAt), id: cursor.id } : null,
+      cursor: cursor ? { activityAt: new Date(cursor.activityAt), id: cursor.id } : null,
       limit: 20,
     });
     const last = items.at(-1);
-    const nextCursor = last ? JSON.stringify({ createdAt: last.entry.createdAt, id: last.entry.id }) : null;
+    const nextCursor = last ? JSON.stringify({ activityAt: last.entry.activityAt ?? last.entry.createdAt, id: last.entry.id }) : null;
     return json({ items, nextCursor });
   } catch (e) { return toErrorResponse(e); }
 }
