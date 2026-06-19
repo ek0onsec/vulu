@@ -18,7 +18,7 @@ export const updateProfileSchema = z.object({
   displayName: z.string().min(1).max(40), bio: z.string().max(300).nullable(),
   avatarUrl: z.url().nullable(), activeTabs: z.array(z.enum(["films", "books"])).min(1),
 });
-export const workRefSchema = z.object({ source: z.literal("tmdb"), externalId: z.string(), type: z.enum(["movie", "tv"]) });
+export const workRefSchema = z.object({ source: z.enum(["tmdb", "googlebooks"]), externalId: z.string(), type: z.enum(["movie", "tv", "book"]) });
 export const setStatusSchema = z.object({ ref: workRefSchema, status: z.enum(["planned", "done"]) });
 export const rateSchema = z.object({
   ref: workRefSchema,
@@ -26,6 +26,11 @@ export const rateSchema = z.object({
   text: z.string().max(2000).nullable(),
   visibility: z.enum(["circle", "public"]),
   communityId: z.string().nullable().optional(),
+});
+const progInt = z.number().int().min(1).nullable().optional();
+export const progressSchema = z.object({
+  ref: workRefSchema,
+  season: progInt, episode: progInt, tome: progInt, page: progInt,
 });
 export const createListSchema = z.object({
   name: z.string().min(1).max(60),

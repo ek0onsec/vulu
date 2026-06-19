@@ -1,5 +1,5 @@
 import type { Deps } from "@/server/container";
-import type { EntryStatus, LibraryEntry, Visibility, WorkSource, WorkType } from "@/server/domain/entities";
+import type { EntryProgress, EntryStatus, LibraryEntry, Visibility, WorkSource, WorkType } from "@/server/domain/entities";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
 import { getOrImportWork } from "./get-work";
 
@@ -46,6 +46,43 @@ export async function rateOrReviewWork(
   const updated: LibraryEntry = { ...entry, status: "done", rating: input.rating,
     text: input.text?.trim() ? input.text.trim() : null, visibility: input.visibility,
     communityId: input.communityId ?? null, activityAt: deps.clock.now(), updatedAt: deps.clock.now() };
+  await deps.entries.upsert(updated);
+  return updated;
+}
+
+function clampPositive(n: number | null | undefined, max: number | null): number | null {
+  if (n === null || n === undefined) return null;
+  const v = Math.max(1, Math.floor(n));
+  return max && max > 0 ? Math.min(v, max) : v;
+}
+
+export async function updateProgress(
+  deps: Deps, userId: string, ref: Ref,
+  input: { season?: number | null; episode?: number | null; tome?: number | null; page?: number | null },
+): Promise<LibraryEntry> {
+  for (const v of [input.season, input.episode, input.tome, input.page]) {
+    if (v !== null && v !== undefined && (!Number.isInteger(v) || v < 1)) {
+      throw new ValidationError("Progression invalide (entier ≥ 1)");
+    }
+  }
+  const work = await getOrImportWork(deps, ref);
+  const existing = await deps.entries.findByUserAndWork(userId, work.id);
+  const base = existing ?? await loadOrCreateEntry(deps, userId, ref);
+
+  let progress: EntryProgress | null = null;
+  if (work.type === "tv") {
+    const season = clampPositive(input.season, null) ?? base.progress?.season ?? 1;
+    const epMax = work.episodeCounts?.[season - 1] ?? null;
+    progress = { season, episode: clampPositive(input.episode, epMax) ?? base.progress?.episode ?? 1, tome: null, page: null };
+  } else if (work.type === "book") {
+    progress = {
+      season: null, episode: null,
+      tome: clampPositive(input.tome, null) ?? base.progress?.tome ?? null,
+      page: clampPositive(input.page, work.pageCount) ?? base.progress?.page ?? null,
+    };
+  } // film : progress reste null
+
+  const updated: LibraryEntry = { ...base, status: "in_progress", progress, updatedAt: deps.clock.now() };
   await deps.entries.upsert(updated);
   return updated;
 }
