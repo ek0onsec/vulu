@@ -13,7 +13,14 @@ export class FakeCatalog implements CatalogProvider {
       source: "googlebooks", externalId: "book-1", type: "book", title: "Neuromancien", year: 1984,
       posterUrl: "c.jpg", backdropUrl: null, overview: "Cyberpunk fondateur.",
       genres: ["Science-fiction"], people: [{ tmdbId: 99, name: "William Gibson", role: "author" }],
-      externalRating: null, watchProviders: [],
+      externalRating: null, watchProviders: [], pageCount: 271,
+    },
+    "1396": {
+      source: "tmdb", externalId: "1396", type: "tv", title: "Breaking Bad", year: 2008,
+      posterUrl: "p.jpg", backdropUrl: "b.jpg", overview: "Walter White…",
+      genres: ["Drame"], people: [{ tmdbId: 1, name: "Bryan Cranston", role: "actor" }],
+      externalRating: 8.9, watchProviders: [{ name: "Netflix", logoUrl: "n.jpg" }],
+      episodeCounts: [7, 13],
     },
   };
   async searchWorks(_query: string, domain: Domain): Promise<WorkSummary[]> {

@@ -11,6 +11,7 @@ interface Volume {
     description?: string;
     categories?: string[];
     imageLinks?: { thumbnail?: string; smallThumbnail?: string };
+    pageCount?: number;
   };
 }
 
@@ -81,6 +82,8 @@ export class GoogleBooksCatalog {
       people: (info.authors ?? []).map((name) => ({ tmdbId: authorId(name), name, role: "author" as const })),
       externalRating: null,
       watchProviders: [],
+      episodeCounts: null,
+      pageCount: typeof info.pageCount === "number" && info.pageCount > 0 ? info.pageCount : null,
     };
   }
 

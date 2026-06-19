@@ -27,4 +27,14 @@ describe("getOrImportWork", () => {
     expect(w.domain).toBe("books");
     expect(w.people[0]?.role).toBe("author");
   });
+  it("importe episodeCounts pour une série", async () => {
+    const w = await getOrImportWork(deps, { source: "tmdb", externalId: "1396", type: "tv" });
+    expect(w.episodeCounts).toEqual([7, 13]);
+    expect(w.pageCount).toBeNull();
+  });
+  it("importe pageCount pour un livre", async () => {
+    const w = await getOrImportWork(deps, { source: "googlebooks", externalId: "book-1", type: "book" });
+    expect(w.pageCount).toBe(271);
+    expect(w.episodeCounts).toBeNull();
+  });
 });

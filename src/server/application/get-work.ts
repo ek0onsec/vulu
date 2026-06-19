@@ -28,8 +28,8 @@ export async function getOrImportWork(
     people: details.people,
     externalRating: details.externalRating,
     watchProviders: details.watchProviders,
-    episodeCounts: null,
-    pageCount: null,
+    episodeCounts: details.episodeCounts ?? null,
+    pageCount: details.pageCount ?? null,
     cachedAt: deps.clock.now(),
   };
   await deps.works.upsert(work);

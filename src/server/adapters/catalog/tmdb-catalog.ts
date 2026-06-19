@@ -10,7 +10,8 @@ interface TmdbDetails { id: number; title?: string; name?: string; release_date?
   poster_path?: string | null; backdrop_path?: string | null; overview?: string; vote_average?: number;
   genres?: { id: number; name: string }[];
   credits?: { cast?: { id: number; name: string }[]; crew?: { id: number; name: string; job: string }[] };
-  "watch/providers"?: { results?: Record<string, { flatrate?: TmdbProvider[] }> }; }
+  "watch/providers"?: { results?: Record<string, { flatrate?: TmdbProvider[] }> };
+  seasons?: { season_number: number; episode_count: number }[]; }
 
 function yearOf(d?: string): number | null { return d ? Number(d.slice(0, 4)) || null : null; }
 
@@ -55,6 +56,9 @@ export class TmdbCatalog {
       .map((c) => ({ tmdbId: c.id, name: c.name, role: "director" as const }));
     const fr = d["watch/providers"]?.results?.FR?.flatrate ?? [];
     const watchProviders = fr.map((p) => ({ name: p.provider_name, logoUrl: this.img(p.logo_path, "w92") }));
+    const episodeCounts = type === "tv"
+      ? (d.seasons ?? []).filter((s) => s.season_number >= 1).sort((a, b) => a.season_number - b.season_number).map((s) => s.episode_count)
+      : null;
     return {
       source: "tmdb", externalId: String(d.id), type,
       title: d.title ?? d.name ?? "Sans titre",
@@ -66,6 +70,8 @@ export class TmdbCatalog {
       people: [...directors, ...cast],
       externalRating: typeof d.vote_average === "number" && d.vote_average > 0 ? Math.round(d.vote_average * 10) / 10 : null,
       watchProviders,
+      episodeCounts: episodeCounts && episodeCounts.length ? episodeCounts : null,
+      pageCount: null,
     };
   }
 
