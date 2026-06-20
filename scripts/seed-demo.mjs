@@ -24,11 +24,21 @@ const work = (id, externalId, type, title, year, seed, overview, genres) => ({
   backdropUrl: `https://picsum.photos/seed/${seed}-bg/1280/400`,
   overview, genres, people: [{ tmdbId: 1, name: "Réalisateur Démo", role: "director" }],
   externalRating: 7.8, watchProviders: [{ name: "Netflix", logoUrl: null }, { name: "Prime Video", logoUrl: null }],
+  episodeCounts: type === "tv" ? [7, 13, 10] : null, pageCount: type === "book" ? 480 : null,
   cachedAt: now,
 });
 
 const entry = (id, userId, workId, rating, text, visibility, daysAgo) => ({
   _id: id, id, userId, workId, domain: "films", status: "done", rating, text, visibility, communityId: null,
+  progress: null, activityAt: new Date(now.getTime() - daysAgo * 86400000),
+  createdAt: new Date(now.getTime() - daysAgo * 86400000),
+  updatedAt: new Date(now.getTime() - daysAgo * 86400000),
+});
+
+const progressEntry = (id, userId, workId, domain, progress, daysAgo, shared) => ({
+  _id: id, id, userId, workId, domain, status: "in_progress", rating: null, text: null,
+  visibility: "public", communityId: null, progress,
+  activityAt: shared ? new Date(now.getTime() - daysAgo * 86400000) : null,
   createdAt: new Date(now.getTime() - daysAgo * 86400000),
   updatedAt: new Date(now.getTime() - daysAgo * 86400000),
 });
@@ -56,6 +66,8 @@ await db.collection("entries").insertMany([
   entry("e-3", "u-alice", "w-matrix", 5.0, "Le film qui a redéfini la SF. Indémodable.", "public", 2),
   entry("e-4", "u-bob", "w-poor", 3.7, "Esthétique folle, un peu longuet sur la fin.", "public", 3),
   entry("e-5", "u-demo", "w-dune", 4.2, "Vu en IMAX, claque garantie.", "public", 4),
+  progressEntry("e-ip1", "u-alice", "w-bear", "films", { season: 2, episode: 4, tome: null, page: null }, 0, true),
+  progressEntry("e-ip2", "u-demo", "w-bear", "films", { season: 1, episode: 3, tome: null, page: null }, 1, false),
 ]);
 
 // demo suit alice (cercle) — bob est en public

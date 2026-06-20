@@ -38,6 +38,12 @@ Onglet Notifications (cloche) + agrégation condensée : likes sur tes avis, com
    - paiement réel (Stripe).
 7. **SP3 — Filtres par personne** : explorer œuvres/bibliothèque par acteur / réalisateur / auteur.
 8. **Mécaniques d'habitude** : Wrapped/Rétrospective, Journal & cartes partageables, Notifications in-app & reco perso.
+
+### ✅ SP-Progression « en cours » (LIVRÉ — 2026-06-20)
+Statut `in_progress` + suivi : séries `S1 E5` (totaux épisodes via TMDB), livres `Tome 3 · p.230` (pages via Google Books), films « en cours » sans détail. `LibraryEntry.progress` + `activityAt` (nullable) ; le feed est ordonné par `activityAt` et ne montre une entrée que si un **avis** ou un **jalon partagé** l'a posé (`shareMilestone`) — les bumps silencieux (`updateProgress`) ne remontent rien. EntryEditor : steppers + « Partager ce jalon ». Profil : section « En cours » avec reprise +1. Routes `PUT /api/works/progress`, `POST /api/entries/:id/share`. `workRefSchema` élargi aux livres. Spec/plan : `docs/superpowers/{specs,plans}/2026-06-19-*`. **Différé** : suggestion « Marquer comme terminé ? » à la fin connue.
+
+### ⏳ Backlog ciblé
+- **Bannière de communauté éditable par le créateur** : upload d'une bannière (port `MediaStorage` existant) côté `/communaute/[id]` réservé à `ownerId`, affichée en en-tête (remplace le dégradé par défaut).
 3. **Communautés (gros sous-système)** : créer des communautés (type Twitter Communities), onglet timeline des communautés publiques pour les rejoindre, ajouter un onglet de communauté rejointe sur le feed principal, et **partage ciblé** d'une activité en **public / cercle / communauté précise**.
 4. **Mécaniques d'habitude (priorisées par l'utilisateur)** :
    - **Rétrospective / Wrapped** (bilan animé annuel/mensuel à partager, façon Spotify Wrapped).
