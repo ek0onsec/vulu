@@ -1,10 +1,10 @@
 import type { Deps } from "@/server/container";
-import type { LibraryEntry, WorkType } from "@/server/domain/entities";
+import type { LibraryEntry, PersonRole, WorkType } from "@/server/domain/entities";
 import { NotFoundError } from "@/server/domain/errors";
 
-export interface LibraryPoster { id: string; workId: string; title: string; posterUrl: string | null; type: WorkType; rating: number | null }
+export interface LibraryPoster { id: string; workId: string; title: string; posterUrl: string | null; type: WorkType; rating: number | null; peopleIds: number[] }
 export interface LibraryPlaylist { id: string; name: string; kind: "films" | "books" | "mixed"; description: string | null; bannerUrl: string | null; visibility: "public" | "private"; count: number; covers: string[] }
-export interface Library { playlists: LibraryPlaylist[]; watchlist: LibraryPoster[]; seen: LibraryPoster[] }
+export interface Library { playlists: LibraryPlaylist[]; watchlist: LibraryPoster[]; seen: LibraryPoster[]; people: { id: number; name: string; role: PersonRole }[] }
 
 export async function getLibrary(deps: Deps, userId: string): Promise<Library> {
   const user = await deps.users.findById(userId);
@@ -14,7 +14,7 @@ export async function getLibrary(deps: Deps, userId: string): Promise<Library> {
     const resolved = await Promise.all(entries.map(async (e) => ({ e, w: await deps.works.findById(e.workId) })));
     return resolved
       .filter((x) => x.w !== null)
-      .map(({ e, w }) => ({ id: e.id, workId: w!.id, title: w!.title, posterUrl: w!.posterUrl, type: w!.type, rating: e.rating }));
+      .map(({ e, w }) => ({ id: e.id, workId: w!.id, title: w!.title, posterUrl: w!.posterUrl, type: w!.type, rating: e.rating, peopleIds: w!.people.map((p) => p.tmdbId) }));
   }
 
   const [watchlist, seen, lists] = await Promise.all([
@@ -31,5 +31,13 @@ export async function getLibrary(deps: Deps, userId: string): Promise<Library> {
     }),
   );
 
-  return { playlists, watchlist, seen };
+  const ownedWorkIds = new Set([...watchlist, ...seen].map((p) => p.workId));
+  const peopleMap = new Map<number, { id: number; name: string; role: PersonRole }>();
+  for (const id of ownedWorkIds) {
+    const w = await deps.works.findById(id);
+    for (const p of w?.people ?? []) if (!peopleMap.has(p.tmdbId)) peopleMap.set(p.tmdbId, { id: p.tmdbId, name: p.name, role: p.role });
+  }
+  const people = [...peopleMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+
+  return { playlists, watchlist, seen, people };
 }

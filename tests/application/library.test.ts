@@ -29,4 +29,12 @@ describe("getLibrary", () => {
     expect(lib.playlists[0]?.count).toBe(1);
     expect(lib.playlists[0]?.covers.length).toBe(1);
   });
+
+  it("expose peopleIds par poster et la liste distincte des personnes", async () => {
+    await rateOrReviewWork(deps, me, film, { rating: 5, text: null, visibility: "public" });
+    const lib = await getLibrary(deps, me);
+    const matrix = lib.seen.find((p) => p.title === "The Matrix");
+    expect(matrix?.peopleIds).toContain(6384);
+    expect(lib.people.some((x) => x.id === 6384 && x.name === "Keanu Reeves")).toBe(true);
+  });
 });

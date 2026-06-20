@@ -45,7 +45,7 @@ export function LibraryClient() {
   const [viewing, setViewing] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    api.get<Library>("/api/library").then(setData).catch(() => setData({ playlists: [], watchlist: [], seen: [] }));
+    api.get<Library>("/api/library").then(setData).catch(() => setData({ playlists: [], watchlist: [], seen: [], people: [] }));
   }, []);
   useEffect(() => { load(); }, [load]);
 
