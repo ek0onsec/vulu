@@ -39,7 +39,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
             {item.author.plus && <CertifiedBadge />}
           </span>
           <span className="text-[var(--color-text-muted)]"> @{item.author.username} · {relativeTime(item.entry.createdAt)}</span>
-          <p className="text-xs text-[var(--color-text-muted)]">{item.entry.status === "done" ? "a noté" : "veut voir"}</p>
+          <p className="text-xs text-[var(--color-text-muted)]">{item.entry.status === "done" ? "a noté" : (activityVerb(item.entry.status, item.work.type) ?? (item.work.type === "book" ? "veut lire" : "veut voir"))}</p>
         </div>
         <span className={`ml-auto rounded-full px-2.5 py-1 text-xs ${
           isPublic
@@ -54,10 +54,9 @@ export function FeedCard({ item }: { item: FeedItem }) {
         <div className="min-w-0">
           <p className="font-display text-lg font-semibold leading-tight">{item.work.title}</p>
           <p className="text-xs text-[var(--color-text-muted)]">{item.work.year ?? ""} · {typeLabel}</p>
-          {item.entry.status === "in_progress" && (
+          {item.entry.status === "in_progress" && formatProgress(item.entry, item.work) && (
             <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-2.5 py-1 text-xs font-semibold text-[var(--color-primary)]">
-              {activityVerb(item.entry.status, item.work.type)}
-              {formatProgress(item.entry, item.work) && <span>· {formatProgress(item.entry, item.work)}</span>}
+              {formatProgress(item.entry, item.work)}
             </p>
           )}
           {item.entry.rating !== null && (
