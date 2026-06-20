@@ -45,7 +45,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const inProgress = isSelf
     ? await Promise.all((await deps.entries.listByUser(target.id, { status: "in_progress" })).map(async (e) => {
         const w = await deps.works.findById(e.workId);
-        return w ? { entryId: e.id, source: w.source, externalId: w.externalId, title: w.title, posterUrl: w.posterUrl,
+        return w ? { entryId: e.id, workId: w.id, source: w.source, externalId: w.externalId, title: w.title, posterUrl: w.posterUrl,
           type: w.type, episodeCounts: w.episodeCounts, pageCount: w.pageCount, progress: e.progress } : null;
       })).then((xs) => xs.filter((x): x is NonNullable<typeof x> => x !== null))
     : [];

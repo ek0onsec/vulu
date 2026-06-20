@@ -7,7 +7,7 @@ import { formatProgress } from "@/lib/progress";
 import type { EntryProgress, WorkSource, WorkType } from "@/server/domain/entities";
 
 interface Item {
-  entryId: string; source: WorkSource; externalId: string; title: string; posterUrl: string | null;
+  entryId: string; workId: string; source: WorkSource; externalId: string; title: string; posterUrl: string | null;
   type: WorkType; episodeCounts: number[] | null; pageCount: number | null; progress: EntryProgress | null;
 }
 
@@ -29,7 +29,7 @@ export function InProgressShelf({ items }: { items: Item[] }) {
       <div className="flex gap-3 overflow-x-auto pb-1">
         {state.map((it) => (
           <div key={it.entryId} className="w-32 shrink-0">
-            <Link href={`/work/${it.externalId}`} className="block">
+            <Link href={`/work/${it.workId}`} className="block">
               <div className="aspect-[2/3] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)]"
                 style={it.posterUrl ? { backgroundImage: `url(${it.posterUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
               <p className="mt-1.5 line-clamp-1 text-sm font-semibold">{it.title}</p>
