@@ -10,6 +10,7 @@ import { StaffBadge } from "@/components/StaffBadge";
 import { Icon } from "@/components/Icon";
 import { ProfileEditModal } from "@/components/ProfileEditModal";
 import { ProfileTabs, type PosterItem, type ListItem, type ShowcaseWork } from "@/components/ProfileTabs";
+import { InProgressShelf } from "@/components/InProgressShelf";
 import type { LibraryEntry } from "@/server/domain/entities";
 
 export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
@@ -41,6 +42,13 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
     : [];
   const watched = await toPosters(watchedEntries);
   const planned = isSelf ? await toPosters(await deps.entries.listByUser(target.id, { status: "planned" })) : null;
+  const inProgress = isSelf
+    ? await Promise.all((await deps.entries.listByUser(target.id, { status: "in_progress" })).map(async (e) => {
+        const w = await deps.works.findById(e.workId);
+        return w ? { entryId: e.id, source: w.source, externalId: w.externalId, title: w.title, posterUrl: w.posterUrl,
+          type: w.type, episodeCounts: w.episodeCounts, pageCount: w.pageCount, progress: e.progress } : null;
+      })).then((xs) => xs.filter((x): x is NonNullable<typeof x> => x !== null))
+    : [];
 
   const lists: ListItem[] = canView
     ? (await deps.lists.listByUser(target.id))
@@ -93,6 +101,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           </div>
         </div>
       </div>
+
+      {isSelf && inProgress.length > 0 && <div className="mt-6"><InProgressShelf items={inProgress} /></div>}
 
       {canView
         ? <ProfileTabs watched={watched} planned={planned} lists={lists} isSelf={isSelf} showFilms={showFilms} showBooks={showBooks} showcase={showcase} />
