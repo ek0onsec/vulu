@@ -19,4 +19,7 @@ export class CompositeCatalog implements CatalogProvider {
   searchPeople(query: string, domain: Domain): Promise<Person[]> {
     return domain === "books" ? this.books.searchPeople(query) : this.films.searchPeople(query);
   }
+  getPersonCredits(personId: string): Promise<WorkSummary[]> {
+    return this.films.getPersonCredits(personId);
+  }
 }

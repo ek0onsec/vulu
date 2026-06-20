@@ -48,6 +48,26 @@ export class TmdbCatalog {
       }));
   }
 
+  async getPersonCredits(personId: string): Promise<WorkSummary[]> {
+    const d = await this.get<{ cast?: TmdbSearchItem[]; crew?: TmdbSearchItem[] }>(`/person/${personId}/combined_credits`, {});
+    const seen = new Set<number>();
+    const out: WorkSummary[] = [];
+    for (const r of [...(d?.cast ?? []), ...(d?.crew ?? [])]) {
+      if (r.media_type !== "movie" && r.media_type !== "tv") continue;
+      if (seen.has(r.id)) continue;
+      seen.add(r.id);
+      out.push({
+        source: "tmdb",
+        externalId: String(r.id),
+        type: (r.media_type === "tv" ? "tv" : "movie") as WorkType,
+        title: r.title ?? r.name ?? "Sans titre",
+        year: yearOf(r.release_date ?? r.first_air_date),
+        posterUrl: this.img(r.poster_path, "w500"),
+      });
+    }
+    return out;
+  }
+
   async getWork(externalId: string, type: WorkType): Promise<WorkDetails | null> {
     const d = await this.get<TmdbDetails>(`/${type}/${externalId}`, { append_to_response: "credits,watch/providers" });
     if (!d?.id) return null;

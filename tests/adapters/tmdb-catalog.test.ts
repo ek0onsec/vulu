@@ -45,4 +45,21 @@ describe("TmdbCatalog", () => {
     }));
     expect((await c.listGenres()).length).toBe(2);
   });
+  it("getPersonCredits mappe cast+crew, filtre movie/tv, déduplique", async () => {
+    const c = new TmdbCatalog(cfg, fakeFetch({
+      "/person/6384/combined_credits": {
+        cast: [
+          { media_type: "movie", id: 603, title: "The Matrix", release_date: "1999-03-30", poster_path: "/m.jpg" },
+          { media_type: "person", id: 1 },
+        ],
+        crew: [
+          { media_type: "tv", id: 1396, name: "Breaking Bad", first_air_date: "2008-01-20", poster_path: "/b.jpg" },
+          { media_type: "movie", id: 603, title: "The Matrix", release_date: "1999-03-30", poster_path: "/m.jpg" },
+        ],
+      },
+    }));
+    const out = await c.getPersonCredits("6384");
+    expect(out.map((w) => w.externalId).sort()).toEqual(["1396", "603"]);
+    expect(out.find((w) => w.externalId === "603")?.type).toBe("movie");
+  });
 });

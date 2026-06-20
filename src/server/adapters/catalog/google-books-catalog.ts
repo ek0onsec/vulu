@@ -65,6 +65,8 @@ export class GoogleBooksCatalog {
     return (data.items ?? []).map((v) => this.toSummary(v));
   }
 
+  async getPersonCredits(): Promise<WorkSummary[]> { return []; }
+
   async getWork(externalId: string): Promise<WorkDetails | null> {
     const v = await this.get<Volume>(`/volumes/${externalId}`, {});
     if (!v?.id) return null;

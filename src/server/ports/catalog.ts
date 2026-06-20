@@ -26,4 +26,5 @@ export interface CatalogProvider {
   getWork(externalId: string, type: WorkType): Promise<WorkDetails | null>;
   listGenres(domain: Domain): Promise<Genre[]>;
   searchPeople(query: string, domain: Domain): Promise<Person[]>;
+  getPersonCredits(personId: string): Promise<WorkSummary[]>;
 }
