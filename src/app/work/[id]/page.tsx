@@ -65,7 +65,7 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
       </div>
 
       <div className="mt-4">
-        <EntryEditor workRef={{ source: work.source, externalId: work.externalId, type: work.type }} initial={entry} />
+        <EntryEditor workRef={{ source: work.source, externalId: work.externalId, type: work.type }} initial={entry} workType={work.type} episodeCounts={work.episodeCounts} pageCount={work.pageCount} />
       </div>
 
       <div className="mt-3">
