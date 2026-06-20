@@ -102,6 +102,7 @@ export class MongoCommunityRepository implements CommunityRepository {
   constructor(private db: Db) {}
   private get col() { return this.db.collection<M.WithIdCommunity>("communities"); }
   async create(c: Community) { await this.col.insertOne(M.toCommunityDoc(c)); }
+  async update(c: Community) { await this.col.replaceOne({ _id: c.id }, M.toCommunityDoc(c)); }
   async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromCommunityDoc(d) : null; }
   async findBySlug(slug: string) { const d = await this.col.findOne({ slug }); return d ? M.fromCommunityDoc(d) : null; }
   async listPublic(limit: number) { return (await this.col.find({}).sort({ createdAt: -1 }).limit(limit).toArray()).map(M.fromCommunityDoc); }

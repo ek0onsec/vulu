@@ -100,6 +100,7 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
 export class InMemoryCommunityRepository implements CommunityRepository {
   private byId = new Map<string, Community>();
   async create(c: Community) { this.byId.set(c.id, c); }
+  async update(c: Community) { this.byId.set(c.id, c); }
   async findById(id: string) { return this.byId.get(id) ?? null; }
   async findBySlug(slug: string) { return [...this.byId.values()].find((c) => c.slug === slug) ?? null; }
   async listPublic(limit: number) { return [...this.byId.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit); }

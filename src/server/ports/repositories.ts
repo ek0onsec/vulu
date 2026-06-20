@@ -60,6 +60,7 @@ export interface LibraryEntryRepository {
 
 export interface CommunityRepository {
   create(community: Community): Promise<void>;
+  update(community: Community): Promise<void>;
   findById(id: string): Promise<Community | null>;
   findBySlug(slug: string): Promise<Community | null>;
   listPublic(limit: number): Promise<Community[]>;

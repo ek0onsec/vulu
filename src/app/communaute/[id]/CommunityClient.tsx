@@ -1,18 +1,31 @@
 "use client";
-import { useEffect, useState } from "react";
-import { api } from "@/lib/api-client";
+import { useEffect, useRef, useState } from "react";
+import { api, ApiError } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
+import { resizeImage } from "@/lib/image-resize";
 import { FeedCard } from "@/components/FeedCard";
 import { Icon } from "@/components/Icon";
 import type { FeedItem } from "@/server/application/feed";
 
-interface CommunityDto { id: string; name: string; description: string | null; bannerUrl: string | null; memberCount: number; isMember: boolean; isPinned: boolean }
+interface CommunityDto { id: string; name: string; description: string | null; bannerUrl: string | null; memberCount: number; isMember: boolean; isPinned: boolean; isOwner: boolean }
 
 export function CommunityClient({ id }: { id: string }) {
   const [c, setC] = useState<CommunityDto | null>(null);
   const [items, setItems] = useState<FeedItem[] | null>(null);
+  const bannerInput = useRef<HTMLInputElement>(null);
 
   function loadCommunity() { return api.get<{ community: CommunityDto }>(`/api/communities/${id}`).then((d) => setC(d.community)); }
+
+  async function uploadBanner(file: File) {
+    try {
+      const blob = await resizeImage(file, 1500, 500);
+      const res = await fetch(`/api/communities/${id}/banner`, { method: "POST", body: blob, credentials: "same-origin" });
+      const data = await res.json();
+      if (!res.ok) throw new ApiError(res.status, data.error, data.message);
+      setC(data.community);
+      toast("Bannière mise à jour");
+    } catch (e) { toast(e instanceof ApiError ? e.message : "Échec de l'upload", "error"); }
+  }
   useEffect(() => {
     loadCommunity().catch(() => setC(null));
     api.get<{ items: FeedItem[] }>(`/api/communities/${id}/feed`).then((d) => setItems(d.items)).catch(() => setItems([]));
@@ -39,7 +52,18 @@ export function CommunityClient({ id }: { id: string }) {
   return (
     <>
       <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="h-28 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)]" style={c.bannerUrl ? { backgroundImage: `url(${c.bannerUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
+        <div className="relative h-28 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)]" style={c.bannerUrl ? { backgroundImage: `url(${c.bannerUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}>
+          {c.isOwner && (
+            <>
+              <button onClick={() => bannerInput.current?.click()} title="Changer la bannière"
+                className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur hover:bg-black/60">
+                <Icon name="camera" size={15} /> Bannière
+              </button>
+              <input ref={bannerInput} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBanner(f); e.target.value = ""; }} />
+            </>
+          )}
+        </div>
         <div className="p-5">
           <div className="flex items-start justify-between gap-3">
             <div>

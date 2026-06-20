@@ -3,7 +3,7 @@ import { makeInMemoryDeps, type Deps } from "@/server/container";
 import { FakeCatalog } from "../helpers/fake-catalog";
 import {
   createCommunity, joinCommunity, leaveCommunity, setCommunityPinned,
-  myCommunities, pinnedCommunities, communityFeed, getCommunity,
+  myCommunities, pinnedCommunities, communityFeed, getCommunity, setCommunityBanner,
 } from "@/server/application/communities";
 import { rateOrReviewWork } from "@/server/application/library-entry";
 import { registerUser } from "@/server/application/register-user";
@@ -75,5 +75,31 @@ describe("communautés", () => {
     const feed = await communityFeed(deps, u1, c.id, null);
     expect(feed).toHaveLength(1);
     expect(feed[0]?.entry.text).toBe("partagé");
+  });
+});
+
+// PNG minimal (signature + 1 octet) — suffisant pour detectImage.
+const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
+
+describe("bannière de communauté", () => {
+  it("le créateur peut définir une bannière", async () => {
+    const c = await createCommunity(deps, u1, { name: "Cinéphiles", description: null });
+    expect((await getCommunity(deps, u1, c.id)).bannerUrl).toBeNull();
+    const dto = await setCommunityBanner(deps, u1, c.id, pngBytes);
+    expect(dto.bannerUrl).not.toBeNull();
+    expect((await getCommunity(deps, u1, c.id)).bannerUrl).toBe(dto.bannerUrl);
+  });
+  it("un non-créateur ne peut pas", async () => {
+    const c = await createCommunity(deps, u1, { name: "Cinéphiles", description: null });
+    await expect(setCommunityBanner(deps, u2, c.id, pngBytes)).rejects.toThrow(ForbiddenError);
+  });
+  it("rejette un fichier non-image", async () => {
+    const c = await createCommunity(deps, u1, { name: "Cinéphiles", description: null });
+    await expect(setCommunityBanner(deps, u1, c.id, new Uint8Array([1, 2, 3]))).rejects.toThrow(ValidationError);
+  });
+  it("getCommunity expose isOwner", async () => {
+    const c = await createCommunity(deps, u1, { name: "Cinéphiles", description: null });
+    expect((await getCommunity(deps, u1, c.id)).isOwner).toBe(true);
+    expect((await getCommunity(deps, u2, c.id)).isOwner).toBe(false);
   });
 });

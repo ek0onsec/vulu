@@ -2,10 +2,13 @@ import type { Deps } from "@/server/container";
 import type { Community } from "@/server/domain/entities";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
 import { enrichEntries, type FeedItem } from "./feed";
+import { detectImage } from "./profile-media";
+
+const BANNER_MAX = 1_536 * 1024;
 
 export interface CommunityDto {
   id: string; name: string; slug: string; description: string | null; bannerUrl: string | null;
-  memberCount: number; isMember: boolean; isPinned: boolean;
+  memberCount: number; isMember: boolean; isPinned: boolean; isOwner: boolean;
 }
 
 function slugify(name: string): string {
@@ -17,7 +20,25 @@ async function present(deps: Deps, viewerId: string, c: Community): Promise<Comm
     deps.memberships.countForCommunity(c.id),
     deps.memberships.find(c.id, viewerId),
   ]);
-  return { id: c.id, name: c.name, slug: c.slug, description: c.description, bannerUrl: c.bannerUrl, memberCount, isMember: Boolean(membership), isPinned: membership?.pinned ?? false };
+  return { id: c.id, name: c.name, slug: c.slug, description: c.description, bannerUrl: c.bannerUrl, memberCount, isMember: Boolean(membership), isPinned: membership?.pinned ?? false, isOwner: c.ownerId === viewerId };
+}
+
+/** Le créateur d'une communauté téléverse/remplace sa bannière. */
+export async function setCommunityBanner(deps: Deps, userId: string, communityId: string, bytes: Uint8Array): Promise<CommunityDto> {
+  const community = await deps.communities.findById(communityId);
+  if (!community) throw new NotFoundError("Communauté introuvable");
+  if (community.ownerId !== userId) throw new ForbiddenError("Seul le créateur peut modifier la bannière");
+  if (bytes.length === 0) throw new ValidationError("Fichier vide");
+  if (bytes.length > BANNER_MAX) throw new ValidationError("Image trop lourde");
+  const ext = detectImage(bytes);
+  if (!ext) throw new ValidationError("Format non supporté (JPEG, PNG ou WebP)");
+
+  const url = await deps.media.save(bytes, ext);
+  const previous = community.bannerUrl;
+  const updated: Community = { ...community, bannerUrl: url };
+  await deps.communities.update(updated);
+  if (previous) await deps.media.delete(previous);
+  return present(deps, userId, updated);
 }
 
 export async function createCommunity(deps: Deps, ownerId: string, input: { name: string; description: string | null }): Promise<Community> {
