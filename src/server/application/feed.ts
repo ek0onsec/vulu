@@ -6,7 +6,7 @@ import { getCircle } from "./social";
 export interface FeedItem {
   entry: LibraryEntry;
   author: Pick<User, "id" | "username" | "displayName" | "avatarUrl" | "plus" | "staff">;
-  work: Pick<Work, "id" | "title" | "year" | "posterUrl" | "type">;
+  work: Pick<Work, "id" | "title" | "year" | "posterUrl" | "type" | "episodeCounts" | "pageCount">;
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
@@ -26,7 +26,7 @@ export async function enrichEntries(deps: Deps, viewerId: string, entries: Libra
     return {
       entry,
       author: { id: author.id, username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl, plus: author.plus, staff: author.staff },
-      work: { id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type },
+      work: { id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type, episodeCounts: work.episodeCounts, pageCount: work.pageCount },
       likeCount, commentCount, likedByMe: liked.has(entry.id),
     };
   }));

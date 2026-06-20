@@ -7,6 +7,7 @@ import { RatingStars } from "./RatingStars";
 import { CertifiedBadge } from "./CertifiedBadge";
 import { StaffBadge } from "./StaffBadge";
 import { relativeTime } from "@/lib/relative-time";
+import { formatProgress, activityVerb } from "@/lib/progress";
 import { api } from "@/lib/api-client";
 import type { FeedItem } from "@/server/application/feed";
 
@@ -53,6 +54,12 @@ export function FeedCard({ item }: { item: FeedItem }) {
         <div className="min-w-0">
           <p className="font-display text-lg font-semibold leading-tight">{item.work.title}</p>
           <p className="text-xs text-[var(--color-text-muted)]">{item.work.year ?? ""} · {typeLabel}</p>
+          {item.entry.status === "in_progress" && (
+            <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-2.5 py-1 text-xs font-semibold text-[var(--color-primary)]">
+              {activityVerb(item.entry.status, item.work.type)}
+              {formatProgress(item.entry, item.work) && <span>· {formatProgress(item.entry, item.work)}</span>}
+            </p>
+          )}
           {item.entry.rating !== null && (
             <div className="mt-1.5 flex items-center gap-2">
               <RatingStars value={item.entry.rating} size={16} />
