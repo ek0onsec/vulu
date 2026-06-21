@@ -48,6 +48,9 @@ Le créateur (`ownerId`) téléverse une bannière depuis `/communaute/[id]` (bo
 ### ⏳ Backlog — Communautés privées & modération (demandé 2026-06-21)
 Une communauté peut être **privée** : rejoindre crée une **demande d'adhésion** à approuver par le **créateur ou un modérateur**. Implique : `Community.visibility` (public/privé), rôle `moderator` (membership `role`), file de demandes d'adhésion (réutiliser le pattern `FollowRequest`), fil + contenu masqués aux non-membres d'une communauté privée, UI d'approbation/refus côté owner/mods. Les modérateurs peuvent aussi **inviter** des gens (demande de sens inverse). **En cours de cadrage** (spec → plan).
 
+### ⏳ Backlog — Réponses imbriquées & likes de commentaires (demandé 2026-06-21)
+Style Twitter : pouvoir **répondre à un commentaire précis** (fil imbriqué sous le commentaire visé) et **liker des commentaires**. Implique : `Comment.parentId: string | null` (threading), bouton « Répondre » qui cible un commentaire, rendu en arbre (indentation/quinconce conservé), entité/▲ like de commentaire (réutiliser le pattern `Like` en généralisant `entryId`→ cible, ou `CommentLike`), compteur + état likedByMe par commentaire, et notifications associées (réponse à ton commentaire, like de ton commentaire). Cadrer en sous-projet dédié.
+
 ### ⏳ Backlog — Signalement de spoilers communautaire (demandé 2026-06-21)
 Un avis (review) ou un message de discussion peut être **signalé comme spoiler** par les utilisateurs.
 - **Seuil pondéré** : plusieurs signalements de comptes **non-abonnés** sont nécessaires pour flaguer ; **un seul** signalement suffit s'il vient d'un **membre vulu+**, d'un **modérateur de la plateforme** ou d'un **membre de l'équipe vulu**.
