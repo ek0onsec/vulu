@@ -36,7 +36,7 @@ Onglet Notifications (cloche) + agrégation condensée : likes sur tes avis, com
    - **Filtre anti-spoiler IA** : détecte et masque les spoilers (flou + « spoiler potentiel », clic pour révéler).
    - ✅ **Thèmes de couleur supplémentaires** (LIVRÉ) : 5 palettes (Aurore, Forêt, Rétro, Océan, Crépuscule) + marque vulu, surchargeant primary/accent par-dessus clair/sombre (`globals.css [data-palette]`, source `lib/theme.ts PALETTES`). `ThemePicker` dans Affichage : aperçu live pour tous, **sauvegarde réservée à vulu+** (persistée dans `vulu-palette`, restaurée sans flash via `themeNoFlashScript`) ; les non-abonnés voient l'aperçu rétabli en quittant le panneau.
    - paiement réel (Stripe).
-7. **SP3 — Filtres par personne** : explorer œuvres/bibliothèque par acteur / réalisateur / auteur.
+7. ✅ **SP3 — Filtres par personne** (LIVRÉ — 2026-06-21) : page `/personne/[id]` (mes œuvres + découverte catalogue via TMDB `combined_credits` / recherche `inauthor:` pour les livres), filtre par personne dans la bibliothèque (`Library.people` + `peopleIds`), noms cliquables sur la fiche œuvre (section « Équipe & casting ») et dans les favoris. Helpers `personHref`/`parsePersonId`, `getPersonProfile`, `catalog.getPersonCredits`. Spec/plan : `docs/superpowers/{specs,plans}/2026-06-20-filtres-par-personne*`.
 8. **Mécaniques d'habitude** : Wrapped/Rétrospective, Journal & cartes partageables, Notifications in-app & reco perso.
 
 ### ✅ SP-Progression « en cours » (LIVRÉ — 2026-06-20)
@@ -44,6 +44,9 @@ Statut `in_progress` + suivi : séries `S1 E5` (totaux épisodes via TMDB), livr
 
 ### ✅ Bannière de communauté (LIVRÉ — 2026-06-20)
 Le créateur (`ownerId`) téléverse une bannière depuis `/communaute/[id]` (bouton « Bannière » en overlay, réservé à `isOwner`), redimensionnée client-side 1500×500, validée par magic bytes (`detectImage`), stockée via `MediaStorage`. `CommunityRepository.update`, `setCommunityBanner`, `POST /api/communities/:id/banner`, `CommunityDto.isOwner`. Remplace le dégradé par défaut.
+
+### ⏳ Backlog — Communautés privées & modération (demandé 2026-06-21)
+Une communauté peut être **privée** : rejoindre crée une **demande d'adhésion** à approuver par le **créateur ou un modérateur**. Implique : `Community.visibility` (public/privé), rôle `moderator` (membership `role`), file de demandes d'adhésion (réutiliser le pattern `FollowRequest`), fil + contenu masqués aux non-membres d'une communauté privée, UI d'approbation/refus côté owner/mods. Cadrer en sous-projet dédié (spec → plan).
 3. **Communautés (gros sous-système)** : créer des communautés (type Twitter Communities), onglet timeline des communautés publiques pour les rejoindre, ajouter un onglet de communauté rejointe sur le feed principal, et **partage ciblé** d'une activité en **public / cercle / communauté précise**.
 4. **Mécaniques d'habitude (priorisées par l'utilisateur)** :
    - **Rétrospective / Wrapped** (bilan animé annuel/mensuel à partager, façon Spotify Wrapped).
