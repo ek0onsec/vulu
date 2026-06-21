@@ -8,7 +8,7 @@ import { Icon } from "@/components/Icon";
 
 interface CommunityDto { id: string; name: string; slug: string; description: string | null; bannerUrl: string | null; memberCount: number; isMember: boolean; isPinned: boolean }
 
-export function CommunitiesClient() {
+export function CommunitiesClient({ plus }: { plus: boolean }) {
   const [list, setList] = useState<CommunityDto[] | null>(null);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -38,7 +38,9 @@ export function CommunitiesClient() {
     <>
       <div className="mb-5 flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Communautés</h1>
-        <button onClick={() => setCreating(true)} className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white"><Icon name="plus" size={18} /> Créer</button>
+        {plus
+          ? <button onClick={() => setCreating(true)} className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white"><Icon name="plus" size={18} /> Créer</button>
+          : <Link href="/plus" title="Réservé à vulu+" className="flex items-center gap-1.5 rounded-full border border-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-primary)]"><Icon name="lock" size={16} /> Créer · vulu+</Link>}
       </div>
 
       {list === null && <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-[var(--color-border)]" />)}</div>}

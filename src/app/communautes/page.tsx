@@ -6,5 +6,5 @@ import { CommunitiesClient } from "./CommunitiesClient";
 export default async function CommunitiesPage() {
   const user = await currentUser();
   if (!user) redirect("/login");
-  return <AppShell><CommunitiesClient /></AppShell>;
+  return <AppShell><CommunitiesClient plus={user.plus} /></AppShell>;
 }

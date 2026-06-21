@@ -16,6 +16,8 @@ beforeEach(async () => {
   deps = makeInMemoryDeps(new FakeCatalog());
   u1 = (await registerUser(deps, { email: "u1@x.io", username: "user1", displayName: "U1", password: "password1", activeTabs: ["films"], tastes })).id;
   u2 = (await registerUser(deps, { email: "u2@x.io", username: "user2", displayName: "U2", password: "password1", activeTabs: ["films"], tastes })).id;
+  // Créer une communauté est réservé à vulu+ : les créateurs des tests sont abonnés.
+  for (const id of [u1, u2]) { const u = await deps.users.findById(id); await deps.users.update({ ...u!, plus: true }); }
 });
 
 describe("communautés", () => {
@@ -25,6 +27,11 @@ describe("communautés", () => {
     expect(c.ownerId).toBe(u1);
     const m = await deps.memberships.find(c.id, u1);
     expect(m?.pinned).toBe(true);
+  });
+
+  it("réserve la création de communauté aux abonnés vulu+", async () => {
+    const free = (await registerUser(deps, { email: "free@x.io", username: "free", displayName: "Free", password: "password1", activeTabs: ["films"], tastes })).id;
+    await expect(createCommunity(deps, free, { name: "Sans abo", description: null })).rejects.toThrow(ForbiddenError);
   });
 
   it("rejette un nom trop court", async () => {

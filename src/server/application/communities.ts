@@ -42,6 +42,9 @@ export async function setCommunityBanner(deps: Deps, userId: string, communityId
 }
 
 export async function createCommunity(deps: Deps, ownerId: string, input: { name: string; description: string | null }): Promise<Community> {
+  const owner = await deps.users.findById(ownerId);
+  if (!owner) throw new NotFoundError("Utilisateur introuvable");
+  if (!owner.plus) throw new ForbiddenError("La création de communauté est réservée à vulu+");
   const name = input.name.trim();
   if (name.length < 2) throw new ValidationError("Nom de communauté trop court");
   let slug = slugify(name);

@@ -8,6 +8,7 @@ import { Icon } from "@/components/Icon";
 
 const PERKS = [
   { icon: "check" as const, title: "Badge certifié vulu+", desc: "Un badge certifié à côté de ton nom, partout dans l’app." },
+  { icon: "community" as const, title: "Créer des communautés", desc: "Lance tes propres communautés et anime-les (réservé aux abonnés)." },
   { icon: "sun" as const, title: "Thèmes de couleur exclusifs", desc: "Aurore, Forêt, Rétro, Océan, Crépuscule — prévisualisables par tous, sauvegardables seulement avec vulu+." },
   { icon: "shield" as const, title: "Filtre anti-spoiler IA", desc: "Masque automatiquement les spoilers détectés dans les avis (à venir)." },
   { icon: "trending" as const, title: "Rétrospective avancée", desc: "Ton Wrapped détaillé et des statistiques exclusives (à venir)." },
