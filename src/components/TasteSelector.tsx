@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api-client";
 import { Avatar } from "./Avatar";
+import { personHref } from "@/lib/person";
 import type { Tastes, PersonRole } from "@/server/domain/entities";
 import type { Genre, Person } from "@/server/ports/catalog";
 
@@ -86,10 +87,11 @@ export function TasteSelector({ value, onChange, showBooks = false, showPeople =
           {value.people.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {value.people.map((p) => (
-                <button type="button" key={`${p.role}-${p.tmdbId}`} onClick={() => togglePerson({ ...p, profileUrl: null })}
+                <span key={`${p.role}-${p.tmdbId}`}
                   className="flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] px-3 py-1 text-sm text-[var(--color-primary)]">
-                  {p.name} <span className="text-xs">✕</span>
-                </button>
+                  <a href={personHref({ tmdbId: p.tmdbId, name: p.name }, p.role === "author" ? "book" : "tmdb")} target="_blank" rel="noopener noreferrer" className="hover:underline">{p.name}</a>
+                  <button type="button" onClick={() => togglePerson({ ...p, profileUrl: null })} aria-label={`Retirer ${p.name}`} className="text-xs">✕</button>
+                </span>
               ))}
             </div>
           )}

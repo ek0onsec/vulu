@@ -7,6 +7,8 @@ import { AddToListButton } from "@/components/AddToListButton";
 import { WorkReviews } from "@/components/WorkReviews";
 import { RatingStars } from "@/components/RatingStars";
 import { BackButton } from "@/components/BackButton";
+import Link from "next/link";
+import { personHref } from "@/lib/person";
 
 export default async function WorkPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await currentUser();
@@ -58,6 +60,19 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
                   {p.logoUrl && <img src={p.logoUrl} alt="" width={18} height={18} className="rounded" />}
                   {p.name}
                 </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {work.people.length > 0 && (
+          <div className="px-5 pb-5">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Équipe &amp; casting</p>
+            <div className="flex flex-wrap gap-2">
+              {work.people.map((p) => (
+                <Link key={`${p.role}-${p.tmdbId}`} href={personHref({ tmdbId: p.tmdbId, name: p.name }, work.type === "book" ? "book" : "tmdb")}
+                  className="rounded-full border border-[var(--color-border)] px-3 py-1 text-xs font-medium hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]">
+                  {p.name}
+                </Link>
               ))}
             </div>
           </div>
