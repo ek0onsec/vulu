@@ -110,3 +110,21 @@ describe("bannière de communauté", () => {
     expect((await getCommunity(deps, u2, c.id)).isOwner).toBe(false);
   });
 });
+
+describe("communautés privées — adhésion", () => {
+  it("rejoindre une communauté publique crée un membership", async () => {
+    const c = await createCommunity(deps, u1, { name: "Publique", description: null });
+    await joinCommunity(deps, u2, c.id);
+    expect(await deps.memberships.find(c.id, u2)).not.toBeNull();
+  });
+  it("rejoindre une privée crée une demande, pas un membership", async () => {
+    const c = await createCommunity(deps, u1, { name: "Privee", description: null, visibility: "private" });
+    await joinCommunity(deps, u2, c.id);
+    expect(await deps.memberships.find(c.id, u2)).toBeNull();
+    expect(await deps.communityRequests.findPair(c.id, u2)).not.toBeNull();
+  });
+  it("le créateur ne peut pas quitter sa communauté", async () => {
+    const c = await createCommunity(deps, u1, { name: "Owner Comm", description: null });
+    await expect(leaveCommunity(deps, u1, c.id)).rejects.toThrow(ForbiddenError);
+  });
+});

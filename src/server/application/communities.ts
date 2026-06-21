@@ -67,14 +67,36 @@ export async function getCommunity(deps: Deps, viewerId: string, id: string): Pr
   return present(deps, viewerId, c);
 }
 
+export async function canModerate(deps: Deps, communityId: string, userId: string): Promise<boolean> {
+  const m = await deps.memberships.find(communityId, userId);
+  return m?.role === "owner" || m?.role === "moderator";
+}
+
 export async function joinCommunity(deps: Deps, userId: string, communityId: string): Promise<void> {
   const c = await deps.communities.findById(communityId);
   if (!c) throw new NotFoundError("Communauté introuvable");
+  if (await deps.memberships.find(communityId, userId)) return;
+  if (c.visibility === "private") {
+    if (await deps.communityRequests.findPair(communityId, userId)) return;
+    await deps.communityRequests.add({ id: deps.ids.next(), communityId, userId, kind: "request", createdAt: deps.clock.now() });
+    return;
+  }
   await deps.memberships.add({ communityId, userId, pinned: false, role: "member", createdAt: deps.clock.now() });
 }
 
 export async function leaveCommunity(deps: Deps, userId: string, communityId: string): Promise<void> {
+  const c = await deps.communities.findById(communityId);
+  if (c && c.ownerId === userId) throw new ForbiddenError("Le créateur ne peut pas quitter sa communauté");
   await deps.memberships.remove(communityId, userId);
+  const pending = await deps.communityRequests.findPair(communityId, userId);
+  if (pending) await deps.communityRequests.remove(pending.id);
+}
+
+export async function setCommunityVisibility(deps: Deps, ownerId: string, communityId: string, visibility: "public" | "private"): Promise<void> {
+  const c = await deps.communities.findById(communityId);
+  if (!c) throw new NotFoundError("Communauté introuvable");
+  if (c.ownerId !== ownerId) throw new ForbiddenError("Seul le créateur peut changer la visibilité");
+  await deps.communities.update({ ...c, visibility });
 }
 
 export async function setCommunityPinned(deps: Deps, userId: string, communityId: string, pinned: boolean): Promise<void> {
