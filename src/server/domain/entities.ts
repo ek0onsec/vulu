@@ -97,21 +97,33 @@ export interface LibraryEntry {
   updatedAt: Date;
 }
 
-/** Communauté publique (type X Communities). */
+/** Communauté (type X Communities), publique ou privée. */
 export interface Community {
   id: string;
   name: string;
   slug: string;
   description: string | null;
   bannerUrl: string | null;
+  visibility: "public" | "private";
   ownerId: string;
   createdAt: Date;
 }
+
+export type CommunityRole = "owner" | "moderator" | "member";
 
 export interface Membership {
   communityId: string;
   userId: string;
   pinned: boolean;       // épinglée comme onglet du feed
+  role: CommunityRole;
+  createdAt: Date;
+}
+
+export interface CommunityRequest {
+  id: string;
+  communityId: string;
+  userId: string;
+  kind: "request" | "invite"; // "request" = demandé par l'utilisateur ; "invite" = par un mod
   createdAt: Date;
 }
 

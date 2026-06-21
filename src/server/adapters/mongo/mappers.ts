@@ -1,4 +1,4 @@
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, Community, Membership } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, Community, Membership, CommunityRequest } from "@/server/domain/entities";
 import { isPublishable } from "@/server/domain/feed-rules";
 
 type WithId<T> = T & { _id: string };
@@ -24,11 +24,22 @@ export const fromFollowDoc = (d: WithIdFollow): Follow => strip(d);
 export const toFollowRequestDoc = (r: FollowRequest): WithIdFollowRequest => ({ _id: r.id, ...r });
 export const fromFollowRequestDoc = (d: WithIdFollowRequest): FollowRequest => strip(d);
 
+export type WithIdCommunityRequest = WithId<CommunityRequest>;
+
 export const toCommunityDoc = (c: Community): WithIdCommunity => ({ _id: c.id, ...c });
-export const fromCommunityDoc = (d: WithIdCommunity): Community => strip(d);
+export const fromCommunityDoc = (d: WithIdCommunity): Community => {
+  const c = strip(d);
+  return { ...c, visibility: c.visibility ?? "public" };
+};
 
 export const toMembershipDoc = (m: Membership): WithIdMembership => ({ _id: `${m.communityId}:${m.userId}`, ...m });
-export const fromMembershipDoc = (d: WithIdMembership): Membership => strip(d);
+export const fromMembershipDoc = (d: WithIdMembership): Membership => {
+  const m = strip(d);
+  return { ...m, role: m.role ?? "member" };
+};
+
+export const toCommunityRequestDoc = (r: CommunityRequest): WithIdCommunityRequest => ({ _id: r.id, ...r });
+export const fromCommunityRequestDoc = (d: WithIdCommunityRequest): CommunityRequest => strip(d);
 
 export const toWorkDoc = (w: Work): WithIdWork => ({ _id: w.id, ...w });
 export const fromWorkDoc = (d: WithIdWork): Work => {

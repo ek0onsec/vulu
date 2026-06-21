@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toUserDoc, fromUserDoc, toEntryDoc, fromEntryDoc, fromWorkDoc } from "@/server/adapters/mongo/mappers";
+import { toUserDoc, fromUserDoc, toEntryDoc, fromEntryDoc, fromWorkDoc, fromCommunityDoc, fromMembershipDoc } from "@/server/adapters/mongo/mappers";
 import type { User, LibraryEntry } from "@/server/domain/entities";
 
 const user: User = { id: "u1", email: "a@x.io", passwordHash: "h", username: "alice",
@@ -41,5 +41,18 @@ describe("mappers — rétro-compat progression", () => {
       genres: [], people: [], externalRating: null, watchProviders: [], cachedAt: new Date() });
     expect(w.episodeCounts).toBeNull();
     expect(w.pageCount).toBeNull();
+  });
+});
+
+describe("mappers — rétro-compat communautés privées", () => {
+  it("fromCommunityDoc backfille visibility public", () => {
+    // @ts-expect-error doc legacy sans visibility
+    const c = fromCommunityDoc({ _id: "c", id: "c", name: "X", slug: "x", description: null, bannerUrl: null, ownerId: "u", createdAt: new Date() });
+    expect(c.visibility).toBe("public");
+  });
+  it("fromMembershipDoc backfille role member", () => {
+    // @ts-expect-error doc legacy sans role
+    const m = fromMembershipDoc({ _id: "c:u", communityId: "c", userId: "u", pinned: false, createdAt: new Date() });
+    expect(m.role).toBe("member");
   });
 });

@@ -41,7 +41,7 @@ export async function setCommunityBanner(deps: Deps, userId: string, communityId
   return present(deps, userId, updated);
 }
 
-export async function createCommunity(deps: Deps, ownerId: string, input: { name: string; description: string | null }): Promise<Community> {
+export async function createCommunity(deps: Deps, ownerId: string, input: { name: string; description: string | null; visibility?: "public" | "private" }): Promise<Community> {
   const owner = await deps.users.findById(ownerId);
   if (!owner) throw new NotFoundError("Utilisateur introuvable");
   if (!owner.plus) throw new ForbiddenError("La création de communauté est réservée à vulu+");
@@ -50,9 +50,9 @@ export async function createCommunity(deps: Deps, ownerId: string, input: { name
   let slug = slugify(name);
   for (let i = 2; await deps.communities.findBySlug(slug); i++) slug = `${slugify(name)}-${i}`;
   const now = deps.clock.now();
-  const community: Community = { id: deps.ids.next(), name, slug, description: input.description, bannerUrl: null, ownerId, createdAt: now };
+  const community: Community = { id: deps.ids.next(), name, slug, description: input.description, bannerUrl: null, visibility: input.visibility ?? "public", ownerId, createdAt: now };
   await deps.communities.create(community);
-  await deps.memberships.add({ communityId: community.id, userId: ownerId, pinned: true, createdAt: now });
+  await deps.memberships.add({ communityId: community.id, userId: ownerId, pinned: true, role: "owner", createdAt: now });
   return community;
 }
 
@@ -70,7 +70,7 @@ export async function getCommunity(deps: Deps, viewerId: string, id: string): Pr
 export async function joinCommunity(deps: Deps, userId: string, communityId: string): Promise<void> {
   const c = await deps.communities.findById(communityId);
   if (!c) throw new NotFoundError("Communauté introuvable");
-  await deps.memberships.add({ communityId, userId, pinned: false, createdAt: deps.clock.now() });
+  await deps.memberships.add({ communityId, userId, pinned: false, role: "member", createdAt: deps.clock.now() });
 }
 
 export async function leaveCommunity(deps: Deps, userId: string, communityId: string): Promise<void> {
