@@ -1,9 +1,9 @@
 import type { Db, Filter } from "mongodb";
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
 import * as M from "./mappers";
 
 export class MongoUserRepository implements UserRepository {
@@ -118,6 +118,21 @@ export class MongoMembershipRepository implements MembershipRepository {
   async listForUser(userId: string) { return (await this.col.find({ userId }).toArray()).map(M.fromMembershipDoc); }
   async setPinned(communityId: string, userId: string, pinned: boolean) { await this.col.updateOne({ _id: `${communityId}:${userId}` }, { $set: { pinned } }); }
   async countForCommunity(communityId: string) { return this.col.countDocuments({ communityId }); }
+  async setRole(communityId: string, userId: string, role: CommunityRole) { await this.col.updateOne({ _id: `${communityId}:${userId}` }, { $set: { role } }); }
+  async listForCommunity(communityId: string) { return (await this.col.find({ communityId }).toArray()).map(M.fromMembershipDoc); }
+}
+
+export class MongoCommunityRequestRepository implements CommunityRequestRepository {
+  constructor(private db: Db) {}
+  private get col() { return this.db.collection<M.WithIdCommunityRequest>("community_requests"); }
+  async add(r: CommunityRequest) { await this.col.updateOne({ communityId: r.communityId, userId: r.userId }, { $setOnInsert: M.toCommunityRequestDoc(r) }, { upsert: true }); }
+  async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromCommunityRequestDoc(d) : null; }
+  async findPair(communityId: string, userId: string) { const d = await this.col.findOne({ communityId, userId }); return d ? M.fromCommunityRequestDoc(d) : null; }
+  async listForCommunity(communityId: string) { return (await this.col.find({ communityId, kind: "request" }).sort({ createdAt: -1 }).toArray()).map(M.fromCommunityRequestDoc); }
+  async listInvitesForUser(userId: string) { return (await this.col.find({ userId, kind: "invite" }).sort({ createdAt: -1 }).toArray()).map(M.fromCommunityRequestDoc); }
+  async remove(id: string) { await this.col.deleteOne({ _id: id }); }
+  async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }
+  async removeAllForCommunity(communityId: string) { await this.col.deleteMany({ communityId }); }
 }
 
 export class MongoListRepository implements ListRepository {

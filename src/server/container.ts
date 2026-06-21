@@ -1,7 +1,7 @@
 import {
   InMemoryUserRepository, InMemoryFollowRepository, InMemoryWorkRepository,
   InMemoryLibraryEntryRepository, InMemoryListRepository, InMemoryLikeRepository, InMemoryCommentRepository,
-  InMemoryFollowRequestRepository, InMemoryCommunityRepository, InMemoryMembershipRepository,
+  InMemoryFollowRequestRepository, InMemoryCommunityRepository, InMemoryMembershipRepository, InMemoryCommunityRequestRepository,
 } from "@/server/adapters/memory";
 import { BcryptHasher } from "@/server/adapters/security/bcrypt-hasher";
 import { JwtTokenService } from "@/server/adapters/security/jwt-token-service";
@@ -9,7 +9,7 @@ import { UuidIdGenerator } from "@/server/adapters/security/uuid-id-generator";
 import { SystemClock } from "@/server/adapters/security/system-clock";
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository,
 } from "@/server/ports/repositories";
 import type { CatalogProvider } from "@/server/ports/catalog";
 import type { PasswordHasher, TokenService, IdGenerator, Clock } from "@/server/ports/security";
@@ -21,7 +21,7 @@ import { getDb } from "@/server/adapters/mongo/client";
 import {
   MongoUserRepository, MongoFollowRepository, MongoWorkRepository, MongoLibraryEntryRepository,
   MongoListRepository, MongoLikeRepository, MongoCommentRepository, MongoFollowRequestRepository,
-  MongoCommunityRepository, MongoMembershipRepository,
+  MongoCommunityRepository, MongoMembershipRepository, MongoCommunityRequestRepository,
 } from "@/server/adapters/mongo/repositories";
 import { TmdbCatalog } from "@/server/adapters/catalog/tmdb-catalog";
 import { GoogleBooksCatalog } from "@/server/adapters/catalog/google-books-catalog";
@@ -34,6 +34,7 @@ export interface Deps {
   followRequests: FollowRequestRepository;
   communities: CommunityRepository;
   memberships: MembershipRepository;
+  communityRequests: CommunityRequestRepository;
   works: WorkRepository;
   entries: LibraryEntryRepository;
   lists: ListRepository;
@@ -55,6 +56,7 @@ export function makeInMemoryDeps(catalog: CatalogProvider): Deps {
     followRequests: new InMemoryFollowRequestRepository(),
     communities: new InMemoryCommunityRepository(),
     memberships: new InMemoryMembershipRepository(),
+    communityRequests: new InMemoryCommunityRequestRepository(),
     works: new InMemoryWorkRepository(),
     entries: new InMemoryLibraryEntryRepository(),
     lists: new InMemoryListRepository(),
@@ -82,6 +84,7 @@ export async function getDeps(): Promise<Deps> {
     followRequests: new MongoFollowRequestRepository(db),
     communities: new MongoCommunityRepository(db),
     memberships: new MongoMembershipRepository(db),
+    communityRequests: new MongoCommunityRequestRepository(db),
     works: new MongoWorkRepository(db),
     entries: new MongoLibraryEntryRepository(db),
     lists: new MongoListRepository(db),

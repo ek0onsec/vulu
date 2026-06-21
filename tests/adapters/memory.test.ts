@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { InMemoryUserRepository, InMemoryFollowRepository, InMemoryLibraryEntryRepository } from "@/server/adapters/memory";
+import { InMemoryUserRepository, InMemoryFollowRepository, InMemoryLibraryEntryRepository, InMemoryMembershipRepository, InMemoryCommunityRequestRepository } from "@/server/adapters/memory";
 import type { User, LibraryEntry } from "@/server/domain/entities";
 
 function user(id: string, over: Partial<User> = {}): User {
@@ -61,5 +61,29 @@ describe("InMemoryLibraryEntryRepository — feed activityAt", () => {
     await repo.upsert(mk("b", new Date(2023, 0, 1)));
     const out = await repo.feed({ scope: "foryou", circleUserIds: [], viewerId: "u", domains: ["films"], cursor: { activityAt: new Date(2023, 0, 1), id: "b" }, limit: 10 });
     expect(out.map((e) => e.id)).toEqual(["a"]);
+  });
+});
+
+describe("InMemoryMembershipRepository — rôles", () => {
+  it("setRole et listForCommunity", async () => {
+    const r = new InMemoryMembershipRepository();
+    await r.add({ communityId: "c", userId: "u1", pinned: true, role: "owner", createdAt: new Date() });
+    await r.add({ communityId: "c", userId: "u2", pinned: false, role: "member", createdAt: new Date() });
+    await r.setRole("c", "u2", "moderator");
+    const members = await r.listForCommunity("c");
+    expect(members).toHaveLength(2);
+    expect((await r.find("c", "u2"))?.role).toBe("moderator");
+  });
+});
+
+describe("InMemoryCommunityRequestRepository", () => {
+  it("add idempotent par couple + listForCommunity (requests) + listInvitesForUser", async () => {
+    const r = new InMemoryCommunityRequestRepository();
+    await r.add({ id: "r1", communityId: "c", userId: "u1", kind: "request", createdAt: new Date() });
+    await r.add({ id: "r1b", communityId: "c", userId: "u1", kind: "request", createdAt: new Date() }); // doublon couple → ignoré
+    await r.add({ id: "r2", communityId: "c", userId: "u2", kind: "invite", createdAt: new Date() });
+    expect((await r.listForCommunity("c")).map((x) => x.id)).toEqual(["r1"]);
+    expect((await r.listInvitesForUser("u2")).map((x) => x.id)).toEqual(["r2"]);
+    expect((await r.findPair("c", "u1"))?.id).toBe("r1");
   });
 });

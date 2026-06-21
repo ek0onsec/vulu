@@ -1,4 +1,4 @@
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
 
 export interface UserRepository {
   create(user: User): Promise<void>;
@@ -74,6 +74,19 @@ export interface MembershipRepository {
   listForUser(userId: string): Promise<Membership[]>;
   setPinned(communityId: string, userId: string, pinned: boolean): Promise<void>;
   countForCommunity(communityId: string): Promise<number>;
+  setRole(communityId: string, userId: string, role: CommunityRole): Promise<void>;
+  listForCommunity(communityId: string): Promise<Membership[]>;
+}
+
+export interface CommunityRequestRepository {
+  add(request: CommunityRequest): Promise<void>;
+  findById(id: string): Promise<CommunityRequest | null>;
+  findPair(communityId: string, userId: string): Promise<CommunityRequest | null>;
+  listForCommunity(communityId: string): Promise<CommunityRequest[]>;   // kind:"request"
+  listInvitesForUser(userId: string): Promise<CommunityRequest[]>;      // kind:"invite"
+  remove(id: string): Promise<void>;
+  removeAllForUser(userId: string): Promise<void>;
+  removeAllForCommunity(communityId: string): Promise<void>;
 }
 export interface ListRepository {
   create(list: List): Promise<void>;

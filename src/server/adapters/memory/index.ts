@@ -1,8 +1,8 @@
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
 import { isPublishable, isFeedVisible } from "@/server/domain/feed-rules";
 
 export class InMemoryUserRepository implements UserRepository {
@@ -115,6 +115,20 @@ export class InMemoryMembershipRepository implements MembershipRepository {
   async listForUser(userId: string) { return this.rows.filter((m) => m.userId === userId); }
   async setPinned(communityId: string, userId: string, pinned: boolean) { const m = await this.find(communityId, userId); if (m) m.pinned = pinned; }
   async countForCommunity(communityId: string) { return this.rows.filter((m) => m.communityId === communityId).length; }
+  async setRole(communityId: string, userId: string, role: CommunityRole) { const m = await this.find(communityId, userId); if (m) m.role = role; }
+  async listForCommunity(communityId: string) { return this.rows.filter((m) => m.communityId === communityId); }
+}
+
+export class InMemoryCommunityRequestRepository implements CommunityRequestRepository {
+  private reqs: CommunityRequest[] = [];
+  async add(r: CommunityRequest) { if (!(await this.findPair(r.communityId, r.userId))) this.reqs.push(r); }
+  async findById(id: string) { return this.reqs.find((r) => r.id === id) ?? null; }
+  async findPair(communityId: string, userId: string) { return this.reqs.find((r) => r.communityId === communityId && r.userId === userId) ?? null; }
+  async listForCommunity(communityId: string) { return this.reqs.filter((r) => r.communityId === communityId && r.kind === "request").sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); }
+  async listInvitesForUser(userId: string) { return this.reqs.filter((r) => r.userId === userId && r.kind === "invite").sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); }
+  async remove(id: string) { this.reqs = this.reqs.filter((r) => r.id !== id); }
+  async removeAllForUser(userId: string) { this.reqs = this.reqs.filter((r) => r.userId !== userId); }
+  async removeAllForCommunity(communityId: string) { this.reqs = this.reqs.filter((r) => r.communityId !== communityId); }
 }
 
 export class InMemoryListRepository implements ListRepository {
