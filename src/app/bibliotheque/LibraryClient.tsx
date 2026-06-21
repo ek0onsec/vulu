@@ -5,6 +5,7 @@ import { api } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
 import { Modal } from "@/components/Modal";
 import { Icon } from "@/components/Icon";
+import { personHref } from "@/lib/person";
 import { PlaylistCard } from "@/components/PlaylistCard";
 import { ListDetailModal } from "@/components/ListDetailModal";
 import type { Library, LibraryPoster } from "@/server/application/library";
@@ -36,6 +37,7 @@ function PosterRow({ items, empty }: { items: LibraryPoster[]; empty: string }) 
 export function LibraryClient() {
   const [data, setData] = useState<Library | null>(null);
   const [filter, setFilter] = useState<TypeFilter>("all");
+  const [person, setPerson] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -65,8 +67,10 @@ export function LibraryClient() {
     return <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">{Array.from({ length: 10 }).map((_, i) => <div key={i} className="aspect-[2/3] animate-pulse rounded-xl bg-[var(--color-border)]" />)}</div>;
   }
 
-  const watchlist = data.watchlist.filter((x) => match(x.type));
-  const seen = data.seen.filter((x) => match(x.type));
+  const matchPerson = (ids: number[]) => person === null || ids.includes(person);
+  const watchlist = data.watchlist.filter((x) => match(x.type) && matchPerson(x.peopleIds));
+  const seen = data.seen.filter((x) => match(x.type) && matchPerson(x.peopleIds));
+  const selectedPerson = person !== null ? data.people.find((x) => x.id === person) ?? null : null;
 
   return (
     <>
@@ -77,7 +81,7 @@ export function LibraryClient() {
         </button>
       </div>
 
-      <div className="mb-6 flex gap-2 overflow-x-auto">
+      <div className="mb-3 flex gap-2 overflow-x-auto">
         {FILTERS.map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
             className={`shrink-0 rounded-full border px-4 py-1.5 text-sm transition-colors ${filter === f.id ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)]"}`}>
@@ -85,6 +89,20 @@ export function LibraryClient() {
           </button>
         ))}
       </div>
+
+      {data.people.length > 0 && (
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <select value={person ?? ""} onChange={(e) => setPerson(e.target.value ? Number(e.target.value) : null)}
+            className="rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-1.5 text-sm">
+            <option value="">Toutes les personnes</option>
+            {data.people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          {selectedPerson && (
+            <Link href={personHref({ tmdbId: selectedPerson.id, name: selectedPerson.name }, selectedPerson.role === "author" ? "book" : "tmdb")}
+              className="text-sm font-semibold text-[var(--color-primary)] hover:underline">Voir la page de {selectedPerson.name}</Link>
+          )}
+        </div>
+      )}
 
       <section className="mb-8">
         <div className="mb-3 flex items-center justify-between">
