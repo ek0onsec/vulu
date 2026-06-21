@@ -28,7 +28,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       <FeedCard item={item} />
       <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
         <h2 className="mb-1 font-display text-lg font-bold">Discussion</h2>
-        <CommentThread entryId={item.entry.id} />
+        <CommentThread entryId={item.entry.id} me={user.username} />
       </section>
     </AppShell>
   );

@@ -12,7 +12,7 @@ interface PresentedComment {
   author: { username: string; displayName: string; avatarUrl: string | null; plus: boolean; staff: boolean };
 }
 
-export function CommentThread({ entryId, onCount }: { entryId: string; onCount?: (n: number) => void }) {
+export function CommentThread({ entryId, me, onCount }: { entryId: string; me: string; onCount?: (n: number) => void }) {
   const [comments, setComments] = useState<PresentedComment[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -38,10 +38,10 @@ export function CommentThread({ entryId, onCount }: { entryId: string; onCount?:
 
   return (
     <div className="mt-3 border-t border-[var(--color-border)] pt-3">
-      {/* Fil en quinconce : les commentaires alternent gauche/droite pour un rendu conversationnel. */}
+      {/* Fil en quinconce façon messagerie : mes commentaires à droite, ceux des autres à gauche. */}
       <ul className="flex flex-col gap-3">
-        {comments.map((c, i) => {
-          const right = i % 2 === 1;
+        {comments.map((c) => {
+          const right = c.author.username === me;
           return (
             <li key={c.id} className={`flex max-w-[88%] gap-2.5 ${right ? "flex-row-reverse self-end text-right" : "self-start"}`}>
               <Avatar name={c.author.displayName} src={c.author.avatarUrl} size={28} />
