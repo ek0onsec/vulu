@@ -1,6 +1,6 @@
 import type { Deps } from "@/server/container";
 import type { Community } from "@/server/domain/entities";
-import { ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
 import { enrichEntries, type FeedItem } from "./feed";
 import { detectImage } from "./profile-media";
 
@@ -111,6 +111,28 @@ export async function rejectJoinRequest(deps: Deps, actorId: string, requestId: 
   const req = await deps.communityRequests.findById(requestId);
   if (!req || req.kind !== "request") throw new NotFoundError("Demande introuvable");
   if (!(await canModerate(deps, req.communityId, actorId))) throw new ForbiddenError("Action réservée à la modération");
+  await deps.communityRequests.remove(req.id);
+}
+
+export async function inviteToCommunity(deps: Deps, actorId: string, communityId: string, targetUsername: string): Promise<void> {
+  if (!(await canModerate(deps, communityId, actorId))) throw new ForbiddenError("Action réservée à la modération");
+  const target = await deps.users.findByUsername(targetUsername.toLowerCase());
+  if (!target) throw new NotFoundError("Utilisateur introuvable");
+  if (await deps.memberships.find(communityId, target.id)) throw new ConflictError("Déjà membre");
+  if (await deps.communityRequests.findPair(communityId, target.id)) throw new ConflictError("Demande ou invitation déjà en attente");
+  await deps.communityRequests.add({ id: deps.ids.next(), communityId, userId: target.id, kind: "invite", createdAt: deps.clock.now() });
+}
+
+export async function acceptInvite(deps: Deps, userId: string, requestId: string): Promise<void> {
+  const req = await deps.communityRequests.findById(requestId);
+  if (!req || req.kind !== "invite" || req.userId !== userId) throw new NotFoundError("Invitation introuvable");
+  await deps.memberships.add({ communityId: req.communityId, userId, pinned: false, role: "member", createdAt: deps.clock.now() });
+  await deps.communityRequests.remove(req.id);
+}
+
+export async function declineInvite(deps: Deps, userId: string, requestId: string): Promise<void> {
+  const req = await deps.communityRequests.findById(requestId);
+  if (!req || req.kind !== "invite" || req.userId !== userId) throw new NotFoundError("Invitation introuvable");
   await deps.communityRequests.remove(req.id);
 }
 

@@ -4,11 +4,11 @@ import { FakeCatalog } from "../helpers/fake-catalog";
 import {
   createCommunity, joinCommunity, leaveCommunity, setCommunityPinned,
   myCommunities, pinnedCommunities, communityFeed, getCommunity, setCommunityBanner,
-  approveJoinRequest, rejectJoinRequest,
+  approveJoinRequest, rejectJoinRequest, inviteToCommunity, acceptInvite, declineInvite,
 } from "@/server/application/communities";
 import { rateOrReviewWork } from "@/server/application/library-entry";
 import { registerUser } from "@/server/application/register-user";
-import { ValidationError, ForbiddenError } from "@/server/domain/errors";
+import { ValidationError, ForbiddenError, ConflictError } from "@/server/domain/errors";
 
 let deps: Deps; let u1: string; let u2: string;
 const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
@@ -152,5 +152,33 @@ describe("communautés privées — modération des demandes", () => {
     await rejectJoinRequest(deps, u1, reqId);
     expect(await deps.memberships.find(c.id, u2)).toBeNull();
     expect(await deps.communityRequests.findById(reqId)).toBeNull();
+  });
+});
+
+describe("communautés privées — invitations", () => {
+  it("un mod invite par username ; l'invité accepte → membership", async () => {
+    const c = await createCommunity(deps, u1, { name: "Privee", description: null, visibility: "private" });
+    await inviteToCommunity(deps, u1, c.id, "user2"); // u2.username = "user2"
+    const inv = (await deps.communityRequests.listInvitesForUser(u2))[0];
+    expect(inv?.kind).toBe("invite");
+    await acceptInvite(deps, u2, inv!.id);
+    expect(await deps.memberships.find(c.id, u2)).not.toBeNull();
+  });
+  it("inviter deux fois → ConflictError", async () => {
+    const c = await createCommunity(deps, u1, { name: "Privee", description: null, visibility: "private" });
+    await inviteToCommunity(deps, u1, c.id, "user2");
+    await expect(inviteToCommunity(deps, u1, c.id, "user2")).rejects.toThrow(ConflictError);
+  });
+  it("refuser une invitation la supprime sans membership", async () => {
+    const c = await createCommunity(deps, u1, { name: "Privee", description: null, visibility: "private" });
+    await inviteToCommunity(deps, u1, c.id, "user2");
+    const inv = (await deps.communityRequests.listInvitesForUser(u2))[0];
+    await declineInvite(deps, u2, inv!.id);
+    expect(await deps.memberships.find(c.id, u2)).toBeNull();
+    expect(await deps.communityRequests.findById(inv!.id)).toBeNull();
+  });
+  it("un non-modérateur ne peut pas inviter", async () => {
+    const c = await createCommunity(deps, u1, { name: "Privee", description: null, visibility: "private" });
+    await expect(inviteToCommunity(deps, u2, c.id, "user1")).rejects.toThrow(ForbiddenError);
   });
 });
