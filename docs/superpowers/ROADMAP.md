@@ -46,7 +46,15 @@ Statut `in_progress` + suivi : séries `S1 E5` (totaux épisodes via TMDB), livr
 Le créateur (`ownerId`) téléverse une bannière depuis `/communaute/[id]` (bouton « Bannière » en overlay, réservé à `isOwner`), redimensionnée client-side 1500×500, validée par magic bytes (`detectImage`), stockée via `MediaStorage`. `CommunityRepository.update`, `setCommunityBanner`, `POST /api/communities/:id/banner`, `CommunityDto.isOwner`. Remplace le dégradé par défaut.
 
 ### ⏳ Backlog — Communautés privées & modération (demandé 2026-06-21)
-Une communauté peut être **privée** : rejoindre crée une **demande d'adhésion** à approuver par le **créateur ou un modérateur**. Implique : `Community.visibility` (public/privé), rôle `moderator` (membership `role`), file de demandes d'adhésion (réutiliser le pattern `FollowRequest`), fil + contenu masqués aux non-membres d'une communauté privée, UI d'approbation/refus côté owner/mods. Cadrer en sous-projet dédié (spec → plan).
+Une communauté peut être **privée** : rejoindre crée une **demande d'adhésion** à approuver par le **créateur ou un modérateur**. Implique : `Community.visibility` (public/privé), rôle `moderator` (membership `role`), file de demandes d'adhésion (réutiliser le pattern `FollowRequest`), fil + contenu masqués aux non-membres d'une communauté privée, UI d'approbation/refus côté owner/mods. Les modérateurs peuvent aussi **inviter** des gens (demande de sens inverse). **En cours de cadrage** (spec → plan).
+
+### ⏳ Backlog — Signalement de spoilers communautaire (demandé 2026-06-21)
+Un avis (review) ou un message de discussion peut être **signalé comme spoiler** par les utilisateurs.
+- **Seuil pondéré** : plusieurs signalements de comptes **non-abonnés** sont nécessaires pour flaguer ; **un seul** signalement suffit s'il vient d'un **membre vulu+**, d'un **modérateur de la plateforme** ou d'un **membre de l'équipe vulu**.
+- **Effet visuel** (dans le feed ET sur la page d'une œuvre film/série/livre) : le contenu flagué est **flouté** + **bandeau « spoiler potentiel »** par-dessus + **bouton « Afficher quand même »**.
+- **Contre-signalement** : option « signaler comme non-spoiler » avec la même mécanique de seuil pour **annuler** le flag.
+- **Provenance affichée** : indiquer **par qui** le spoiler a été détecté — soit le **@ de la personne**, soit « détecté par le **Système IA de vulu** » quand c'est l'IA anti-spoiler qui flague (cf. avantage vulu+ « Filtre anti-spoiler IA »).
+- Implique : entité `SpoilerReport { targetType: review|comment, targetId, reporterId, kind: spoiler|not_spoiler, weight }`, calcul de seuil au read-time, champ dérivé `spoiler: { flagged, byIa, byUser }` sur les DTO de feed/avis, composant `SpoilerVeil`. Cadrer en sous-projet dédié.
 3. **Communautés (gros sous-système)** : créer des communautés (type Twitter Communities), onglet timeline des communautés publiques pour les rejoindre, ajouter un onglet de communauté rejointe sur le feed principal, et **partage ciblé** d'une activité en **public / cercle / communauté précise**.
 4. **Mécaniques d'habitude (priorisées par l'utilisateur)** :
    - **Rétrospective / Wrapped** (bilan animé annuel/mensuel à partager, façon Spotify Wrapped).
