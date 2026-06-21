@@ -99,6 +99,21 @@ export async function setCommunityVisibility(deps: Deps, ownerId: string, commun
   await deps.communities.update({ ...c, visibility });
 }
 
+export async function approveJoinRequest(deps: Deps, actorId: string, requestId: string): Promise<void> {
+  const req = await deps.communityRequests.findById(requestId);
+  if (!req || req.kind !== "request") throw new NotFoundError("Demande introuvable");
+  if (!(await canModerate(deps, req.communityId, actorId))) throw new ForbiddenError("Action réservée à la modération");
+  await deps.memberships.add({ communityId: req.communityId, userId: req.userId, pinned: false, role: "member", createdAt: deps.clock.now() });
+  await deps.communityRequests.remove(req.id);
+}
+
+export async function rejectJoinRequest(deps: Deps, actorId: string, requestId: string): Promise<void> {
+  const req = await deps.communityRequests.findById(requestId);
+  if (!req || req.kind !== "request") throw new NotFoundError("Demande introuvable");
+  if (!(await canModerate(deps, req.communityId, actorId))) throw new ForbiddenError("Action réservée à la modération");
+  await deps.communityRequests.remove(req.id);
+}
+
 export async function setCommunityPinned(deps: Deps, userId: string, communityId: string, pinned: boolean): Promise<void> {
   const m = await deps.memberships.find(communityId, userId);
   if (!m) throw new ForbiddenError("Rejoins la communauté pour l'épingler");

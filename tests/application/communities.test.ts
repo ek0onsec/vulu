@@ -4,6 +4,7 @@ import { FakeCatalog } from "../helpers/fake-catalog";
 import {
   createCommunity, joinCommunity, leaveCommunity, setCommunityPinned,
   myCommunities, pinnedCommunities, communityFeed, getCommunity, setCommunityBanner,
+  approveJoinRequest, rejectJoinRequest,
 } from "@/server/application/communities";
 import { rateOrReviewWork } from "@/server/application/library-entry";
 import { registerUser } from "@/server/application/register-user";
@@ -126,5 +127,30 @@ describe("communautés privées — adhésion", () => {
   it("le créateur ne peut pas quitter sa communauté", async () => {
     const c = await createCommunity(deps, u1, { name: "Owner Comm", description: null });
     await expect(leaveCommunity(deps, u1, c.id)).rejects.toThrow(ForbiddenError);
+  });
+});
+
+describe("communautés privées — modération des demandes", () => {
+  async function privateWithRequest() {
+    const c = await createCommunity(deps, u1, { name: "Privee", description: null, visibility: "private" });
+    await joinCommunity(deps, u2, c.id);
+    const req = await deps.communityRequests.findPair(c.id, u2);
+    return { c, reqId: req!.id };
+  }
+  it("l'owner approuve → membership créé, demande supprimée", async () => {
+    const { c, reqId } = await privateWithRequest();
+    await approveJoinRequest(deps, u1, reqId);
+    expect(await deps.memberships.find(c.id, u2)).not.toBeNull();
+    expect(await deps.communityRequests.findById(reqId)).toBeNull();
+  });
+  it("un non-modérateur ne peut pas approuver", async () => {
+    const { reqId } = await privateWithRequest();
+    await expect(approveJoinRequest(deps, u2, reqId)).rejects.toThrow(ForbiddenError);
+  });
+  it("refuser supprime la demande sans membership", async () => {
+    const { c, reqId } = await privateWithRequest();
+    await rejectJoinRequest(deps, u1, reqId);
+    expect(await deps.memberships.find(c.id, u2)).toBeNull();
+    expect(await deps.communityRequests.findById(reqId)).toBeNull();
   });
 });
