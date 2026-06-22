@@ -136,6 +136,15 @@ export async function declineInvite(deps: Deps, userId: string, requestId: strin
   await deps.communityRequests.remove(req.id);
 }
 
+export async function setMemberRole(deps: Deps, ownerId: string, communityId: string, targetUserId: string, role: "member" | "moderator"): Promise<void> {
+  const c = await deps.communities.findById(communityId);
+  if (!c) throw new NotFoundError("Communauté introuvable");
+  if (c.ownerId !== ownerId) throw new ForbiddenError("Seul le créateur gère les rôles");
+  if (targetUserId === c.ownerId) throw new ForbiddenError("Le rôle du créateur ne peut pas changer");
+  if (!(await deps.memberships.find(communityId, targetUserId))) throw new NotFoundError("Membre introuvable");
+  await deps.memberships.setRole(communityId, targetUserId, role);
+}
+
 export async function setCommunityPinned(deps: Deps, userId: string, communityId: string, pinned: boolean): Promise<void> {
   const m = await deps.memberships.find(communityId, userId);
   if (!m) throw new ForbiddenError("Rejoins la communauté pour l'épingler");

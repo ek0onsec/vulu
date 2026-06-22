@@ -4,7 +4,7 @@ import { FakeCatalog } from "../helpers/fake-catalog";
 import {
   createCommunity, joinCommunity, leaveCommunity, setCommunityPinned,
   myCommunities, pinnedCommunities, communityFeed, getCommunity, setCommunityBanner,
-  approveJoinRequest, rejectJoinRequest, inviteToCommunity, acceptInvite, declineInvite,
+  approveJoinRequest, rejectJoinRequest, inviteToCommunity, acceptInvite, declineInvite, setMemberRole,
 } from "@/server/application/communities";
 import { rateOrReviewWork } from "@/server/application/library-entry";
 import { registerUser } from "@/server/application/register-user";
@@ -180,5 +180,36 @@ describe("communautés privées — invitations", () => {
   it("un non-modérateur ne peut pas inviter", async () => {
     const c = await createCommunity(deps, u1, { name: "Privee", description: null, visibility: "private" });
     await expect(inviteToCommunity(deps, u2, c.id, "user1")).rejects.toThrow(ForbiddenError);
+  });
+});
+
+describe("communautés — rôles", () => {
+  async function communityWithMember() {
+    const c = await createCommunity(deps, u1, { name: "Roles Comm", description: null });
+    await joinCommunity(deps, u2, c.id);
+    return c;
+  }
+  it("l'owner promeut un membre en modérateur", async () => {
+    const c = await communityWithMember();
+    await setMemberRole(deps, u1, c.id, u2, "moderator");
+    expect((await deps.memberships.find(c.id, u2))?.role).toBe("moderator");
+  });
+  it("un non-owner ne peut pas promouvoir", async () => {
+    const c = await communityWithMember();
+    await expect(setMemberRole(deps, u2, c.id, u2, "moderator")).rejects.toThrow(ForbiddenError);
+  });
+  it("on ne peut pas changer le rôle de l'owner", async () => {
+    const c = await communityWithMember();
+    await expect(setMemberRole(deps, u1, c.id, u1, "member")).rejects.toThrow(ForbiddenError);
+  });
+  it("un modérateur peut approuver une demande", async () => {
+    const c = await createCommunity(deps, u1, { name: "Privee Mod", description: null, visibility: "private" });
+    await joinCommunity(deps, u2, c.id); // demande de u2
+    const other = (await registerUser(deps, { email: "o@x.io", username: "other", displayName: "O", password: "password1", activeTabs: ["films"], tastes })).id;
+    await deps.memberships.add({ communityId: c.id, userId: other, pinned: false, role: "member", createdAt: new Date() });
+    await setMemberRole(deps, u1, c.id, other, "moderator");
+    const reqId = (await deps.communityRequests.findPair(c.id, u2))!.id;
+    await approveJoinRequest(deps, other, reqId);
+    expect(await deps.memberships.find(c.id, u2)).not.toBeNull();
   });
 });
