@@ -6,6 +6,7 @@ import { resizeImage } from "@/lib/image-resize";
 import { FeedCard } from "@/components/FeedCard";
 import { Icon } from "@/components/Icon";
 import { Avatar } from "@/components/Avatar";
+import { Modal } from "@/components/Modal";
 import type { FeedItem } from "@/server/application/feed";
 
 type Role = "owner" | "moderator" | "member";
@@ -27,6 +28,7 @@ export function CommunityClient({ id }: { id: string }) {
   const [members, setMembers] = useState<Member[]>([]);
   const [inviteName, setInviteName] = useState("");
   const [inviteReqId, setInviteReqId] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const bannerInput = useRef<HTMLInputElement>(null);
 
   function loadCommunity() { return api.get<{ community: CommunityDto }>(`/api/communities/${id}`).then((d) => { setC(d.community); return d.community; }); }
@@ -136,6 +138,13 @@ export function CommunityClient({ id }: { id: string }) {
                   <Icon name="home" size={18} />
                 </button>
               )}
+              {c.isMember && (
+                <button onClick={() => setSettingsOpen(true)} title="Membres et modération"
+                  className="relative rounded-full border border-[var(--color-border)] p-2 text-[var(--color-text-muted)]">
+                  <Icon name="dots" size={18} />
+                  {c.canModerate && c.pendingCount > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-primary)] px-1 text-[0.6rem] font-bold text-white">{c.pendingCount}</span>}
+                </button>
+              )}
               {!c.isOwner && (
                 <button onClick={onJoinClick} className={`rounded-full px-5 py-2 text-sm font-semibold ${c.isMember || c.requestState === "requested" ? "border border-[var(--color-border)]" : "bg-[var(--color-primary)] text-white"}`}>
                   {joinLabel}
@@ -157,55 +166,56 @@ export function CommunityClient({ id }: { id: string }) {
         </div>
       )}
 
-      {c.canModerate && (
-        <section className="mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <h2 className="mb-3 font-display text-lg font-bold">Modération</h2>
-          <p className="mb-2 text-sm font-semibold">Demandes en attente ({requests.length})</p>
-          {requests.length === 0 && <p className="text-sm text-[var(--color-text-muted)]">Aucune demande.</p>}
-          <ul className="flex flex-col gap-2">
-            {requests.map((r) => (
-              <li key={r.requestId} className="flex items-center gap-2">
-                <Avatar name={r.displayName} src={r.avatarUrl} size={28} />
-                <span className="min-w-0 flex-1 text-sm"><b>{r.displayName}</b> <span className="text-[var(--color-text-muted)]">@{r.username}</span></span>
-                <button onClick={() => moderate(r.requestId, "approve")} className="rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-semibold text-white">Approuver</button>
-                <button onClick={() => moderate(r.requestId, "reject")} className="rounded-full border border-[var(--color-border)] px-3 py-1 text-xs">Refuser</button>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-3 flex gap-2">
-            <input value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder="Inviter par @username"
-              className="flex-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2 text-sm" />
-            <button onClick={invite} className="rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white">Inviter</button>
-          </div>
-        </section>
-      )}
+      <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Membres et modération">
+        <div className="flex flex-col gap-5">
+          {c.canModerate && (
+            <section>
+              <h3 className="mb-2 text-sm font-semibold">Demandes en attente ({requests.length})</h3>
+              {requests.length === 0 && <p className="text-sm text-[var(--color-text-muted)]">Aucune demande.</p>}
+              <ul className="flex flex-col gap-2">
+                {requests.map((r) => (
+                  <li key={r.requestId} className="flex items-center gap-2">
+                    <Avatar name={r.displayName} src={r.avatarUrl} size={28} />
+                    <span className="min-w-0 flex-1 text-sm"><b>{r.displayName}</b> <span className="text-[var(--color-text-muted)]">@{r.username}</span></span>
+                    <button onClick={() => moderate(r.requestId, "approve")} className="rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-semibold text-white">Approuver</button>
+                    <button onClick={() => moderate(r.requestId, "reject")} className="rounded-full border border-[var(--color-border)] px-3 py-1 text-xs">Refuser</button>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 flex gap-2">
+                <input value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder="Inviter par @username"
+                  className="flex-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2 text-sm" />
+                <button onClick={invite} className="rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white">Inviter</button>
+              </div>
+            </section>
+          )}
 
-      {c.isMember && members.length > 0 && (
-        <section className="mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold">Membres</h2>
-            {c.isOwner && (
-              <button onClick={toggleVisibility} className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1 text-xs font-semibold">
-                <Icon name="lock" size={13} /> {c.visibility === "public" ? "Passer en privée" : "Passer en publique"}
-              </button>
-            )}
-          </div>
-          <ul className="flex flex-col gap-2">
-            {members.map((m) => (
-              <li key={m.userId} className="flex items-center gap-2">
-                <Avatar name={m.displayName} src={m.avatarUrl} size={28} />
-                <span className="min-w-0 flex-1 text-sm"><b>{m.displayName}</b> <span className="text-[var(--color-text-muted)]">@{m.username}</span></span>
-                <span className="rounded-full bg-[var(--color-bg)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">{roleLabel[m.role]}</span>
-                {c.isOwner && m.role !== "owner" && (
-                  m.role === "moderator"
-                    ? <button onClick={() => setRole(m.userId, "member")} className="rounded-full border border-[var(--color-border)] px-2.5 py-0.5 text-xs">Rétrograder</button>
-                    : <button onClick={() => setRole(m.userId, "moderator")} className="rounded-full border border-[var(--color-primary)] px-2.5 py-0.5 text-xs text-[var(--color-primary)]">Promouvoir mod</button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+          <section>
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Membres ({c.memberCount})</h3>
+              {c.isOwner && (
+                <button onClick={toggleVisibility} className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1 text-xs font-semibold">
+                  <Icon name="lock" size={13} /> {c.visibility === "public" ? "Passer en privée" : "Passer en publique"}
+                </button>
+              )}
+            </div>
+            <ul className="flex flex-col gap-2">
+              {members.map((m) => (
+                <li key={m.userId} className="flex items-center gap-2">
+                  <Avatar name={m.displayName} src={m.avatarUrl} size={28} />
+                  <span className="min-w-0 flex-1 text-sm"><b>{m.displayName}</b> <span className="text-[var(--color-text-muted)]">@{m.username}</span></span>
+                  <span className="rounded-full bg-[var(--color-bg)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">{roleLabel[m.role]}</span>
+                  {c.isOwner && m.role !== "owner" && (
+                    m.role === "moderator"
+                      ? <button onClick={() => setRole(m.userId, "member")} className="rounded-full border border-[var(--color-border)] px-2.5 py-0.5 text-xs">Rétrograder</button>
+                      : <button onClick={() => setRole(m.userId, "moderator")} className="rounded-full border border-[var(--color-primary)] px-2.5 py-0.5 text-xs text-[var(--color-primary)]">Promouvoir mod</button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </Modal>
 
       <h2 className="mb-3 mt-6 font-display text-lg font-bold">Fil de la communauté</h2>
       {!c.isMember && c.visibility === "private" ? (
