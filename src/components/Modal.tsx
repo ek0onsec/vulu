@@ -7,13 +7,19 @@ export function Modal({ open, onClose, title, children }: {
 }) {
   const panel = useRef<HTMLDivElement>(null);
 
+  // Focus uniquement à l'ouverture : sinon un onClose recréé à chaque frappe du parent
+  // relancerait cet effet et volerait le focus des champs de saisie de la modale.
+  useEffect(() => {
+    if (!open) return;
+    panel.current?.focus();
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    panel.current?.focus();
     return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
   }, [open, onClose]);
 
