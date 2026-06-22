@@ -5,6 +5,7 @@ import {
   createCommunity, joinCommunity, leaveCommunity, setCommunityPinned,
   myCommunities, pinnedCommunities, communityFeed, getCommunity, setCommunityBanner,
   approveJoinRequest, rejectJoinRequest, inviteToCommunity, acceptInvite, declineInvite, setMemberRole,
+  listJoinRequests, listPublicCommunities,
 } from "@/server/application/communities";
 import { rateOrReviewWork } from "@/server/application/library-entry";
 import { registerUser } from "@/server/application/register-user";
@@ -211,5 +212,35 @@ describe("communautés — rôles", () => {
     const reqId = (await deps.communityRequests.findPair(c.id, u2))!.id;
     await approveJoinRequest(deps, other, reqId);
     expect(await deps.memberships.find(c.id, u2)).not.toBeNull();
+  });
+});
+
+describe("communautés privées — visibilité du fil & DTO", () => {
+  it("communityFeed refuse un non-membre d'une privée", async () => {
+    const c = await createCommunity(deps, u1, { name: "Privee Feed", description: null, visibility: "private" });
+    await expect(communityFeed(deps, u2, c.id, null)).rejects.toThrow(ForbiddenError);
+  });
+  it("getCommunity expose visibility, role, requestState, canModerate", async () => {
+    const c = await createCommunity(deps, u1, { name: "Privee DTO", description: null, visibility: "private" });
+    await joinCommunity(deps, u2, c.id); // demande
+    const asOwner = await getCommunity(deps, u1, c.id);
+    expect(asOwner.visibility).toBe("private");
+    expect(asOwner.role).toBe("owner");
+    expect(asOwner.canModerate).toBe(true);
+    expect(asOwner.pendingCount).toBe(1);
+    const asRequester = await getCommunity(deps, u2, c.id);
+    expect(asRequester.role).toBeNull();
+    expect(asRequester.requestState).toBe("requested");
+  });
+  it("listJoinRequests réservé à la modération", async () => {
+    const c = await createCommunity(deps, u1, { name: "Privee Reqs", description: null, visibility: "private" });
+    await joinCommunity(deps, u2, c.id);
+    expect((await listJoinRequests(deps, u1, c.id))).toHaveLength(1);
+    await expect(listJoinRequests(deps, u2, c.id)).rejects.toThrow(ForbiddenError);
+  });
+  it("listPublicCommunities liste la vitrine privée (marquée private)", async () => {
+    const c = await createCommunity(deps, u1, { name: "Privee Vitrine", description: null, visibility: "private" });
+    const list = await listPublicCommunities(deps, u2);
+    expect(list.find((x) => x.id === c.id)?.visibility).toBe("private");
   });
 });

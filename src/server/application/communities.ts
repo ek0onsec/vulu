@@ -1,5 +1,5 @@
 import type { Deps } from "@/server/container";
-import type { Community } from "@/server/domain/entities";
+import type { Community, CommunityRole } from "@/server/domain/entities";
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
 import { enrichEntries, type FeedItem } from "./feed";
 import { detectImage } from "./profile-media";
@@ -9,6 +9,8 @@ const BANNER_MAX = 1_536 * 1024;
 export interface CommunityDto {
   id: string; name: string; slug: string; description: string | null; bannerUrl: string | null;
   memberCount: number; isMember: boolean; isPinned: boolean; isOwner: boolean;
+  visibility: "public" | "private"; role: CommunityRole | null;
+  requestState: "none" | "requested" | "invited"; canModerate: boolean; pendingCount: number;
 }
 
 function slugify(name: string): string {
@@ -16,11 +18,20 @@ function slugify(name: string): string {
 }
 
 async function present(deps: Deps, viewerId: string, c: Community): Promise<CommunityDto> {
-  const [memberCount, membership] = await Promise.all([
+  const [memberCount, membership, request] = await Promise.all([
     deps.memberships.countForCommunity(c.id),
     deps.memberships.find(c.id, viewerId),
+    deps.communityRequests.findPair(c.id, viewerId),
   ]);
-  return { id: c.id, name: c.name, slug: c.slug, description: c.description, bannerUrl: c.bannerUrl, memberCount, isMember: Boolean(membership), isPinned: membership?.pinned ?? false, isOwner: c.ownerId === viewerId };
+  const role = membership ? membership.role : null;
+  const canMod = role === "owner" || role === "moderator";
+  const pendingCount = canMod ? (await deps.communityRequests.listForCommunity(c.id)).length : 0;
+  const requestState = request ? (request.kind === "invite" ? "invited" : "requested") : "none";
+  return {
+    id: c.id, name: c.name, slug: c.slug, description: c.description, bannerUrl: c.bannerUrl,
+    memberCount, isMember: Boolean(membership), isPinned: membership?.pinned ?? false, isOwner: c.ownerId === viewerId,
+    visibility: c.visibility, role, requestState, canModerate: canMod, pendingCount,
+  };
 }
 
 /** Le créateur d'une communauté téléverse/remplace sa bannière. */
@@ -166,6 +177,41 @@ export async function pinnedCommunities(deps: Deps, userId: string): Promise<{ i
 }
 
 export async function communityFeed(deps: Deps, viewerId: string, communityId: string, cursor: { activityAt: Date; id: string } | null): Promise<FeedItem[]> {
+  const c = await deps.communities.findById(communityId);
+  if (!c) throw new NotFoundError("Communauté introuvable");
+  if (c.visibility === "private" && !(await deps.memberships.find(communityId, viewerId))) {
+    throw new ForbiddenError("Communauté privée — rejoins-la pour voir le fil");
+  }
   const entries = await deps.entries.feedByCommunity(communityId, cursor, 20);
   return enrichEntries(deps, viewerId, entries);
+}
+
+export async function listMembers(deps: Deps, viewerId: string, communityId: string): Promise<{ userId: string; username: string; displayName: string; avatarUrl: string | null; role: CommunityRole }[]> {
+  const c = await deps.communities.findById(communityId);
+  if (!c) throw new NotFoundError("Communauté introuvable");
+  if (c.visibility === "private" && !(await deps.memberships.find(communityId, viewerId))) throw new ForbiddenError("Réservé aux membres");
+  const members = await deps.memberships.listForCommunity(communityId);
+  return Promise.all(members.map(async (m) => {
+    const u = await deps.users.findById(m.userId);
+    return { userId: m.userId, username: u?.username ?? "?", displayName: u?.displayName ?? "?", avatarUrl: u?.avatarUrl ?? null, role: m.role };
+  }));
+}
+
+export async function listJoinRequests(deps: Deps, actorId: string, communityId: string): Promise<{ requestId: string; username: string; displayName: string; avatarUrl: string | null }[]> {
+  if (!(await canModerate(deps, communityId, actorId))) throw new ForbiddenError("Réservé à la modération");
+  const reqs = await deps.communityRequests.listForCommunity(communityId);
+  return Promise.all(reqs.map(async (r) => {
+    const u = await deps.users.findById(r.userId);
+    return { requestId: r.id, username: u?.username ?? "?", displayName: u?.displayName ?? "?", avatarUrl: u?.avatarUrl ?? null };
+  }));
+}
+
+export async function myInvites(deps: Deps, userId: string): Promise<{ requestId: string; community: CommunityDto }[]> {
+  const invites = await deps.communityRequests.listInvitesForUser(userId);
+  const out: { requestId: string; community: CommunityDto }[] = [];
+  for (const inv of invites) {
+    const c = await deps.communities.findById(inv.communityId);
+    if (c) out.push({ requestId: inv.id, community: await present(deps, userId, c) });
+  }
+  return out;
 }
