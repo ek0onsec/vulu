@@ -23,6 +23,7 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
   const [communities, setCommunities] = useState<{ id: string; name: string }[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const [season, setSeason] = useState(initial?.progress?.season ?? 1);
   const [episode, setEpisode] = useState(initial?.progress?.episode ?? 1);
   const [tome, setTome] = useState(initial?.progress?.tome ?? 1);
@@ -50,7 +51,7 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
     setBusy(true);
     try {
       await api.del("/api/works/entry", { entryId });
-      setEntryId(null); setStatus("planned"); setRating(0); setText("");
+      setEntryId(null); setStatus("planned"); setRating(0); setText(""); setConfirmRemove(false);
       toast("Retiré de ta bibliothèque");
       router.refresh();
     } catch (e) {
@@ -149,10 +150,24 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
         {busy ? "…" : "Enregistrer"}
       </button>
       {entryId && (
-        <button onClick={removeEntry} disabled={busy}
-          className="mt-3 text-sm font-medium text-red-500 hover:underline disabled:opacity-50">
-          Retirer de ma bibliothèque
-        </button>
+        <div className="mt-4 border-t border-[var(--color-border)] pt-3">
+          {!confirmRemove ? (
+            <button onClick={() => setConfirmRemove(true)} disabled={busy}
+              className="rounded-full border border-red-500/40 px-4 py-1.5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50">
+              Retirer de ma bibliothèque
+            </button>
+          ) : (
+            <div className="flex flex-col gap-2 rounded-xl border border-red-500/40 bg-red-500/5 p-3">
+              <p className="text-sm font-medium">Retirer « {workType === "book" ? "ce livre" : "cette œuvre"} » de ta bibliothèque ? Ta note et ton avis seront supprimés.</p>
+              <div className="flex gap-2">
+                <button onClick={removeEntry} disabled={busy}
+                  className="rounded-full bg-red-500 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "…" : "Oui, retirer"}</button>
+                <button onClick={() => setConfirmRemove(false)} disabled={busy}
+                  className="rounded-full border border-[var(--color-border)] px-4 py-1.5 text-sm font-semibold">Annuler</button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
       {msg && <p className="mt-2 text-sm text-[var(--color-primary)]">{msg}</p>}
     </section>
