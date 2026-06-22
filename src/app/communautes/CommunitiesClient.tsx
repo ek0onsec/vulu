@@ -6,13 +6,14 @@ import { toast } from "@/lib/toast";
 import { Modal } from "@/components/Modal";
 import { Icon } from "@/components/Icon";
 
-interface CommunityDto { id: string; name: string; slug: string; description: string | null; bannerUrl: string | null; memberCount: number; isMember: boolean; isPinned: boolean }
+interface CommunityDto { id: string; name: string; slug: string; description: string | null; bannerUrl: string | null; memberCount: number; isMember: boolean; isPinned: boolean; visibility: "public" | "private" }
 
 export function CommunitiesClient({ plus }: { plus: boolean }) {
   const [list, setList] = useState<CommunityDto[] | null>(null);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [busy, setBusy] = useState(false);
 
   const load = () => api.get<{ communities: CommunityDto[] }>("/api/communities").then((d) => setList(d.communities)).catch(() => setList([]));
@@ -21,7 +22,7 @@ export function CommunitiesClient({ plus }: { plus: boolean }) {
   async function create() {
     if (name.trim().length < 2) return;
     setBusy(true);
-    try { await api.post("/api/communities", { name, description: description.trim() || null }); setName(""); setDescription(""); setCreating(false); toast("Communauté créée"); load(); }
+    try { await api.post("/api/communities", { name, description: description.trim() || null, visibility }); setName(""); setDescription(""); setVisibility("public"); setCreating(false); toast("Communauté créée"); load(); }
     catch { toast("Action impossible", "error"); } finally { setBusy(false); }
   }
 
@@ -51,12 +52,12 @@ export function CommunitiesClient({ plus }: { plus: boolean }) {
             <div className="h-16 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)]" style={c.bannerUrl ? { backgroundImage: `url(${c.bannerUrl})`, backgroundSize: "cover" } : undefined} />
             <div className="flex items-start gap-3 p-4">
               <Link href={`/communaute/${c.id}`} className="min-w-0 flex-1">
-                <p className="font-display text-lg font-bold">{c.name}</p>
+                <p className="flex items-center gap-1.5 font-display text-lg font-bold">{c.name}{c.visibility === "private" && <Icon name="lock" size={14} />}</p>
                 {c.description && <p className="line-clamp-2 text-sm text-[var(--color-text)]">{c.description}</p>}
                 <p className="mt-1 text-xs text-[var(--color-text-muted)]">{c.memberCount} membre{c.memberCount > 1 ? "s" : ""}</p>
               </Link>
               <button onClick={() => toggleJoin(c)} className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold ${c.isMember ? "border border-[var(--color-border)] text-[var(--color-text)]" : "bg-[var(--color-primary)] text-white"}`}>
-                {c.isMember ? "Membre ✓" : "Rejoindre"}
+                {c.isMember ? "Membre ✓" : c.visibility === "private" ? "Demander" : "Rejoindre"}
               </button>
             </div>
           </div>
@@ -73,6 +74,18 @@ export function CommunitiesClient({ plus }: { plus: boolean }) {
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} rows={3}
               className="mt-1 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm font-normal" />
           </label>
+          <div>
+            <p className="mb-1 text-sm font-semibold">Visibilité</p>
+            <div className="flex gap-2">
+              {(["public", "private"] as const).map((v) => (
+                <button key={v} type="button" onClick={() => setVisibility(v)}
+                  className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold ${visibility === v ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>
+                  {v === "public" ? "Publique" : "Privée 🔒"}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">{visibility === "private" ? "Les demandes d'adhésion devront être approuvées." : "Tout le monde peut rejoindre et voir le fil."}</p>
+          </div>
           <button onClick={create} disabled={busy || name.trim().length < 2} className="rounded-full bg-[var(--color-primary)] py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "…" : "Créer la communauté"}</button>
         </div>
       </Modal>
