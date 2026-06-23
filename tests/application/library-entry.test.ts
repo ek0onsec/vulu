@@ -14,22 +14,22 @@ describe("library entry", () => {
     expect(e.rating).toBeNull();
   });
   it("rateOrReview force done et enregistre note + visibilité", async () => {
-    const e = await rateOrReviewWork(deps, "u1", ref, { rating: 4.2, text: "top", visibility: "circle" });
+    const e = await rateOrReviewWork(deps, "u1", ref, { rating: 4.2, text: "top", audiences: { public: false, circle: true, communityIds: [] } });
     expect(e.status).toBe("done");
     expect(e.rating).toBe(4.2);
-    expect(e.visibility).toBe("circle");
+    expect(e.audiences).toEqual({ public: false, circle: true, communityIds: [] });
   });
   it("réutilise la même entrée (unicité user+work)", async () => {
     const a = await setEntryStatus(deps, "u1", ref, "planned");
-    const b = await rateOrReviewWork(deps, "u1", ref, { rating: 3, text: null, visibility: "public" });
+    const b = await rateOrReviewWork(deps, "u1", ref, { rating: 3, text: null, audiences: { public: true, circle: true, communityIds: [] } });
     expect(b.id).toBe(a.id);
   });
   it("rejette une note hors bornes ou non multiple de 0,1", async () => {
-    await expect(rateOrReviewWork(deps, "u1", ref, { rating: 5.5, text: null, visibility: "public" })).rejects.toThrow(ValidationError);
-    await expect(rateOrReviewWork(deps, "u1", ref, { rating: 2.73, text: null, visibility: "public" })).rejects.toThrow(ValidationError);
+    await expect(rateOrReviewWork(deps, "u1", ref, { rating: 5.5, text: null, audiences: { public: true, circle: true, communityIds: [] } })).rejects.toThrow(ValidationError);
+    await expect(rateOrReviewWork(deps, "u1", ref, { rating: 2.73, text: null, audiences: { public: true, circle: true, communityIds: [] } })).rejects.toThrow(ValidationError);
   });
   it("rejette ni note ni texte", async () => {
-    await expect(rateOrReviewWork(deps, "u1", ref, { rating: null, text: null, visibility: "public" })).rejects.toThrow(ValidationError);
+    await expect(rateOrReviewWork(deps, "u1", ref, { rating: null, text: null, audiences: { public: true, circle: true, communityIds: [] } })).rejects.toThrow(ValidationError);
   });
   it("removeEntry interdit à un autre que le propriétaire", async () => {
     const e = await setEntryStatus(deps, "u1", ref, "planned");

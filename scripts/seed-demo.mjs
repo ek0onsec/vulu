@@ -29,7 +29,7 @@ const work = (id, externalId, type, title, year, seed, overview, genres) => ({
 });
 
 const entry = (id, userId, workId, rating, text, visibility, daysAgo) => ({
-  _id: id, id, userId, workId, domain: "films", status: "done", rating, text, visibility, communityId: null,
+  _id: id, id, userId, workId, domain: "films", status: "done", rating, text, audiences: { public: visibility === "public", circle: true, communityIds: [] },
   progress: null, activityAt: new Date(now.getTime() - daysAgo * 86400000),
   createdAt: new Date(now.getTime() - daysAgo * 86400000),
   updatedAt: new Date(now.getTime() - daysAgo * 86400000),
@@ -37,7 +37,7 @@ const entry = (id, userId, workId, rating, text, visibility, daysAgo) => ({
 
 const progressEntry = (id, userId, workId, domain, progress, daysAgo, shared) => ({
   _id: id, id, userId, workId, domain, status: "in_progress", rating: null, text: null,
-  visibility: "public", communityId: null, progress,
+  audiences: { public: true, circle: true, communityIds: [] }, progress,
   activityAt: shared ? new Date(now.getTime() - daysAgo * 86400000) : null,
   createdAt: new Date(now.getTime() - daysAgo * 86400000),
   updatedAt: new Date(now.getTime() - daysAgo * 86400000),

@@ -1,5 +1,5 @@
 import type { Deps } from "@/server/container";
-import type { EntryProgress, EntryStatus, LibraryEntry, Visibility, WorkSource, WorkType } from "@/server/domain/entities";
+import type { EntryProgress, EntryStatus, LibraryEntry, EntryAudiences, WorkSource, WorkType } from "@/server/domain/entities";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
 import { getOrImportWork } from "./get-work";
 
@@ -16,7 +16,7 @@ async function loadOrCreateEntry(deps: Deps, userId: string, ref: Ref): Promise<
   if (existing) return existing;
   const now = deps.clock.now();
   return { id: deps.ids.next(), userId, workId: work.id, domain: work.domain,
-    status: "planned", rating: null, text: null, visibility: "circle", communityId: null,
+    status: "planned", rating: null, text: null, audiences: { public: false, circle: true, communityIds: [] },
     progress: null, activityAt: null, createdAt: now, updatedAt: now };
 }
 
@@ -29,7 +29,7 @@ export async function setEntryStatus(deps: Deps, userId: string, ref: Ref, statu
 
 export async function rateOrReviewWork(
   deps: Deps, userId: string, ref: Ref,
-  input: { rating: number | null; text: string | null; visibility: Visibility; communityId?: string | null },
+  input: { rating: number | null; text: string | null; audiences: EntryAudiences },
 ): Promise<LibraryEntry> {
   if (input.rating === null && (input.text === null || input.text.trim() === "")) {
     throw new ValidationError("Ajoute une note ou un commentaire");
@@ -37,15 +37,19 @@ export async function rateOrReviewWork(
   if (input.rating !== null && !isValidRating(input.rating)) {
     throw new ValidationError("Note invalide (0 à 5, par pas de 0,1)");
   }
-  // Si partagé dans une communauté, l'auteur doit en être membre.
-  if (input.communityId) {
-    const member = await deps.memberships.find(input.communityId, userId);
+  const { audiences } = input;
+  if (!audiences.public && !audiences.circle && audiences.communityIds.length === 0) {
+    throw new ValidationError("Choisis au moins une destination");
+  }
+  // Pour chaque communauté ciblée, l'auteur doit en être membre.
+  for (const communityId of audiences.communityIds) {
+    const member = await deps.memberships.find(communityId, userId);
     if (!member) throw new ForbiddenError("Tu n'es pas membre de cette communauté");
   }
   const entry = await loadOrCreateEntry(deps, userId, ref);
   const updated: LibraryEntry = { ...entry, status: "done", rating: input.rating,
-    text: input.text?.trim() ? input.text.trim() : null, visibility: input.visibility,
-    communityId: input.communityId ?? null, activityAt: deps.clock.now(), updatedAt: deps.clock.now() };
+    text: input.text?.trim() ? input.text.trim() : null, audiences,
+    activityAt: deps.clock.now(), updatedAt: deps.clock.now() };
   await deps.entries.upsert(updated);
   return updated;
 }

@@ -73,14 +73,14 @@ describe("communautés", () => {
   it("partager dans une communauté exige d'en être membre", async () => {
     const c = await createCommunity(deps, u1, { name: "Cinéphiles", description: null });
     await expect(
-      rateOrReviewWork(deps, u2, ref, { rating: 4, text: "top", visibility: "public", communityId: c.id }),
+      rateOrReviewWork(deps, u2, ref, { rating: 4, text: "top", audiences: { public: false, circle: false, communityIds: [c.id] } }),
     ).rejects.toThrow(ForbiddenError);
   });
 
   it("le fil de communauté ne contient que les avis qui y sont partagés", async () => {
     const c = await createCommunity(deps, u1, { name: "Cinéphiles", description: null });
-    await rateOrReviewWork(deps, u1, ref, { rating: 4, text: "partagé", visibility: "public", communityId: c.id });
-    await rateOrReviewWork(deps, u1, { source: "googlebooks", externalId: "book-1", type: "book" }, { rating: 3, text: "hors comm", visibility: "public", communityId: null });
+    await rateOrReviewWork(deps, u1, ref, { rating: 4, text: "partagé", audiences: { public: false, circle: true, communityIds: [c.id] } });
+    await rateOrReviewWork(deps, u1, { source: "googlebooks", externalId: "book-1", type: "book" }, { rating: 3, text: "hors comm", audiences: { public: true, circle: true, communityIds: [] } });
     const feed = await communityFeed(deps, u1, c.id, null);
     expect(feed).toHaveLength(1);
     expect(feed[0]?.entry.text).toBe("partagé");

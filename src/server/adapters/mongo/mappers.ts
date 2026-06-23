@@ -47,12 +47,20 @@ export const fromWorkDoc = (d: WithIdWork): Work => {
   return { ...w, episodeCounts: w.episodeCounts ?? null, pageCount: w.pageCount ?? null };
 };
 
+type LegacyEntryDoc = WithIdEntry & { visibility?: "circle" | "public"; communityId?: string | null };
+
 export const toEntryDoc = (e: LibraryEntry): WithIdEntry => ({ _id: e.id, ...e });
 export const fromEntryDoc = (d: WithIdEntry): LibraryEntry => {
+  const raw = d as LegacyEntryDoc;
   const e = strip(d);
   const progress = e.progress ?? null;
-  const activityAt = e.activityAt ?? (isPublishable({ ...e, progress, activityAt: null }) ? e.createdAt : null);
-  return { ...e, progress, activityAt };
+  const audiences = e.audiences ?? {
+    public: raw.visibility === "public",
+    circle: true,
+    communityIds: raw.communityId ? [raw.communityId] : [],
+  };
+  const activityAt = e.activityAt ?? (isPublishable({ ...e, audiences, progress, activityAt: null }) ? e.createdAt : null);
+  return { ...e, audiences, progress, activityAt };
 };
 
 export const toListDoc = (l: List): WithIdList => ({ _id: l.id, ...l });

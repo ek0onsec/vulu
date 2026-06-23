@@ -26,7 +26,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
     }
   }
 
-  const isPublic = item.entry.visibility === "public";
+  const isPublic = item.entry.audiences.public || item.entry.audiences.communityIds.length > 0;
   const typeLabel = item.work.type === "book" ? "Livre" : item.work.type === "tv" ? "Série" : "Film";
   return (
     <article className="mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-shadow hover:shadow-[0_2px_20px_rgba(0,0,0,0.05)]">

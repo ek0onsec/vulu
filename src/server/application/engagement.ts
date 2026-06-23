@@ -6,7 +6,7 @@ import { getCircle } from "./social";
 /** Une entrée est visible pour le viewer si : la sienne, OU publique, OU 'circle' et auteur dans le cercle. */
 async function assertVisible(deps: Deps, viewerId: string, entry: LibraryEntry): Promise<void> {
   if (entry.userId === viewerId) return;
-  if (entry.visibility === "public") return;
+  if (entry.audiences.public) return;
   const circle = await getCircle(deps, viewerId);
   if (!circle.has(entry.userId)) throw new ForbiddenError("Contenu non accessible");
 }

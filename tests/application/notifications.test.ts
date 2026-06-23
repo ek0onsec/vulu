@@ -20,7 +20,7 @@ beforeEach(async () => {
 
 describe("buildNotifications", () => {
   it("agrège likes/commentaires sur mon avis + nouveaux abonnés", async () => {
-    const entry = await rateOrReviewWork(deps, me, ref, { rating: 4, text: "top", visibility: "public" });
+    const entry = await rateOrReviewWork(deps, me, ref, { rating: 4, text: "top", audiences: { public: true, circle: true, communityIds: [] } });
     await likeEntry(deps, alice, entry.id);
     await likeEntry(deps, bob, entry.id);
     await commentOnEntry(deps, alice, entry.id, "d'accord");
@@ -34,12 +34,12 @@ describe("buildNotifications", () => {
     expect(notifs.find((n) => n.kind === "follow")?.totalActors).toBe(1);
   });
   it("ignore mes propres likes/commentaires", async () => {
-    const entry = await rateOrReviewWork(deps, me, ref, { rating: 4, text: "top", visibility: "public" });
+    const entry = await rateOrReviewWork(deps, me, ref, { rating: 4, text: "top", audiences: { public: true, circle: true, communityIds: [] } });
     await likeEntry(deps, me, entry.id);
     expect(await buildNotifications(deps, me)).toHaveLength(0);
   });
   it("non-lu jusqu'au markNotificationsSeen", async () => {
-    const entry = await rateOrReviewWork(deps, me, ref, { rating: 4, text: "top", visibility: "public" });
+    const entry = await rateOrReviewWork(deps, me, ref, { rating: 4, text: "top", audiences: { public: true, circle: true, communityIds: [] } });
     await likeEntry(deps, alice, entry.id);
     expect(await countUnreadNotifications(deps, me)).toBe(1);
     await markNotificationsSeen(deps, me);

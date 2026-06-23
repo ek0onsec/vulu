@@ -15,7 +15,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ usernam
     const inCircle = viewer ? (await getCircle(deps, viewer.id)).has(target.id) : false;
     const isSelf = viewer?.id === target.id;
     const visibleEntries = (await deps.entries.listByUser(target.id, { status: "done" }))
-      .filter((e) => e.visibility === "public" || isSelf || inCircle);
+      .filter((e) => e.audiences.public || isSelf || inCircle);
     const lists = (await deps.lists.listByUser(target.id))
       .filter((l) => l.visibility === "public" || isSelf);
     const [followers, following] = await Promise.all([deps.follows.countFollowers(target.id), deps.follows.countFollowing(target.id)]);

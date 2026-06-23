@@ -2,7 +2,11 @@ export type Domain = "films" | "books";
 export type WorkType = "movie" | "tv" | "book";
 export type WorkSource = "tmdb" | "googlebooks";
 export type EntryStatus = "planned" | "in_progress" | "done";
-export type Visibility = "circle" | "public";
+export interface EntryAudiences {
+  public: boolean;        // visible par tous dans « Pour vous »
+  circle: boolean;        // visible par le cercle (onglet « Mon cercle »)
+  communityIds: string[]; // fils de communautés ciblés (implique aussi « Pour vous »)
+}
 
 export interface EntryProgress {
   season: number | null;   // séries
@@ -89,8 +93,7 @@ export interface LibraryEntry {
   status: EntryStatus;
   rating: number | null;
   text: string | null;
-  visibility: Visibility;
-  communityId: string | null;   // si partagé dans une communauté
+  audiences: EntryAudiences;
   progress: EntryProgress | null;  // null pour les films « en cours » (statut seul)
   activityAt: Date | null;         // date d'apparition/remontée dans le feed (null = absent du feed)
   createdAt: Date;

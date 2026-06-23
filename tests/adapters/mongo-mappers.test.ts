@@ -6,7 +6,7 @@ const user: User = { id: "u1", email: "a@x.io", passwordHash: "h", username: "al
   displayName: "Alice", bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"],
   tastes: { filmGenreIds: [1, 2, 3], people: [] }, showcase: { movie: [], tv: [], book: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, deactivatedAt: null, notificationsSeenAt: null, createdAt: new Date("2024-01-01") };
 const entry: LibraryEntry = { id: "e1", userId: "u1", workId: "w1", domain: "films",
-  status: "done", rating: 4.2, text: "top", visibility: "public", communityId: null,
+  status: "done", rating: 4.2, text: "top", audiences: { public: true, circle: true, communityIds: [] },
   progress: null, activityAt: new Date("2024-01-02"),
   createdAt: new Date("2024-01-02"), updatedAt: new Date("2024-01-03") };
 
@@ -19,19 +19,25 @@ describe("mongo mappers", () => {
 describe("mappers — rétro-compat progression", () => {
   it("fromEntryDoc backfille un ancien doc (avis) avec activityAt = createdAt", () => {
     const created = new Date("2025-01-01");
-    // @ts-expect-error doc legacy sans progress/activityAt
     const e = fromEntryDoc({ _id: "e", id: "e", userId: "u", workId: "w", domain: "films",
       status: "done", rating: 4, text: null, visibility: "public", communityId: null,
-      createdAt: created, updatedAt: created });
+      createdAt: created, updatedAt: created } as unknown as Parameters<typeof fromEntryDoc>[0]);
     expect(e.progress).toBeNull();
     expect(e.activityAt).toEqual(created);
+    expect(e.audiences).toEqual({ public: true, circle: true, communityIds: [] });
+  });
+  it("fromEntryDoc backfille audiences depuis visibility/communityId legacy", () => {
+    const created = new Date("2025-01-01");
+    const e = fromEntryDoc({ _id: "e", id: "e", userId: "u", workId: "w", domain: "films",
+      status: "done", rating: 4, text: "x", visibility: "circle", communityId: "c1",
+      progress: null, activityAt: created, createdAt: created, updatedAt: created } as unknown as Parameters<typeof fromEntryDoc>[0]);
+    expect(e.audiences).toEqual({ public: false, circle: true, communityIds: ["c1"] });
   });
   it("fromEntryDoc laisse activityAt null pour un ancien doc non publiable", () => {
     const created = new Date("2025-01-01");
-    // @ts-expect-error doc legacy
     const e = fromEntryDoc({ _id: "e", id: "e", userId: "u", workId: "w", domain: "films",
       status: "planned", rating: null, text: null, visibility: "circle", communityId: null,
-      createdAt: created, updatedAt: created });
+      createdAt: created, updatedAt: created } as unknown as Parameters<typeof fromEntryDoc>[0]);
     expect(e.activityAt).toBeNull();
   });
   it("fromWorkDoc backfille episodeCounts/pageCount à null", () => {

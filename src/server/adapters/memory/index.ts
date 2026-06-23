@@ -72,14 +72,16 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
     return [...this.byId.values()]
       .filter((e) => isFeedVisible(e))
       .filter((e) => opts.domains.includes(e.domain))
-      .filter((e) => opts.scope === "circle" ? circle.has(e.userId) : (e.visibility === "public" || circle.has(e.userId)))
+      .filter((e) => opts.scope === "circle"
+        ? (e.audiences.circle && circle.has(e.userId))
+        : (e.audiences.public || e.audiences.communityIds.length > 0 || (e.audiences.circle && circle.has(e.userId))))
       .filter((e) => !opts.cursor || e.activityAt!.getTime() < opts.cursor.activityAt.getTime())
       .sort((a, b) => b.activityAt!.getTime() - a.activityAt!.getTime())
       .slice(0, opts.limit);
   }
   async listRecentPublic(limit: number) {
     return [...this.byId.values()]
-      .filter((e) => e.visibility === "public" && isPublishable(e))
+      .filter((e) => e.audiences.public && isPublishable(e))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
   }
@@ -90,7 +92,7 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
   }
   async feedByCommunity(communityId: string, cursor: { activityAt: Date; id: string } | null, limit: number) {
     return [...this.byId.values()]
-      .filter((e) => e.communityId === communityId && isFeedVisible(e))
+      .filter((e) => e.audiences.communityIds.includes(communityId) && isFeedVisible(e))
       .filter((e) => !cursor || e.activityAt!.getTime() < cursor.activityAt.getTime())
       .sort((a, b) => b.activityAt!.getTime() - a.activityAt!.getTime())
       .slice(0, limit);

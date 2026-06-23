@@ -38,7 +38,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   }
 
   const watchedEntries = canView
-    ? (await deps.entries.listByUser(target.id, { status: "done" })).filter((e) => e.visibility === "public" || isSelf || inCircle)
+    ? (await deps.entries.listByUser(target.id, { status: "done" })).filter((e) => e.audiences.public || isSelf || inCircle)
     : [];
   const watched = await toPosters(watchedEntries);
   const planned = isSelf ? await toPosters(await deps.entries.listByUser(target.id, { status: "planned" })) : null;

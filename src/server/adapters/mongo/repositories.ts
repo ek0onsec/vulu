@@ -70,8 +70,12 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
   async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }
   async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { activityAt: Date; id: string } | null; limit: number; }) {
     const visibility: Filter<M.WithIdEntry> = opts.scope === "circle"
-      ? { userId: { $in: opts.circleUserIds } }
-      : { $or: [{ visibility: "public" }, { userId: { $in: opts.circleUserIds } }] };
+      ? { "audiences.circle": true, userId: { $in: opts.circleUserIds } }
+      : { $or: [
+          { "audiences.public": true },
+          { "audiences.communityIds.0": { $exists: true } },
+          { "audiences.circle": true, userId: { $in: opts.circleUserIds } },
+        ] };
     const and: Filter<M.WithIdEntry>[] = [
       visibility,
       { activityAt: { $ne: null } },
@@ -81,7 +85,7 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
     return (await this.col.find({ $and: and }).sort({ activityAt: -1, _id: -1 }).limit(opts.limit).toArray()).map(M.fromEntryDoc);
   }
   async listRecentPublic(limit: number) {
-    const q: Filter<M.WithIdEntry> = { visibility: "public", status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] };
+    const q: Filter<M.WithIdEntry> = { "audiences.public": true, status: "done", $or: [{ rating: { $ne: null } }, { text: { $ne: null } }] };
     return (await this.col.find(q).sort({ createdAt: -1 }).limit(limit).toArray()).map(M.fromEntryDoc);
   }
   async listByWork(workId: string) {
@@ -90,7 +94,7 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
   }
   async feedByCommunity(communityId: string, cursor: { activityAt: Date; id: string } | null, limit: number) {
     const and: Filter<M.WithIdEntry>[] = [
-      { communityId },
+      { "audiences.communityIds": communityId },
       { activityAt: { $ne: null } },
     ];
     if (cursor) and.push({ activityAt: { $lt: cursor.activityAt } });

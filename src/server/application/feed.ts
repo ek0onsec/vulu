@@ -55,7 +55,7 @@ export async function buildFeed(
 export async function getEntryItem(deps: Deps, viewerId: string, entryId: string): Promise<FeedItem> {
   const entry = await deps.entries.findById(entryId);
   if (!entry) throw new NotFoundError("Publication introuvable");
-  if (entry.userId !== viewerId && entry.visibility !== "public") {
+  if (entry.userId !== viewerId && !entry.audiences.public) {
     const circle = await getCircle(deps, viewerId);
     if (!circle.has(entry.userId)) throw new NotFoundError("Publication introuvable");
   }
@@ -68,7 +68,7 @@ export async function getEntryItem(deps: Deps, viewerId: string, entryId: string
 export async function getWorkReviews(deps: Deps, viewerId: string, workId: string): Promise<FeedItem[]> {
   const circle = await getCircle(deps, viewerId);
   const entries = (await deps.entries.listByWork(workId)).filter(
-    (e) => e.userId !== viewerId && (e.visibility === "public" || circle.has(e.userId)),
+    (e) => e.userId !== viewerId && (e.audiences.public || circle.has(e.userId)),
   );
   return enrichEntries(deps, viewerId, entries);
 }

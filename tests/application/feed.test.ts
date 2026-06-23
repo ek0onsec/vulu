@@ -20,13 +20,13 @@ beforeEach(async () => {
 describe("buildFeed", () => {
   it("inclut public + cercle, enrichit auteur & œuvre & compteurs", async () => {
     const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
-    const fe = await rateOrReviewWork(deps, friend, ref, { rating: 4.2, text: "circle", visibility: "circle" });
-    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "public", visibility: "public" });
+    const fe = await rateOrReviewWork(deps, friend, ref, { rating: 4.2, text: "circle", audiences: { public: false, circle: true, communityIds: [] } });
+    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "public", audiences: { public: true, circle: true, communityIds: [] } });
     await likeEntry(deps, me, fe.id);
 
     const items = await buildFeed(deps, me, { scope: "foryou", cursor: null, limit: 10 });
     expect(items).toHaveLength(2);
-    const circleItem = items.find((i) => i.entry.visibility === "circle")!;
+    const circleItem = items.find((i) => !i.entry.audiences.public)!;
     expect(circleItem.author.username).toBe("friend");
     expect(circleItem.work.title).toBe("The Matrix");
     expect(circleItem.likeCount).toBe(1);
@@ -34,24 +34,30 @@ describe("buildFeed", () => {
   });
   it("exclut les entrées 'circle' d'un inconnu", async () => {
     const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
-    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "hidden", visibility: "circle" });
+    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "hidden", audiences: { public: false, circle: true, communityIds: [] } });
     const items = await buildFeed(deps, me, { scope: "foryou", cursor: null, limit: 10 });
     expect(items).toHaveLength(0);
+  });
+  it("une entrée multi-cibles (public + cercle) n'apparaît qu'une fois en Pour vous", async () => {
+    const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+    await rateOrReviewWork(deps, friend, ref, { rating: 4, text: "multi", audiences: { public: true, circle: true, communityIds: [] } });
+    const items = await buildFeed(deps, me, { scope: "foryou", cursor: null, limit: 50 });
+    expect(items.filter((i) => i.author.id === friend)).toHaveLength(1);
   });
 });
 
 describe("getWorkReviews", () => {
   const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
   it("montre les avis des autres (public/cercle) mais pas le sien", async () => {
-    await rateOrReviewWork(deps, me, ref, { rating: 4, text: "le mien", visibility: "public" });
-    await rateOrReviewWork(deps, friend, ref, { rating: 5, text: "cercle", visibility: "circle" });
-    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "public", visibility: "public" });
+    await rateOrReviewWork(deps, me, ref, { rating: 4, text: "le mien", audiences: { public: true, circle: true, communityIds: [] } });
+    await rateOrReviewWork(deps, friend, ref, { rating: 5, text: "cercle", audiences: { public: false, circle: true, communityIds: [] } });
+    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "public", audiences: { public: true, circle: true, communityIds: [] } });
     const work = await deps.works.findByExternal("tmdb", "603");
     const reviews = await getWorkReviews(deps, me, work!.id);
     expect(reviews.map((r) => r.author.username).sort()).toEqual(["friend", "stranger"]);
   });
   it("cache l'avis cercle d'un inconnu", async () => {
-    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "secret", visibility: "circle" });
+    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "secret", audiences: { public: false, circle: true, communityIds: [] } });
     const work = await deps.works.findByExternal("tmdb", "603");
     expect(await getWorkReviews(deps, me, work!.id)).toHaveLength(0);
   });

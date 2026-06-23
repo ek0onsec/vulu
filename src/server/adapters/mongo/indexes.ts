@@ -12,7 +12,7 @@ export async function ensureIndexes(db: Db): Promise<void> {
   await db.collection("works").createIndex({ source: 1, externalId: 1 }, { unique: true, name: "uniq_external" });
   await db.collection("entries").createIndexes([
     { key: { userId: 1, workId: 1 }, unique: true, name: "uniq_user_work" },
-    { key: { visibility: 1, domain: 1, createdAt: -1 }, name: "feed" },
+    { key: { "audiences.public": 1, domain: 1, createdAt: -1 }, name: "feed" },
     { key: { activityAt: -1, _id: -1 }, name: "feed_activity" },
     { key: { userId: 1, status: 1 }, name: "by_user_status" },
     { key: { userId: 1, createdAt: -1 }, name: "by_user_date" },
@@ -31,7 +31,7 @@ export async function ensureIndexes(db: Db): Promise<void> {
     { key: { userId: 1, kind: 1 }, name: "by_user_kind" },
     { key: { communityId: 1, kind: 1 }, name: "by_comm_kind" },
   ]);
-  await db.collection("entries").createIndex({ communityId: 1, createdAt: -1 }, { name: "by_community" });
+  await db.collection("entries").createIndex({ "audiences.communityIds": 1, activityAt: -1 }, { name: "by_community" });
   await db.collection("lists").createIndex({ userId: 1 }, { name: "by_user" });
   await db.collection("likes").createIndex({ entryId: 1, userId: 1 }, { unique: true, name: "uniq_like" });
   await db.collection("comments").createIndex({ entryId: 1, createdAt: 1 }, { name: "by_entry" });

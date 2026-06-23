@@ -19,7 +19,7 @@ beforeEach(async () => {
 describe("getLibrary", () => {
   it("agrège watchlist, vus/lus et playlists avec couvertures", async () => {
     await setEntryStatus(deps, me, book, "planned");
-    await rateOrReviewWork(deps, me, film, { rating: 4, text: null, visibility: "public" });
+    await rateOrReviewWork(deps, me, film, { rating: 4, text: null, audiences: { public: true, circle: true, communityIds: [] } });
     const l = await createList(deps, me, { name: "Mix", kind: "films", description: null, visibility: "public" });
     await addWorkToList(deps, me, l.id, film);
 
@@ -31,7 +31,7 @@ describe("getLibrary", () => {
   });
 
   it("expose peopleIds par poster et la liste distincte des personnes", async () => {
-    await rateOrReviewWork(deps, me, film, { rating: 5, text: null, visibility: "public" });
+    await rateOrReviewWork(deps, me, film, { rating: 5, text: null, audiences: { public: true, circle: true, communityIds: [] } });
     const lib = await getLibrary(deps, me);
     const matrix = lib.seen.find((p) => p.title === "The Matrix");
     expect(matrix?.peopleIds).toContain(6384);

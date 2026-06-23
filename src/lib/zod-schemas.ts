@@ -24,8 +24,11 @@ export const rateSchema = z.object({
   ref: workRefSchema,
   rating: z.number().min(0).max(5).nullable(),
   text: z.string().max(2000).nullable(),
-  visibility: z.enum(["circle", "public"]),
-  communityId: z.string().nullable().optional(),
+  audiences: z.object({
+    public: z.boolean(),
+    circle: z.boolean(),
+    communityIds: z.array(z.string()),
+  }),
 });
 const progInt = z.number().int().min(1).nullable().optional();
 export const progressSchema = z.object({

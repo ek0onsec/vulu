@@ -19,7 +19,9 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
   const [status, setStatus] = useState<"planned" | "in_progress" | "done">(initial?.status ?? "planned");
   const [rating, setRating] = useState<number>(initial?.rating ?? 0);
   const [text, setText] = useState(initial?.text ?? "");
-  const [target, setTarget] = useState<Target>(initial?.communityId ?? initial?.visibility ?? "circle");
+  const [target, setTarget] = useState<Target>(
+    initial?.audiences.communityIds[0] ?? (initial?.audiences.public ? "public" : "circle"),
+  );
   const [communities, setCommunities] = useState<{ id: string; name: string }[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -65,11 +67,14 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
     setBusy(true); setMsg(null);
     try {
       const isTargetCommunity = target !== "circle" && target !== "public";
-      const visibility = isTargetCommunity ? "public" : target;
-      const communityId = isTargetCommunity ? target : null;
+      const audiences = {
+        public: target === "public",
+        circle: target === "circle",
+        communityIds: isTargetCommunity ? [target] : [],
+      };
       const body = status === "planned" && rating === 0 && !text.trim()
         ? { ref: workRef, status: "planned" }
-        : { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, visibility, communityId };
+        : { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, audiences };
       const { entry } = await api.put<{ entry: LibraryEntry }>("/api/works/entry", body);
       setEntryId(entry.id);
       setMsg("Enregistré ✓");

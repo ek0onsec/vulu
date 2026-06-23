@@ -28,7 +28,7 @@ describe("discover", () => {
     expect(res.suggestions.map((s) => s.id)).not.toContain(alice);
   });
   it("classe les tendances par nombre d'avis publics", async () => {
-    await rateOrReviewWork(deps, alice, ref, { rating: 5, text: "top", visibility: "public" });
+    await rateOrReviewWork(deps, alice, ref, { rating: 5, text: "top", audiences: { public: true, circle: true, communityIds: [] } });
     const res = await discover(deps, me);
     expect(res.trending[0]?.work.title).toBe("The Matrix");
     expect(res.trending[0]?.reviews).toBe(1);
