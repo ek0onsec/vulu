@@ -14,7 +14,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ name: s
   try {
     const bytes = await readFile(join(getEnv().UPLOADS_DIR, safe));
     return new Response(new Uint8Array(bytes), {
-      headers: { "content-type": type, "cache-control": "public, max-age=31536000, immutable" },
+      headers: {
+        "content-type": type,
+        "cache-control": "public, max-age=31536000, immutable",
+        "x-content-type-options": "nosniff",
+      },
     });
   } catch {
     return new Response("Not found", { status: 404 });
