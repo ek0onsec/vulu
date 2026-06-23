@@ -41,11 +41,19 @@ export function FeedCard({ item }: { item: FeedItem }) {
           <span className="text-[var(--color-text-muted)]"> @{item.author.username} · {relativeTime(item.entry.createdAt)}</span>
           <p className="text-xs text-[var(--color-text-muted)]">{item.entry.status === "done" ? "a noté" : (activityVerb(item.entry.status, item.work.type) ?? (item.work.type === "book" ? "veut lire" : "veut voir"))}</p>
         </div>
-        <span className={`ml-auto rounded-full px-2.5 py-1 text-xs ${
-          isPublic
-            ? "bg-[color-mix(in_srgb,var(--color-accent)_22%,transparent)] text-[var(--color-text)]"
-            : "bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-[var(--color-primary)]"
-        }`}>{isPublic ? "Public" : "Cercle"}</span>
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          {item.communities.length > 0 && (
+            <Link href={`/communaute/${item.communities[0]!.id}`}
+              className="rounded-full bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-2.5 py-1 text-xs font-medium text-[var(--color-primary)] hover:underline">
+              via {item.communities[0]!.name}{item.communities.length > 1 ? ` +${item.communities.length - 1}` : ""}
+            </Link>
+          )}
+          <span className={`rounded-full px-2.5 py-1 text-xs ${
+            isPublic
+              ? "bg-[color-mix(in_srgb,var(--color-accent)_22%,transparent)] text-[var(--color-text)]"
+              : "bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-[var(--color-primary)]"
+          }`}>{isPublic ? "Public" : "Cercle"}</span>
+        </div>
       </header>
 
       <Link href={`/work/${item.work.id}`} className="mt-3 flex gap-3">

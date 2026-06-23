@@ -44,6 +44,16 @@ describe("buildFeed", () => {
     const items = await buildFeed(deps, me, { scope: "foryou", cursor: null, limit: 50 });
     expect(items.filter((i) => i.author.id === friend)).toHaveLength(1);
   });
+  it("enrichEntries résout les communautés d'origine d'une entrée", async () => {
+    const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+    const now = new Date();
+    await deps.communities.create({ id: "c1", name: "Ciné Club", slug: "cine-club", description: null, bannerUrl: null, visibility: "public", ownerId: friend, createdAt: now });
+    await deps.memberships.add({ communityId: "c1", userId: friend, pinned: false, role: "owner", createdAt: now });
+    await rateOrReviewWork(deps, friend, ref, { rating: 4, text: "x", audiences: { public: false, circle: false, communityIds: ["c1"] } });
+    const items = await buildFeed(deps, friend, { scope: "foryou", cursor: null, limit: 50 });
+    const mine = items.find((i) => i.author.id === friend);
+    expect(mine?.communities).toEqual([{ id: "c1", name: "Ciné Club" }]);
+  });
 });
 
 describe("getWorkReviews", () => {

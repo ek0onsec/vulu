@@ -10,17 +10,21 @@ export interface FeedItem {
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+  communities: { id: string; name: string }[];
 }
 
 /** Enrichit des entrées brutes en items de feed (auteur, œuvre, compteurs, likedByMe). */
 export async function enrichEntries(deps: Deps, viewerId: string, entries: LibraryEntry[]): Promise<FeedItem[]> {
   const liked = new Set(await deps.likes.likedEntryIds(viewerId, entries.map((e) => e.id)));
   return Promise.all(entries.map(async (entry) => {
-    const [author, work, likeCount, commentCount] = await Promise.all([
+    const [author, work, likeCount, commentCount, communities] = await Promise.all([
       deps.users.findById(entry.userId),
       deps.works.findById(entry.workId),
       deps.likes.countByEntry(entry.id),
       deps.comments.countByEntry(entry.id),
+      entry.audiences.communityIds.length > 0
+        ? deps.communities.listByIds(entry.audiences.communityIds)
+        : Promise.resolve([]),
     ]);
     if (!author || !work) throw new NotFoundError("Données de feed incohérentes");
     return {
@@ -28,6 +32,7 @@ export async function enrichEntries(deps: Deps, viewerId: string, entries: Libra
       author: { id: author.id, username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl, plus: author.plus, staff: author.staff },
       work: { id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type, episodeCounts: work.episodeCounts, pageCount: work.pageCount },
       likeCount, commentCount, likedByMe: liked.has(entry.id),
+      communities: communities.map((c) => ({ id: c.id, name: c.name })),
     };
   }));
 }
