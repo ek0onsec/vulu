@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Domain } from "@/server/domain/entities";
 import { SIGNUP_KEY, type SignupDraft } from "@/lib/signup";
+import { api } from "@/lib/api-client";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -11,6 +12,12 @@ export default function RegisterPage() {
     email: "", username: "", displayName: "", password: "", activeTabs: ["films"],
   });
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem(SIGNUP_KEY);
+    if (raw) setDraft(JSON.parse(raw) as SignupDraft);
+  }, []);
 
   function toggleTab(tab: Domain) {
     setDraft((d) => {
@@ -20,11 +27,29 @@ export default function RegisterPage() {
     });
   }
 
-  function next(e: React.FormEvent) {
+  async function next(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
+    const username = draft.username.trim().toLowerCase();
+    const email = draft.email.trim().toLowerCase();
+    if (!draft.displayName.trim()) { setError("Renseigne un nom affiché"); return; }
+    if (!/^[a-z0-9_]{3,20}$/.test(username)) { setError("Pseudo invalide (3–20 caractères : lettres, chiffres, _)"); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setError("Email invalide"); return; }
     if (draft.password.length < 8) { setError("Mot de passe : 8 caractères minimum"); return; }
-    sessionStorage.setItem(SIGNUP_KEY, JSON.stringify(draft));
-    router.push("/onboarding");
+    setBusy(true);
+    try {
+      const r = await api.get<{ usernameAvailable: boolean; emailAvailable: boolean }>(
+        `/api/auth/check-account?u=${encodeURIComponent(username)}&e=${encodeURIComponent(email)}`,
+      );
+      if (!r.usernameAvailable) { setError("Ce nom d'utilisateur est déjà pris"); return; }
+      if (!r.emailAvailable) { setError("Cet email est déjà utilisé"); return; }
+      sessionStorage.setItem(SIGNUP_KEY, JSON.stringify(draft));
+      router.push("/onboarding");
+    } catch {
+      setError("Vérification impossible, réessaie");
+    } finally {
+      setBusy(false);
+    }
   }
 
   const field = "rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm";
@@ -62,7 +87,9 @@ export default function RegisterPage() {
         </div>
 
         {error && <p className="text-sm text-red-500">{error}</p>}
-        <button className="rounded-full bg-[var(--color-primary)] py-3 text-sm font-semibold text-white">Continuer →</button>
+        <button disabled={busy} className="rounded-full bg-[var(--color-primary)] py-3 text-sm font-semibold text-white disabled:opacity-50">
+          {busy ? "Vérification…" : "Continuer →"}
+        </button>
       </form>
       <p className="mt-4 text-center text-sm text-[var(--color-text-muted)]">
         Déjà inscrit ? <Link href="/login" className="font-semibold text-[var(--color-primary)]">Se connecter</Link>
