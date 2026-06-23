@@ -42,10 +42,16 @@ export default function OnboardingPage() {
       <TasteSelector value={tastes} onChange={setTastes} />
 
       {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
-      <button onClick={finish} disabled={busy || tastes.filmGenreIds.length < 3}
-        className="mt-6 rounded-full bg-[var(--color-primary)] py-3 text-sm font-semibold text-white disabled:opacity-50">
-        {busy ? "…" : "Terminer l’inscription"}
-      </button>
+      <div className="mt-6 flex items-center gap-3">
+        <button type="button" onClick={() => router.push("/register")} disabled={busy}
+          className="rounded-full border border-[var(--color-border)] px-5 py-3 text-sm font-semibold text-[var(--color-text-muted)] disabled:opacity-50">
+          ← Retour
+        </button>
+        <button onClick={finish} disabled={busy || tastes.filmGenreIds.length < 3}
+          className="flex-1 rounded-full bg-[var(--color-primary)] py-3 text-sm font-semibold text-white disabled:opacity-50">
+          {busy ? "…" : "Terminer l’inscription"}
+        </button>
+      </div>
     </main>
   );
 }
