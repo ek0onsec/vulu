@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { rateSchema, userSearchSchema } from "@/lib/zod-schemas";
+import { rateSchema, userSearchSchema, checkAccountSchema } from "@/lib/zod-schemas";
 
 const ref = { source: "tmdb", externalId: "603", type: "movie" } as const;
 
@@ -35,5 +35,15 @@ describe("userSearchSchema", () => {
     expect(userSearchSchema.parse({ q: "tom" }).q).toBe("tom");
     expect(() => userSearchSchema.parse({ q: "" })).toThrow();
     expect(() => userSearchSchema.parse({ q: "x".repeat(51) })).toThrow();
+  });
+});
+
+describe("checkAccountSchema", () => {
+  it("accepte un pseudo et un email valides", () => {
+    expect(checkAccountSchema.parse({ u: "tom_92", e: "a@x.io" })).toEqual({ u: "tom_92", e: "a@x.io" });
+  });
+  it("rejette un pseudo trop court ou un email invalide", () => {
+    expect(() => checkAccountSchema.parse({ u: "ab", e: "a@x.io" })).toThrow();
+    expect(() => checkAccountSchema.parse({ u: "tom_92", e: "pas-un-email" })).toThrow();
   });
 });
