@@ -9,6 +9,8 @@ export interface UserRepository {
   remove(id: string): Promise<void>;
   /** Utilisateurs récents (pour les suggestions « À suivre »). */
   listRecent(limit: number): Promise<User[]>;
+  /** Recherche par username OU displayName (contains, insensible à la casse). */
+  searchByText(query: string, limit: number): Promise<User[]>;
 }
 export interface FollowRepository {
   add(follow: Follow): Promise<void>;

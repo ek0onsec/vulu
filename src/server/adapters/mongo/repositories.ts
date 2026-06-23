@@ -18,6 +18,14 @@ export class MongoUserRepository implements UserRepository {
   async listRecent(limit: number) {
     return (await this.col.find({}).sort({ createdAt: -1 }).limit(limit).toArray()).map(M.fromUserDoc);
   }
+  async searchByText(query: string, limit: number) {
+    const q = query.trim();
+    if (!q) return [];
+    const esc = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rx = { $regex: esc, $options: "i" };
+    return (await this.col.find({ $or: [{ username: rx }, { displayName: rx }] })
+      .sort({ username: 1 }).limit(limit).toArray()).map(M.fromUserDoc);
+  }
 }
 
 export class MongoFollowRepository implements FollowRepository {

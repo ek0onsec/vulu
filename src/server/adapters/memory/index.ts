@@ -16,6 +16,14 @@ export class InMemoryUserRepository implements UserRepository {
   async listRecent(limit: number) {
     return [...this.byId.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
   }
+  async searchByText(query: string, limit: number) {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return [...this.byId.values()]
+      .filter((u) => u.username.toLowerCase().includes(q) || u.displayName.toLowerCase().includes(q))
+      .sort((a, b) => a.username.localeCompare(b.username))
+      .slice(0, limit);
+  }
 }
 
 export class InMemoryFollowRepository implements FollowRepository {

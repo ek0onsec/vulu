@@ -21,6 +21,16 @@ describe("InMemory repos", () => {
     expect(await r.findByEmail("none@x.io")).toBeNull();
   });
 
+  it("UserRepository.searchByText matche username/displayName, insensible casse, respecte limit", async () => {
+    const r = new InMemoryUserRepository();
+    await r.create(user("u1", { username: "tom_92", displayName: "Thomas" }));
+    await r.create(user("u2", { username: "alice", displayName: "Alice T" }));
+    await r.create(user("u3", { username: "bob", displayName: "Bob" }));
+    expect((await r.searchByText("TOM", 10)).map((u) => u.id)).toEqual(["u1"]);
+    expect((await r.searchByText("alice", 10)).map((u) => u.id)).toEqual(["u2"]);
+    expect((await r.searchByText("o", 1)).length).toBe(1);
+  });
+
   it("FollowRepository union directions", async () => {
     const r = new InMemoryFollowRepository();
     await r.add({ followerId: "u1", followeeId: "u2", createdAt: new Date() });

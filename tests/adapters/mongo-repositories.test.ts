@@ -22,6 +22,17 @@ describe("Mongo repositories", () => {
     await r.create(user("u1", { email: "a@x.io" }));
     expect((await r.findByEmail("a@x.io"))?.id).toBe("u1");
   });
+  it("UserRepository.searchByText matche username/displayName et échappe les regex", async () => {
+    const r = new MongoUserRepository(m.db);
+    await r.create(user("s1", { username: "tom.92", displayName: "Thomas" }));
+    await r.create(user("s2", { username: "alice", displayName: "A(lice" }));
+    expect((await r.searchByText("THOM", 10)).map((u) => u.id)).toEqual(["s1"]);
+    // métacaractères traités littéralement : "(" ne fait pas planter et matche "A(lice"
+    expect((await r.searchByText("(lice", 10)).map((u) => u.id)).toEqual(["s2"]);
+    // "." littéral : "tom.92" matché par "m.9", PAS par "tomX92"
+    expect((await r.searchByText("m.9", 10)).map((u) => u.id)).toEqual(["s1"]);
+    expect((await r.searchByText("mX9", 10)).map((u) => u.id)).toEqual([]);
+  });
   it("entries: unicité (userId, workId) via upsert", async () => {
     const r = new MongoLibraryEntryRepository(m.db);
     await r.upsert(entry("e1", { rating: 3 }));
