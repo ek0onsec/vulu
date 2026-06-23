@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { rateSchema } from "@/lib/zod-schemas";
+import { rateSchema, userSearchSchema } from "@/lib/zod-schemas";
 
 const ref = { source: "tmdb", externalId: "603", type: "movie" } as const;
 
@@ -27,5 +27,13 @@ describe("rateSchema", () => {
       ref, rating: 4, text: "top",
       audiences: { public: "yes", circle: true, communityIds: [] },
     })).toThrow();
+  });
+});
+
+describe("userSearchSchema", () => {
+  it("exige q (1–50 caractères)", () => {
+    expect(userSearchSchema.parse({ q: "tom" }).q).toBe("tom");
+    expect(() => userSearchSchema.parse({ q: "" })).toThrow();
+    expect(() => userSearchSchema.parse({ q: "x".repeat(51) })).toThrow();
   });
 });
