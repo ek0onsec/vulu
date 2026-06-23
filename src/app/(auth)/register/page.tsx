@@ -35,15 +35,18 @@ export default function RegisterPage() {
       <form onSubmit={next} className="flex flex-col gap-3">
         <input className={field} placeholder="Nom affiché" value={draft.displayName}
           onChange={(e) => setDraft({ ...draft, displayName: e.target.value })} required />
-        <input className={field} placeholder="Nom d’utilisateur (@pseudo)" value={draft.username}
-          onChange={(e) => setDraft({ ...draft, username: e.target.value })} required />
+        <div className={`${field} flex items-center gap-1 px-0`}>
+          <span className="pl-4 font-semibold text-[var(--color-text-muted)]">@</span>
+          <input className="min-w-0 flex-1 bg-transparent pr-4 outline-none" placeholder="pseudo" value={draft.username}
+            onChange={(e) => setDraft({ ...draft, username: e.target.value.replace(/@/g, "") })} required />
+        </div>
         <input className={field} type="email" placeholder="Email" value={draft.email}
           onChange={(e) => setDraft({ ...draft, email: e.target.value })} required />
         <input className={field} type="password" placeholder="Mot de passe (8 caractères min.)" value={draft.password}
           onChange={(e) => setDraft({ ...draft, password: e.target.value })} required />
 
         <div>
-          <p className="mb-2 text-sm font-semibold">Tes onglets (au moins un)</p>
+          <p className="mb-2 text-sm font-semibold">Que veux-tu suivre ? (au moins un)</p>
           <div className="flex gap-2">
             {(["films", "books"] as Domain[]).map((t) => (
               <button type="button" key={t} onClick={() => toggleTab(t)}
