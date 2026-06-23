@@ -7,8 +7,6 @@ import { toast } from "@/lib/toast";
 import type { LibraryEntry, WorkSource, WorkType } from "@/server/domain/entities";
 
 interface Ref { source: WorkSource; externalId: string; type: WorkType }
-// Cible de partage : "circle" | "public" | id de communauté.
-type Target = string;
 
 export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCount }: {
   workRef: Ref; initial: LibraryEntry | null;
@@ -19,8 +17,10 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
   const [status, setStatus] = useState<"planned" | "in_progress" | "done">(initial?.status ?? "planned");
   const [rating, setRating] = useState<number>(initial?.rating ?? 0);
   const [text, setText] = useState(initial?.text ?? "");
-  const [target, setTarget] = useState<Target>(
-    initial?.audiences.communityIds[0] ?? (initial?.audiences.public ? "public" : "circle"),
+  const [sharePublic, setSharePublic] = useState<boolean>(initial?.audiences.public ?? false);
+  const [shareCircle, setShareCircle] = useState<boolean>(initial?.audiences.circle ?? true);
+  const [shareCommunities, setShareCommunities] = useState<Set<string>>(
+    () => new Set(initial?.audiences.communityIds ?? []),
   );
   const [communities, setCommunities] = useState<{ id: string; name: string }[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
@@ -66,15 +66,16 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
   async function save() {
     setBusy(true); setMsg(null);
     try {
-      const isTargetCommunity = target !== "circle" && target !== "public";
-      const audiences = {
-        public: target === "public",
-        circle: target === "circle",
-        communityIds: isTargetCommunity ? [target] : [],
-      };
-      const body = status === "planned" && rating === 0 && !text.trim()
-        ? { ref: workRef, status: "planned" }
-        : { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, audiences };
+      const communityIds = [...shareCommunities];
+      const audiences = { public: sharePublic, circle: shareCircle, communityIds };
+      const isReview = !(status === "planned" && rating === 0 && !text.trim());
+      if (isReview && !sharePublic && !shareCircle && communityIds.length === 0) {
+        const m = "Choisis au moins une destination";
+        setMsg(m); toast(m, "error"); setBusy(false); return;
+      }
+      const body = isReview
+        ? { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, audiences }
+        : { ref: workRef, status: "planned" };
       const { entry } = await api.put<{ entry: LibraryEntry }>("/api/works/entry", body);
       setEntryId(entry.id);
       setMsg("Enregistré ✓");
@@ -140,15 +141,25 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
       />
 
       <p className="mt-4 mb-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Partager dans</p>
+      <p className="mb-1.5 text-xs text-[var(--color-text-muted)]">Plusieurs destinations possibles — pas de doublon dans le feed.</p>
       <div className="flex flex-wrap gap-2">
-        {([["circle", "● Cercle"], ["public", "● Public"]] as const).map(([v, label]) => (
-          <button key={v} onClick={() => setTarget(v)}
-            className={`rounded-full border px-4 py-1.5 text-sm ${target === v ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>{label}</button>
-        ))}
-        {communities.map((c) => (
-          <button key={c.id} onClick={() => setTarget(c.id)}
-            className={`rounded-full border px-4 py-1.5 text-sm ${target === c.id ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>◆ {c.name}</button>
-        ))}
+        <button onClick={() => setSharePublic((v) => !v)}
+          className={`rounded-full border px-4 py-1.5 text-sm ${sharePublic ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>
+          {sharePublic ? "✓ " : ""}● Public
+        </button>
+        <button onClick={() => setShareCircle((v) => !v)}
+          className={`rounded-full border px-4 py-1.5 text-sm ${shareCircle ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>
+          {shareCircle ? "✓ " : ""}● Cercle
+        </button>
+        {communities.map((c) => {
+          const on = shareCommunities.has(c.id);
+          return (
+            <button key={c.id} onClick={() => setShareCommunities((prev) => { const next = new Set(prev); if (next.has(c.id)) next.delete(c.id); else next.add(c.id); return next; })}
+              className={`rounded-full border px-4 py-1.5 text-sm ${on ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>
+              {on ? "✓ " : ""}◆ {c.name}
+            </button>
+          );
+        })}
       </div>
       <button onClick={save} disabled={busy}
         className="mt-4 rounded-full bg-[var(--color-primary)] px-6 py-2 text-sm font-semibold text-white disabled:opacity-50">
