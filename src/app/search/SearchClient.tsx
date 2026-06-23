@@ -1,16 +1,22 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { api } from "@/lib/api-client";
 import { TabSwitcher } from "@/components/TabSwitcher";
+import { Avatar } from "@/components/Avatar";
+import { CertifiedBadge } from "@/components/CertifiedBadge";
+import { StaffBadge } from "@/components/StaffBadge";
 import type { Domain } from "@/server/domain/entities";
 import type { WorkSummary, WorkDetails } from "@/server/ports/catalog";
+import type { UserSearchResult } from "@/server/application/search-users";
 
 export function SearchClient({ activeTabs }: { activeTabs: Domain[] }) {
   const router = useRouter();
   const [domain, setDomain] = useState<Domain>(activeTabs[0] ?? "films");
   const [q, setQ] = useState("");
   const [results, setResults] = useState<WorkSummary[]>([]);
+  const [members, setMembers] = useState<UserSearchResult[]>([]);
   const [unavailable, setUnavailable] = useState(false);
   const [loading, setLoading] = useState(false);
   const [opening, setOpening] = useState<string | null>(null);
@@ -18,13 +24,26 @@ export function SearchClient({ activeTabs }: { activeTabs: Domain[] }) {
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
-    if (!q.trim()) { setResults([]); return; }
+    const trimmed = q.trim();
+    const isMemberMode = trimmed.startsWith("@");
+    const memberQuery = isMemberMode ? trimmed.slice(1).trim() : "";
+    const catalogQuery = isMemberMode ? memberQuery : trimmed;
+    if (!isMemberMode) setMembers([]);
+    if (!catalogQuery && !memberQuery) { setResults([]); setMembers([]); return; }
     timer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const data = await api.get<{ results: WorkSummary[]; unavailable?: boolean }>(`/api/catalog/search?q=${encodeURIComponent(q)}&domain=${domain}`);
-        setResults(data.results);
-        setUnavailable(Boolean(data.unavailable));
+        if (isMemberMode && memberQuery) {
+          const m = await api.get<{ users: UserSearchResult[] }>(`/api/users/search?q=${encodeURIComponent(memberQuery)}`);
+          setMembers(m.users);
+        }
+        if (catalogQuery) {
+          const data = await api.get<{ results: WorkSummary[]; unavailable?: boolean }>(`/api/catalog/search?q=${encodeURIComponent(catalogQuery)}&domain=${domain}`);
+          setResults(data.results);
+          setUnavailable(Boolean(data.unavailable));
+        } else {
+          setResults([]);
+        }
       } finally {
         setLoading(false);
       }
@@ -49,7 +68,7 @@ export function SearchClient({ activeTabs }: { activeTabs: Domain[] }) {
       <h1 className="font-display mb-4 text-2xl font-bold">Recherche</h1>
       {activeTabs.length > 1 && <TabSwitcher active={activeTabs} value={domain} onChange={setDomain} />}
       <input autoFocus value={q} onChange={(e) => setQ(e.target.value)}
-        placeholder={domain === "books" ? "Un livre, un auteur…" : "Un film, une série…"}
+        placeholder={domain === "books" ? "Un livre, un auteur, @pseudo…" : "Un film, une série, @pseudo…"}
         className="mb-5 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm" />
 
       {loading && <p className="text-sm text-[var(--color-text-muted)]">Recherche…</p>}
@@ -59,6 +78,28 @@ export function SearchClient({ activeTabs }: { activeTabs: Domain[] }) {
             ? "Catalogue livres momentanément indisponible (limite Google Books). Ajoute une clé GOOGLE_BOOKS_API_KEY pour fiabiliser."
             : "Catalogue momentanément indisponible. Réessaie dans un instant."}
         </p>
+      )}
+      {members.length > 0 && (
+        <section className="mb-5">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Membres</p>
+          <ul className="flex flex-col gap-1">
+            {members.map((u) => (
+              <li key={u.id}>
+                <Link href={`/u/${u.username}`} className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-[var(--color-surface)]">
+                  <Avatar name={u.displayName} src={u.avatarUrl} size={40} />
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-1 text-sm font-semibold">
+                      {u.displayName}
+                      {u.staff && <StaffBadge />}
+                      {u.plus && <CertifiedBadge />}
+                    </span>
+                    <span className="block truncate text-xs text-[var(--color-text-muted)]">@{u.username}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
         {results.map((r) => (
