@@ -6,8 +6,15 @@ import { toErrorResponse } from "@/server/http/errors";
 import { selfUser } from "@/lib/serialize";
 
 export async function GET() {
-  try { return json({ user: selfUser(await requireUser()) }); }
-  catch (e) { return toErrorResponse(e); }
+  try {
+    const user = await requireUser();
+    const deps = await getDeps();
+    const [followers, following] = await Promise.all([
+      deps.follows.countFollowers(user.id),
+      deps.follows.countFollowing(user.id),
+    ]);
+    return json({ user: selfUser(user), followers, following });
+  } catch (e) { return toErrorResponse(e); }
 }
 export async function PATCH(req: Request) {
   try {
