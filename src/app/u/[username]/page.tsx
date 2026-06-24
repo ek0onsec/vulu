@@ -2,6 +2,8 @@ import { redirect, notFound } from "next/navigation";
 import { currentUser } from "@/server/http/session";
 import { getDeps } from "@/server/container";
 import { getCircle, canViewProfile } from "@/server/application/social";
+import { computeTasteMatch } from "@/server/application/taste-match";
+import { TasteMatchBadge } from "@/components/TasteMatchBadge";
 import { AppShell } from "@/components/AppShell";
 import { FollowButton } from "@/components/FollowButton";
 import { Avatar } from "@/components/Avatar";
@@ -28,6 +30,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const canView = await canViewProfile(deps, viewer.id, target);
   const isFollowing = await deps.follows.exists(viewer.id, target.id);
   const requested = !isSelf && Boolean(await deps.followRequests.findPair(viewer.id, target.id));
+  const rawMatch = !isSelf ? await computeTasteMatch(deps, viewer.id, target) : null;
+  const tasteMatch = rawMatch && rawMatch.overlap >= 3 ? rawMatch : null;
   const [followers, following] = await Promise.all([deps.follows.countFollowers(target.id), deps.follows.countFollowing(target.id)]);
 
   async function toPosters(entries: LibraryEntry[]): Promise<PosterItem[]> {
@@ -92,6 +96,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
               ? <ProfileEditModal initial={{ username: target.username, displayName: target.displayName, bio: target.bio, avatarUrl: target.avatarUrl, bannerUrl: target.bannerUrl, activeTabs: target.activeTabs }} />
               : <FollowButton username={target.username} initialFollowing={isFollowing} isPrivate={target.private} initialRequested={requested} />}
           </div>
+          {tasteMatch && <TasteMatchBadge score={tasteMatch.score} overlap={tasteMatch.overlap} sample={tasteMatch.sample} />}
           {target.bio && <p className="mt-3 text-sm text-[var(--color-text)]">{target.bio}</p>}
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
             {showFilms && <span><b>{vusCount}</b> <span className="text-[var(--color-text-muted)]">vus</span></span>}
