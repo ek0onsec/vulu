@@ -8,6 +8,7 @@ import { Avatar } from "./Avatar";
 import { CertifiedBadge } from "./CertifiedBadge";
 import { StaffBadge } from "./StaffBadge";
 import { DiscoverRail } from "./DiscoverRail";
+import { SideMenu } from "./SideMenu";
 import { api } from "@/lib/api-client";
 
 const NAV: { href: string; label: string; icon: IconName; pulse?: boolean }[] = [
@@ -21,7 +22,15 @@ const NAV: { href: string; label: string; icon: IconName; pulse?: boolean }[] = 
   { href: "/parametres", label: "Paramètres", icon: "settings" },
 ];
 
-interface Me { username: string; displayName: string; avatarUrl: string | null; plus: boolean; staff: boolean; private: boolean }
+// Barre du bas (mobile) : 4 entrées. Recherche = island flottante ; profil/réglages/vulu+ = side menu.
+const BOTTOM_NAV: { href: string; label: string; icon: IconName; pulse?: boolean }[] = [
+  { href: "/feed", label: "Accueil", icon: "home", pulse: true },
+  { href: "/communautes", label: "Communautés", icon: "community" },
+  { href: "/bibliotheque", label: "Bibliothèque", icon: "lists" },
+  { href: "/notifications", label: "Notifications", icon: "bell" },
+];
+
+interface Me { username: string; displayName: string; avatarUrl: string | null; plus: boolean; staff: boolean; private: boolean; followers: number; following: number }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
@@ -29,15 +38,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const active = (href: string) => path === href || path.startsWith(href + "/");
   const [me, setMe] = useState<Me | null>(null);
   const [unread, setUnread] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    api.get<{ user: Me }>("/api/me").then((d) => setMe(d.user)).catch(() => setMe(null));
+    api.get<{ user: Omit<Me, "followers" | "following">; followers: number; following: number }>("/api/me")
+      .then((d) => setMe({ ...d.user, followers: d.followers, following: d.following }))
+      .catch(() => setMe(null));
   }, []);
 
   // Compteur de notifications non lues, rafraîchi à chaque navigation.
   useEffect(() => {
     api.get<{ unreadCount: number }>("/api/notifications/count").then((d) => setUnread(d.unreadCount)).catch(() => {});
   }, [path]);
+
+  // Ferme le side menu à chaque navigation.
+  useEffect(() => { setMenuOpen(false); }, [path]);
 
   async function logout() {
     await api.post("/api/auth/logout").catch(() => {});
@@ -92,24 +107,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main className="w-full border-x border-[var(--color-border)] px-3 pb-24 pt-4 md:px-5 md:pb-8">{children}</main>
+      <main className="w-full border-x border-[var(--color-border)] px-3 pb-24 pt-4 md:px-5 md:pb-8">
+        <div className="sticky top-0 z-30 -mx-3 mb-2 flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 px-3 py-2 backdrop-blur md:hidden">
+          <Link href="/feed" className="font-display text-2xl font-bold text-[var(--color-primary)]">vulu</Link>
+          <button onClick={() => setMenuOpen(true)} aria-label="Ouvrir le menu">
+            {me && <Avatar name={me.displayName} src={me.avatarUrl} size={32} />}
+          </button>
+        </div>
+        {children}
+      </main>
 
       <aside className="sticky top-0 hidden h-screen overflow-y-auto px-4 py-5 lg:block">
         <DiscoverRail />
       </aside>
 
-      <Link href="/search" aria-label="Rechercher une œuvre"
-        className="fixed bottom-16 right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_40%,transparent)] transition-transform active:scale-95 md:hidden">
-        <Icon name="plus" size={26} />
-      </Link>
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} me={me} onLogout={logout} />
 
       <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-[var(--color-border)] bg-[var(--color-surface)] py-2 md:hidden">
-        {NAV.map((n) => (
+        {BOTTOM_NAV.map((n) => (
           <Link key={n.href} href={n.href} aria-label={n.label}
             className={`relative rounded-full p-2 ${active(n.href) ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}`}>
             <Icon name={n.icon} size={24} />
             {n.pulse && !active(n.href) && (
               <span className="absolute right-1.5 top-1.5 h-2 w-2 animate-ping rounded-full bg-[var(--color-accent)]" />
+            )}
+            {n.icon === "bell" && unread > 0 && (
+              <span className="absolute right-0.5 top-0.5 flex min-w-[1.1rem] items-center justify-center rounded-full bg-[var(--color-primary)] px-1 text-[0.6rem] font-bold leading-4 text-white">{unread > 9 ? "9+" : unread}</span>
             )}
           </Link>
         ))}
