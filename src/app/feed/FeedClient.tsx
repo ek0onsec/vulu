@@ -6,7 +6,7 @@ import { FeedComposer } from "@/components/FeedComposer";
 import type { Domain } from "@/server/domain/entities";
 import type { FeedItem } from "@/server/application/feed";
 
-// onglet = "foryou" | "circle" | "c:<communityId>"
+// onglet = "foryou" | "following" | "c:<communityId>"
 export function FeedClient({ displayName, avatarUrl }: { activeTabs: Domain[]; displayName: string; avatarUrl: string | null }) {
   const [tab, setTab] = useState("foryou");
   const [pinned, setPinned] = useState<{ id: string; name: string }[]>([]);
@@ -43,7 +43,7 @@ export function FeedClient({ displayName, avatarUrl }: { activeTabs: Domain[]; d
     return () => obs.disconnect();
   }, [cursor, loading, tab, load]);
 
-  const tabs = [{ id: "foryou", label: "Pour vous" }, { id: "circle", label: "Mon cercle" }, ...pinned.map((c) => ({ id: `c:${c.id}`, label: c.name }))];
+  const tabs = [{ id: "foryou", label: "Pour toi" }, { id: "following", label: "Suivis" }, ...pinned.map((c) => ({ id: `c:${c.id}`, label: c.name }))];
 
   return (
     <>
@@ -62,7 +62,7 @@ export function FeedClient({ displayName, avatarUrl }: { activeTabs: Domain[]; d
       {ready && items.map((i) => <FeedCard key={i.entry.id} item={i} />)}
       {ready && items.length === 0 && !loading && (
         <p className="mt-8 text-center text-[var(--color-text-muted)]">
-          {tab === "circle" ? "Ton cercle n’a rien publié récemment. Suis plus de monde !" : tab.startsWith("c:") ? "Rien dans cette communauté. Partages-y un avis depuis une fiche !" : "Rien ici pour l’instant. Note un film ou un livre pour lancer ton feed."}
+          {tab === "following" ? "Personne que tu suis n’a publié récemment. Suis plus de monde !" : tab.startsWith("c:") ? "Rien dans cette communauté. Partages-y un avis depuis une fiche !" : "Rien ici pour l’instant. Note un film ou un livre pour lancer ton feed."}
         </p>
       )}
 
