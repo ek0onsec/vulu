@@ -3,7 +3,7 @@ import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
 import * as M from "./mappers";
 
 export class MongoUserRepository implements UserRepository {
@@ -73,6 +73,12 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
     if (opts.status) q.status = opts.status;
     if (opts.domain) q.domain = opts.domain as M.WithIdEntry["domain"];
     return (await this.col.find(q).sort({ createdAt: -1 }).toArray()).map(M.fromEntryDoc);
+  }
+  async listRatedByUser(userId: string): Promise<RatedEntry[]> {
+    const docs = await this.col.find({ userId, rating: { $ne: null } }).sort({ createdAt: -1 }).toArray();
+    return docs.map(M.fromEntryDoc).map((e) => ({
+      workId: e.workId, domain: e.domain, rating: e.rating as number, audiences: e.audiences,
+    }));
   }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }
   async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }

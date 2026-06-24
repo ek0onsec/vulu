@@ -100,6 +100,14 @@ export interface LibraryEntry {
   updatedAt: Date;
 }
 
+/** Projection d'une œuvre notée par un utilisateur, pour le calcul de compatibilité. */
+export interface RatedEntry {
+  workId: string;
+  domain: Domain;
+  rating: number;
+  audiences: EntryAudiences;
+}
+
 /** Communauté (type X Communities), publique ou privée. */
 export interface Community {
   id: string;

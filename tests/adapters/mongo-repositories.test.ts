@@ -46,4 +46,13 @@ describe("Mongo repositories", () => {
     const res = await r.feed({ scope: "foryou", circleUserIds: ["friend"], viewerId: "me", domains: ["films"], cursor: null, limit: 10 });
     expect(res.map((e) => e.id)).toEqual(["e_cir", "e_pub"]);
   });
+  it("listRatedByUser ne remonte que les entries notées (parité mémoire)", async () => {
+    const r = new MongoLibraryEntryRepository(m.db);
+    await r.upsert(entry("r1", { userId: "u1", workId: "w1", rating: 4.5 }));
+    await r.upsert(entry("r2", { userId: "u1", workId: "w2", rating: null }));
+    await r.upsert(entry("r3", { userId: "other", workId: "w1", rating: 3 }));
+    const rated = await r.listRatedByUser("u1");
+    expect(rated.map((x) => x.workId)).toEqual(["w1"]);
+    expect(rated[0]).toEqual({ workId: "w1", domain: "films", rating: 4.5, audiences: { public: true, circle: true, communityIds: [] } });
+  });
 });

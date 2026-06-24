@@ -2,7 +2,7 @@ import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
 import { isPublishable, isFeedVisible } from "@/server/domain/feed-rules";
 
 export class InMemoryUserRepository implements UserRepository {
@@ -72,6 +72,11 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
       (opts.status ? e.status === opts.status : true) &&
       (opts.domain ? e.domain === opts.domain : true),
     ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  async listRatedByUser(userId: string): Promise<RatedEntry[]> {
+    return [...this.byId.values()]
+      .filter((e) => e.userId === userId && e.rating !== null)
+      .map((e) => ({ workId: e.workId, domain: e.domain, rating: e.rating as number, audiences: e.audiences }));
   }
   async remove(id: string) { this.byId.delete(id); }
   async removeAllForUser(userId: string) { for (const [k, e] of this.byId) if (e.userId === userId) this.byId.delete(k); }

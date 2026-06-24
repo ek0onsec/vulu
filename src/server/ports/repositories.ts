@@ -1,4 +1,4 @@
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
 
 export interface UserRepository {
   create(user: User): Promise<void>;
@@ -42,6 +42,8 @@ export interface LibraryEntryRepository {
   findById(id: string): Promise<LibraryEntry | null>;
   findByUserAndWork(userId: string, workId: string): Promise<LibraryEntry | null>;
   listByUser(userId: string, opts: { status?: "planned" | "in_progress" | "done"; domain?: string }): Promise<LibraryEntry[]>;
+  /** Œuvres notées (rating non nul) d'un utilisateur. Pour la compatibilité de goûts. */
+  listRatedByUser(userId: string): Promise<RatedEntry[]>;
   remove(id: string): Promise<void>;
   removeAllForUser(userId: string): Promise<void>;
   feed(opts: {

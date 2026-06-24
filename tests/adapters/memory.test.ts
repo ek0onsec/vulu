@@ -49,6 +49,16 @@ describe("InMemory repos", () => {
     const res = await r.feed({ scope: "foryou", circleUserIds: ["friend"], viewerId: "me", domains: ["films"], cursor: null, limit: 10 });
     expect(res.map((e) => e.id)).toEqual(["e_circle", "e_pub"]);
   });
+
+  it("listRatedByUser ne remonte que les entries notées, projetées avec audiences", async () => {
+    const r = new InMemoryLibraryEntryRepository();
+    await r.upsert(entry("e1", { userId: "u1", workId: "w1", rating: 4.5 }));
+    await r.upsert(entry("e2", { userId: "u1", workId: "w2", rating: null }));
+    await r.upsert(entry("e3", { userId: "other", workId: "w1", rating: 3 }));
+    expect(await r.listRatedByUser("u1")).toEqual([
+      { workId: "w1", domain: "films", rating: 4.5, audiences: { public: true, circle: true, communityIds: [] } },
+    ]);
+  });
 });
 
 describe("InMemoryLibraryEntryRepository — feed activityAt", () => {
