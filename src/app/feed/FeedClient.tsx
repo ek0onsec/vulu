@@ -3,11 +3,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api-client";
 import { FeedCard } from "@/components/FeedCard";
 import { FeedComposer } from "@/components/FeedComposer";
+import { SearchIsland } from "@/components/SearchIsland";
 import type { Domain } from "@/server/domain/entities";
 import type { FeedItem } from "@/server/application/feed";
 
 // onglet = "foryou" | "following" | "c:<communityId>"
-export function FeedClient({ displayName, avatarUrl }: { activeTabs: Domain[]; displayName: string; avatarUrl: string | null }) {
+export function FeedClient({ activeTabs, displayName, avatarUrl }: { activeTabs: Domain[]; displayName: string; avatarUrl: string | null }) {
   const [tab, setTab] = useState("foryou");
   const [pinned, setPinned] = useState<{ id: string; name: string }[]>([]);
   const [items, setItems] = useState<FeedItem[]>([]);
@@ -56,7 +57,11 @@ export function FeedClient({ displayName, avatarUrl }: { activeTabs: Domain[]; d
         ))}
       </div>
 
-      <FeedComposer displayName={displayName} avatarUrl={avatarUrl} />
+      <SearchIsland activeTabs={activeTabs} />
+
+      <div className="hidden md:block">
+        <FeedComposer displayName={displayName} avatarUrl={avatarUrl} />
+      </div>
 
       {!ready && <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-32 animate-pulse rounded-2xl bg-[var(--color-border)]" />)}</div>}
       {ready && items.map((i) => <FeedCard key={i.entry.id} item={i} />)}
