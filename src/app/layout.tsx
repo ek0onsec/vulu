@@ -19,8 +19,13 @@ export const viewport: Viewport = { themeColor: "#9461C0" };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr" suppressHydrationWarning className={`${display.variable} ${body.variable} h-full antialiased`}>
-      <head>{/* No-flash de thème : script externe render-blocking, exécuté avant le premier paint. */}
-        <script src="/theme-no-flash.js" /></head>
+      <head>
+        {/* Dev uniquement : neutralise le throw « negative time stamp » de la piste perf
+            Server Components (React 19.2 / Next 16.2). Retiré du build de production. */}
+        {process.env.NODE_ENV !== "production" && <script src="/dev-perf-guard.js" />}
+        {/* No-flash de thème : script externe render-blocking, exécuté avant le premier paint. */}
+        <script src="/theme-no-flash.js" />
+      </head>
       <body className="min-h-full">
         <ThemeProvider>{children}</ThemeProvider>
         <ToastViewport />
