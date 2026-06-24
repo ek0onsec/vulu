@@ -38,15 +38,19 @@ export async function enrichEntries(deps: Deps, viewerId: string, entries: Libra
 }
 
 export async function buildFeed(
-  deps: Deps, viewerId: string, opts: { scope: "foryou" | "circle"; cursor: { activityAt: Date; id: string } | null; limit: number },
+  deps: Deps, viewerId: string, opts: { scope: "foryou" | "following"; cursor: { activityAt: Date; id: string } | null; limit: number },
 ): Promise<FeedItem[]> {
   const viewer = await deps.users.findById(viewerId);
   if (!viewer) throw new NotFoundError("Utilisateur introuvable");
-  const circle = await getCircle(deps, viewerId);
+  const [circle, following] = await Promise.all([
+    getCircle(deps, viewerId),
+    deps.follows.followeeIdsOf(viewerId),
+  ]);
 
   const entries = await deps.entries.feed({
     scope: opts.scope,
     circleUserIds: [...circle],
+    followingUserIds: following,
     viewerId,
     domains: viewer.activeTabs,
     cursor: opts.cursor,

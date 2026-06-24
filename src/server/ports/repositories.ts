@@ -47,8 +47,9 @@ export interface LibraryEntryRepository {
   remove(id: string): Promise<void>;
   removeAllForUser(userId: string): Promise<void>;
   feed(opts: {
-    scope: "foryou" | "circle";
+    scope: "foryou" | "following";
     circleUserIds: string[];
+    followingUserIds: string[];
     viewerId: string;
     domains: string[];
     cursor: { activityAt: Date; id: string } | null;

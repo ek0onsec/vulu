@@ -43,7 +43,7 @@ describe("Mongo repositories", () => {
     const r = new MongoLibraryEntryRepository(m.db);
     await r.upsert(entry("e_pub", { userId: "stranger", audiences: { public: true, circle: true, communityIds: [] }, createdAt: new Date(2024, 0, 1), activityAt: new Date(2024, 0, 1) }));
     await r.upsert(entry("e_cir", { userId: "friend", audiences: { public: false, circle: true, communityIds: [] }, createdAt: new Date(2024, 0, 2), activityAt: new Date(2024, 0, 2) }));
-    const res = await r.feed({ scope: "foryou", circleUserIds: ["friend"], viewerId: "me", domains: ["films"], cursor: null, limit: 10 });
+    const res = await r.feed({ scope: "foryou", circleUserIds: ["friend"], followingUserIds: [], viewerId: "me", domains: ["films"], cursor: null, limit: 10 });
     expect(res.map((e) => e.id)).toEqual(["e_cir", "e_pub"]);
   });
   it("listRatedByUser ne remonte que les entries notées (parité mémoire)", async () => {

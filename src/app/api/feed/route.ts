@@ -7,7 +7,7 @@ export async function GET(req: Request) {
   try {
     const user = await requireUser();
     const sp = new URL(req.url).searchParams;
-    const scope = sp.get("scope") === "circle" ? "circle" : "foryou";
+    const scope = sp.get("scope") === "following" ? "following" : "foryou";
     const cursorRaw = sp.get("cursor");
     const cursor = cursorRaw ? JSON.parse(cursorRaw) as { activityAt: string; id: string } : null;
     const items = await buildFeed(await getDeps(), user.id, {

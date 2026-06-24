@@ -38,6 +38,24 @@ describe("buildFeed", () => {
     const items = await buildFeed(deps, me, { scope: "foryou", cursor: null, limit: 10 });
     expect(items).toHaveLength(0);
   });
+  it("scope 'following' : montre le public d'un suivi, masque un non-suivi", async () => {
+    const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+    await rateOrReviewWork(deps, friend, ref, { rating: 4, text: "suivi public", audiences: { public: true, circle: true, communityIds: [] } });
+    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "non suivi", audiences: { public: true, circle: true, communityIds: [] } });
+    const items = await buildFeed(deps, me, { scope: "following", cursor: null, limit: 10 });
+    expect(items.map((i) => i.author.username)).toEqual(["friend"]);
+  });
+
+  it("scope 'following' : un post 'cercle' d'un compte suivi est visible (suivre = être dans son cercle)", async () => {
+    const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+    // me suit friend → me ∈ cercle de friend → son post cercle est visible en 'following'
+    await rateOrReviewWork(deps, friend, ref, { rating: 4, text: "cercle", audiences: { public: false, circle: true, communityIds: [] } });
+    // stranger non suivi : son post cercle reste masqué
+    await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "cercle inconnu", audiences: { public: false, circle: true, communityIds: [] } });
+    const items = await buildFeed(deps, me, { scope: "following", cursor: null, limit: 10 });
+    expect(items.map((i) => i.author.username)).toEqual(["friend"]);
+  });
+
   it("une entrée multi-cibles (public + cercle) n'apparaît qu'une fois en Pour vous", async () => {
     const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
     await rateOrReviewWork(deps, friend, ref, { rating: 4, text: "multi", audiences: { public: true, circle: true, communityIds: [] } });

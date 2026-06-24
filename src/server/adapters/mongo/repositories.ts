@@ -82,9 +82,12 @@ export class MongoLibraryEntryRepository implements LibraryEntryRepository {
   }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }
   async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }
-  async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { activityAt: Date; id: string } | null; limit: number; }) {
-    const visibility: Filter<M.WithIdEntry> = opts.scope === "circle"
-      ? { "audiences.circle": true, userId: { $in: opts.circleUserIds } }
+  async feed(opts: { scope: "foryou" | "following"; circleUserIds: string[]; followingUserIds: string[]; viewerId: string; domains: string[]; cursor: { activityAt: Date; id: string } | null; limit: number; }) {
+    const visibility: Filter<M.WithIdEntry> = opts.scope === "following"
+      ? { userId: { $in: opts.followingUserIds }, $or: [
+          { "audiences.public": true },
+          { "audiences.circle": true, userId: { $in: opts.circleUserIds } },
+        ] }
       : { $or: [
           { "audiences.public": true },
           { "audiences.communityIds.0": { $exists: true } },

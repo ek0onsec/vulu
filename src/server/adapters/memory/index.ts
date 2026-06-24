@@ -80,13 +80,14 @@ export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
   }
   async remove(id: string) { this.byId.delete(id); }
   async removeAllForUser(userId: string) { for (const [k, e] of this.byId) if (e.userId === userId) this.byId.delete(k); }
-  async feed(opts: { scope: "foryou" | "circle"; circleUserIds: string[]; viewerId: string; domains: string[]; cursor: { activityAt: Date; id: string } | null; limit: number; }) {
+  async feed(opts: { scope: "foryou" | "following"; circleUserIds: string[]; followingUserIds: string[]; viewerId: string; domains: string[]; cursor: { activityAt: Date; id: string } | null; limit: number; }) {
     const circle = new Set(opts.circleUserIds);
+    const following = new Set(opts.followingUserIds);
     return [...this.byId.values()]
       .filter((e) => isFeedVisible(e))
       .filter((e) => opts.domains.includes(e.domain))
-      .filter((e) => opts.scope === "circle"
-        ? (e.audiences.circle && circle.has(e.userId))
+      .filter((e) => opts.scope === "following"
+        ? (following.has(e.userId) && (e.audiences.public || (e.audiences.circle && circle.has(e.userId))))
         : (e.audiences.public || e.audiences.communityIds.length > 0 || (e.audiences.circle && circle.has(e.userId))))
       .filter((e) => !opts.cursor || e.activityAt!.getTime() < opts.cursor.activityAt.getTime())
       .sort((a, b) => b.activityAt!.getTime() - a.activityAt!.getTime())
