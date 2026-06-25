@@ -5,6 +5,7 @@ import { api, ApiError } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
 import { CertifiedBadge } from "@/components/CertifiedBadge";
 import { Icon } from "@/components/Icon";
+import { VuluLogo } from "@/components/VuluLogo";
 
 const PERKS = [
   { icon: "check" as const, title: "Badge certifié vulu+", desc: "Un badge certifié à côté de ton nom, partout dans l’app." },
@@ -42,7 +43,7 @@ export function PlusClient({ active }: { active: boolean }) {
   return (
     <div className="mx-auto max-w-lg">
       <div className="rounded-3xl border border-[color-mix(in_srgb,var(--color-primary)_40%,transparent)] bg-gradient-to-br from-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] to-[color-mix(in_srgb,var(--color-accent)_14%,transparent)] p-6 text-center">
-        <p className="font-display text-4xl font-bold text-[var(--color-primary)]">vulu<span className="text-[var(--color-accent)]">+</span></p>
+        <p className="flex items-center justify-center gap-0.5 font-display text-4xl font-bold"><VuluLogo height={36} /><span className="text-[var(--color-accent)]">+</span></p>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">Passe au niveau supérieur de vu &amp; lu.</p>
 
         <div className="mx-auto mt-4 inline-flex rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-1">

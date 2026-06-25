@@ -9,6 +9,7 @@ import { CertifiedBadge } from "./CertifiedBadge";
 import { StaffBadge } from "./StaffBadge";
 import { DiscoverRail } from "./DiscoverRail";
 import { SideMenu } from "./SideMenu";
+import { VuluLogo } from "./VuluLogo";
 import { api } from "@/lib/api-client";
 
 const NAV: { href: string; label: string; icon: IconName; pulse?: boolean }[] = [
@@ -62,7 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto grid min-h-screen max-w-[1320px] grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[240px_minmax(0,1fr)_340px]">
       <aside className="sticky top-0 hidden h-screen flex-col gap-1 border-r border-[var(--color-border)] px-3 py-4 md:flex">
-        <Link href="/feed" className="font-display mb-3 px-3 text-3xl font-bold text-[var(--color-primary)]">vulu</Link>
+        <Link href="/feed" className="mb-3 px-3"><VuluLogo height={30} /></Link>
         {NAV.map((n) => (
           <Link key={n.href} href={n.href}
             className={`flex items-center gap-3 rounded-full px-3 py-2.5 text-[0.95rem] transition-colors ${
@@ -109,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main className="w-full border-x border-[var(--color-border)] px-3 pb-24 pt-4 md:px-5 md:pb-8">
         <div className="sticky top-0 z-40 -mx-3 mb-2 flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 px-3 py-2 backdrop-blur md:hidden">
-          <Link href="/feed" className="font-display text-2xl font-bold text-[var(--color-primary)]">vulu</Link>
+          <Link href="/feed"><VuluLogo height={24} /></Link>
           <button onClick={() => setMenuOpen(true)} aria-label="Ouvrir le menu">
             {me && <Avatar name={me.displayName} src={me.avatarUrl} size={32} />}
           </button>

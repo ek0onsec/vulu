@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Domain } from "@/server/domain/entities";
 import { SIGNUP_KEY, type SignupDraft } from "@/lib/signup";
 import { api } from "@/lib/api-client";
+import { VuluLogo } from "@/components/VuluLogo";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function RegisterPage() {
   const field = "rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm";
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-5">
-      <h1 className="font-display mb-1 text-4xl font-bold text-[var(--color-primary)]">vulu</h1>
+      <VuluLogo height={40} className="mb-1" />
       <p className="mb-6 text-sm text-[var(--color-text-muted)]">Étape 1/2 · Crée ton compte.</p>
       <form onSubmit={next} className="flex flex-col gap-3">
         <input className={field} placeholder="Nom affiché" value={draft.displayName}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
+import { VuluLogo } from "@/components/VuluLogo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-5">
-      <h1 className="font-display mb-1 text-4xl font-bold text-[var(--color-primary)]">vulu</h1>
+      <VuluLogo height={40} className="mb-1" />
       <p className="mb-6 text-sm text-[var(--color-text-muted)]">Content de te revoir.</p>
       {deleted && (
         <div className="mb-4 rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-accent)_15%,transparent)] p-3 text-sm">
