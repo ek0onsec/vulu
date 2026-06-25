@@ -12,7 +12,7 @@ import type {
   ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository,
 } from "@/server/ports/repositories";
 import type { CatalogProvider } from "@/server/ports/catalog";
-import type { PasswordHasher, TokenService, IdGenerator, Clock } from "@/server/ports/security";
+import type { PasswordHasher, TokenService, IdGenerator, Clock, Totp, Crypto } from "@/server/ports/security";
 import type { MediaStorage } from "@/server/ports/media";
 import { LocalDiskStorage } from "@/server/adapters/media/local-disk-storage";
 import { tmpdir } from "node:os";
@@ -26,6 +26,8 @@ import {
 import { TmdbCatalog } from "@/server/adapters/catalog/tmdb-catalog";
 import { GoogleBooksCatalog } from "@/server/adapters/catalog/google-books-catalog";
 import { CompositeCatalog } from "@/server/adapters/catalog/composite-catalog";
+import { OtplibTotp } from "@/server/adapters/security/otplib-totp";
+import { NodeCrypto } from "@/server/adapters/security/node-crypto";
 import { getEnv } from "@/lib/env";
 
 export interface Deps {
@@ -44,6 +46,8 @@ export interface Deps {
   media: MediaStorage;
   hasher: PasswordHasher;
   tokens: TokenService;
+  totp: Totp;
+  crypto: Crypto;
   ids: IdGenerator;
   clock: Clock;
 }
@@ -66,6 +70,8 @@ export function makeInMemoryDeps(catalog: CatalogProvider): Deps {
     media: new LocalDiskStorage(join(tmpdir(), "vulu-test-uploads")),
     hasher: new BcryptHasher(4),
     tokens: new JwtTokenService("test-secret-test-secret-test-secret-32"),
+    totp: new OtplibTotp(),
+    crypto: new NodeCrypto("test-secret-test-secret-test-secret-32"),
     ids: new UuidIdGenerator(),
     clock: new SystemClock(),
   };
@@ -97,6 +103,8 @@ export async function getDeps(): Promise<Deps> {
     media: new LocalDiskStorage(env.UPLOADS_DIR),
     hasher: new BcryptHasher(12),
     tokens: new JwtTokenService(env.JWT_SECRET),
+    totp: new OtplibTotp(),
+    crypto: new NodeCrypto(env.JWT_SECRET),
     ids: new UuidIdGenerator(),
     clock: new SystemClock(),
   };
