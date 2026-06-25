@@ -1,7 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { rateSchema, userSearchSchema, checkAccountSchema } from "@/lib/zod-schemas";
+import { rateSchema, userSearchSchema, checkAccountSchema, isbnSchema } from "@/lib/zod-schemas";
 
 const ref = { source: "tmdb", externalId: "603", type: "movie" } as const;
+
+describe("isbnSchema", () => {
+  it("accepte une chaîne 10–20, rejette trop court", () => {
+    expect(isbnSchema.parse({ isbn: "9780441569595" }).isbn).toBe("9780441569595");
+    expect(() => isbnSchema.parse({ isbn: "123" })).toThrow();
+  });
+});
 
 describe("rateSchema", () => {
   // Garde-fou : zod retire les clés inconnues. Si audiences n'est pas déclaré, les

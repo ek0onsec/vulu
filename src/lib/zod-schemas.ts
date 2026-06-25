@@ -55,3 +55,5 @@ export const showcaseSchema = z.object({
   tv: z.array(z.string()).max(5),
   book: z.array(z.string()).max(5),
 });
+
+export const isbnSchema = z.object({ isbn: z.string().min(10).max(20) });
