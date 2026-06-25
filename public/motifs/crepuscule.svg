@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+  <g fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- demi-soleil couchant + rayons -->
+    <path d="M30 60a18 18 0 0 1 36 0"/>
+    <path d="M22 60h52M48 34v-8M30 40l-5-5m46 5l5-5"/>
+    <!-- nuage -->
+    <path d="M96 108a8 8 0 0 1 15-3 7 7 0 0 1 6 11h-26a7 7 0 0 1 5-8z"/>
+    <!-- oiseaux en V -->
+    <path d="M100 34c4-5 8-5 12 0"/>
+    <path d="M116 30c4-5 8-5 12 0"/>
+  </g>
+</svg>
