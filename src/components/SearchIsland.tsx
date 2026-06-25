@@ -19,7 +19,7 @@ export function SearchIsland({ activeTabs }: { activeTabs: Domain[] }) {
     <>
       {/* Pilule épinglée sous les onglets : enfant direct du flux du feed pour que `sticky` ait de la course → suit le scroll, superposée, sans chevaucher les onglets. */}
       <button onClick={() => setOpen(true)}
-        className="sticky top-24 z-20 mb-3 flex w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-2.5 text-sm text-[var(--color-text-muted)] shadow-md backdrop-blur md:hidden">
+        className="sticky top-28 z-20 mb-3 flex w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-2.5 text-sm text-[var(--color-text-muted)] shadow-md backdrop-blur md:hidden">
         <Icon name="search" size={18} /> Rechercher une œuvre, @un membre…
       </button>
 
