@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+  <g fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- poisson -->
+    <path d="M26 40c10-8 22-8 30 0-8 8-20 8-30 0z"/>
+    <path d="M26 40l-8-6v12z"/>
+    <circle cx="48" cy="38" r="1.4" fill="#000"/>
+    <!-- vagues -->
+    <path d="M14 118c8-7 16-7 24 0s16 7 24 0 16-7 24 0"/>
+    <path d="M14 128c8-7 16-7 24 0s16 7 24 0 16-7 24 0"/>
+    <!-- dauphin stylisé -->
+    <path d="M96 34c14-2 24 8 22 22-4-9-9-12-16-12 6 4 8 9 6 15-5-8-12-10-20-8 8-7 8-13 8-17z"/>
+  </g>
+</svg>

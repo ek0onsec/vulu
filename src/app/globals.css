@@ -42,6 +42,7 @@
    La forme (SVG masque) est commune clair/sombre ; seule l'encre --motif-ink bascule.
    Le thème vulu (sans data-palette) n'affiche aucun motif (couche display:none). */
 :root[data-palette="foret"], .dark[data-palette="foret"] { --motif-pattern: url("/motifs/foret.svg"); }
+:root[data-palette="ocean"], .dark[data-palette="ocean"] { --motif-pattern: url("/motifs/ocean.svg"); }
 
 body::before {
   content: "";
