@@ -9,6 +9,7 @@ import { RatingStars } from "@/components/RatingStars";
 import { BackButton } from "@/components/BackButton";
 import Link from "next/link";
 import { personHref } from "@/lib/person";
+import { sanitizeDescription } from "@/lib/sanitize-html";
 
 export default async function WorkPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await currentUser();
@@ -50,7 +51,12 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
         </div>
-        {work.overview && <p className="px-5 pb-4 text-sm leading-relaxed text-[var(--color-text)]">{work.overview}</p>}
+        {work.overview && (
+          <div
+            className="px-5 pb-4 text-sm leading-relaxed text-[var(--color-text)] [&_a]:text-[var(--color-primary)] [&_a]:underline [&_blockquote]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-[var(--color-border)] [&_blockquote]:pl-3 [&_li]:mt-1 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
+            dangerouslySetInnerHTML={{ __html: sanitizeDescription(work.overview) }}
+          />
+        )}
         {work.watchProviders.length > 0 && (
           <div className="px-5 pb-5">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Où regarder</p>
