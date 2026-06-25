@@ -38,4 +38,15 @@ describe("GoogleBooksCatalog", () => {
     expect(g.length).toBeGreaterThan(5);
     expect(g.map((x) => x.name)).toContain("Science-fiction");
   });
+  it("findByIsbn renvoie le premier volume", async () => {
+    const c = new GoogleBooksCatalog(cfg, fakeFetch({
+      "/volumes": { items: [{ id: "xyz", volumeInfo: { title: "Dune", publishedDate: "1965" } }] },
+    }));
+    const r = await c.findByIsbn("9780441569595");
+    expect(r).toMatchObject({ source: "googlebooks", type: "book", title: "Dune", externalId: "xyz" });
+  });
+  it("findByIsbn renvoie null si aucun volume", async () => {
+    const c = new GoogleBooksCatalog(cfg, fakeFetch({ "/volumes": {} }));
+    expect(await c.findByIsbn("0000000000000")).toBeNull();
+  });
 });

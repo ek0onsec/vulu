@@ -24,6 +24,7 @@ export interface Person { tmdbId: number; name: string; role: PersonRole; profil
 export interface CatalogProvider {
   searchWorks(query: string, domain: Domain): Promise<WorkSummary[]>;
   getWork(externalId: string, type: WorkType): Promise<WorkDetails | null>;
+  findByIsbn(isbn: string): Promise<WorkSummary | null>;
   listGenres(domain: Domain): Promise<Genre[]>;
   searchPeople(query: string, domain: Domain): Promise<Person[]>;
   getPersonCredits(personId: string): Promise<WorkSummary[]>;

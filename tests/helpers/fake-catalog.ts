@@ -27,6 +27,11 @@ export class FakeCatalog implements CatalogProvider {
     return Object.values(this.works).filter((w) => (domain === "books" ? w.type === "book" : w.type !== "book"));
   }
   async getWork(externalId: string, _type: WorkType): Promise<WorkDetails | null> { return this.works[externalId] ?? null; }
+  async findByIsbn(isbn: string): Promise<WorkSummary | null> {
+    if (isbn !== "9780441569595") return null;
+    const w = this.works["book-1"]!;
+    return { source: w.source, externalId: w.externalId, type: w.type, title: w.title, year: w.year, posterUrl: w.posterUrl };
+  }
   async getPersonCredits(personId: string): Promise<WorkSummary[]> {
     if (personId !== "6384") return [];
     return [this.works["603"], this.works["1396"]]

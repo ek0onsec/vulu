@@ -13,6 +13,9 @@ export class CompositeCatalog implements CatalogProvider {
   getWork(externalId: string, type: WorkType): Promise<WorkDetails | null> {
     return type === "book" ? this.books.getWork(externalId) : this.films.getWork(externalId, type);
   }
+  findByIsbn(isbn: string): Promise<WorkSummary | null> {
+    return this.books.findByIsbn(isbn);
+  }
   listGenres(domain: Domain): Promise<Genre[]> {
     return domain === "books" ? this.books.listGenres() : this.films.listGenres();
   }

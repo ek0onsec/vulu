@@ -65,6 +65,12 @@ export class GoogleBooksCatalog {
     return (data.items ?? []).map((v) => this.toSummary(v));
   }
 
+  async findByIsbn(isbn: string): Promise<WorkSummary | null> {
+    const data = await this.get<{ items?: Volume[] }>("/volumes", { q: `isbn:${isbn}`, maxResults: "1" });
+    const v = data.items?.[0];
+    return v ? this.toSummary(v) : null;
+  }
+
   async getPersonCredits(): Promise<WorkSummary[]> { return []; }
 
   async getWork(externalId: string): Promise<WorkDetails | null> {
