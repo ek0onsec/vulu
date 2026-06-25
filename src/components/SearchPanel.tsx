@@ -7,6 +7,9 @@ import { TabSwitcher } from "@/components/TabSwitcher";
 import { Avatar } from "@/components/Avatar";
 import { CertifiedBadge } from "@/components/CertifiedBadge";
 import { StaffBadge } from "@/components/StaffBadge";
+import { Icon } from "@/components/Icon";
+import { toast } from "@/lib/toast";
+import { BookScanner } from "@/components/BookScanner";
 import type { Domain } from "@/server/domain/entities";
 import type { WorkSummary, WorkDetails } from "@/server/ports/catalog";
 import type { UserSearchResult } from "@/server/application/search-users";
@@ -20,6 +23,7 @@ export function SearchPanel({ activeTabs, autoFocus = true }: { activeTabs: Doma
   const [unavailable, setUnavailable] = useState(false);
   const [loading, setLoading] = useState(false);
   const [opening, setOpening] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -63,13 +67,32 @@ export function SearchPanel({ activeTabs, autoFocus = true }: { activeTabs: Doma
     }
   }
 
+  async function handleIsbn(isbn: string) {
+    try {
+      const { result } = await api.get<{ result: WorkSummary | null }>(`/api/catalog/isbn?isbn=${encodeURIComponent(isbn)}`);
+      if (result) { setScanning(false); await open(result); }
+      else toast("Aucun livre trouvé pour ce code-barres", "error");
+    } catch {
+      toast("Recherche indisponible, réessaie", "error");
+    }
+  }
+
   return (
     <>
       <h1 className="font-display mb-4 text-2xl font-bold">Recherche</h1>
       {activeTabs.length > 1 && <TabSwitcher active={activeTabs} value={domain} onChange={setDomain} />}
-      <input autoFocus={autoFocus} value={q} onChange={(e) => setQ(e.target.value)}
-        placeholder={domain === "books" ? "Un livre, un auteur, @pseudo…" : "Un film, une série, @pseudo…"}
-        className="mb-5 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm" />
+      <div className="mb-5 flex items-center gap-2">
+        <input autoFocus={autoFocus} value={q} onChange={(e) => setQ(e.target.value)}
+          placeholder={domain === "books" ? "Un livre, un auteur, @pseudo…" : "Un film, une série, @pseudo…"}
+          className="w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm" />
+        {domain === "books" && (
+          <button type="button" onClick={() => setScanning(true)} aria-label="Scanner un code-barres"
+            className="shrink-0 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]">
+            <Icon name="camera" size={20} />
+          </button>
+        )}
+      </div>
+      {scanning && <BookScanner onClose={() => setScanning(false)} onIsbn={handleIsbn} />}
 
       {loading && <p className="text-sm text-[var(--color-text-muted)]">Recherche…</p>}
       {unavailable && !loading && (
