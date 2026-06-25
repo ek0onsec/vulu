@@ -16,15 +16,15 @@ export function SearchIsland({ activeTabs }: { activeTabs: Domain[] }) {
   }, [open]);
 
   return (
-    <div className="md:hidden">
-      {/* Pilule épinglée sous les onglets : suit le scroll (sticky), superposée au feed, sans jamais chevaucher les onglets. */}
+    <>
+      {/* Pilule épinglée sous les onglets : enfant direct du flux du feed pour que `sticky` ait de la course → suit le scroll, superposée, sans chevaucher les onglets. */}
       <button onClick={() => setOpen(true)}
-        className="sticky top-24 z-20 mb-3 flex w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-2.5 text-sm text-[var(--color-text-muted)] shadow-md backdrop-blur">
+        className="sticky top-24 z-20 mb-3 flex w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-2.5 text-sm text-[var(--color-text-muted)] shadow-md backdrop-blur md:hidden">
         <Icon name="search" size={18} /> Rechercher une œuvre, @un membre…
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-[var(--color-bg)]">
+        <div className="fixed inset-0 z-50 flex flex-col bg-[var(--color-bg)] md:hidden">
           <div className="flex items-center gap-2 border-b border-[var(--color-border)] px-3 py-2">
             <button onClick={() => setOpen(false)} aria-label="Fermer la recherche" className="rounded-full p-2 hover:bg-[var(--color-border)]">
               <Icon name="back" size={22} />
@@ -36,6 +36,6 @@ export function SearchIsland({ activeTabs }: { activeTabs: Domain[] }) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
