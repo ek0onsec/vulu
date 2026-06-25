@@ -44,6 +44,7 @@
 :root[data-palette="foret"], .dark[data-palette="foret"] { --motif-pattern: url("/motifs/foret.svg"); }
 :root[data-palette="ocean"], .dark[data-palette="ocean"] { --motif-pattern: url("/motifs/ocean.svg"); }
 :root[data-palette="aurore"], .dark[data-palette="aurore"] { --motif-pattern: url("/motifs/aurore.svg"); }
+:root[data-palette="retro"], .dark[data-palette="retro"] { --motif-pattern: url("/motifs/retro.svg"); }
 
 body::before {
   content: "";

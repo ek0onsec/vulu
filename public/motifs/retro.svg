@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+  <g fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- soleil 80s à rayures -->
+    <path d="M16 52a18 18 0 0 1 36 0"/>
+    <path d="M16 46h36M19 52h30M23 58h22"/>
+    <!-- zigzag -->
+    <path d="M96 30l10-12 10 12 10-12 10 12"/>
+    <!-- triangles -->
+    <path d="M30 120l12-20 12 20z"/>
+    <path d="M104 124l9-15 9 15z"/>
+  </g>
+</svg>
