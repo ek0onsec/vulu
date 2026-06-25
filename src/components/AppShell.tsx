@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="w-full border-x border-[var(--color-border)] px-3 pb-24 pt-4 md:px-5 md:pb-8">
-        <div className="sticky top-0 z-30 -mx-3 mb-2 flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 px-3 py-2 backdrop-blur md:hidden">
+        <div className="sticky top-0 z-40 -mx-3 mb-2 flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 px-3 py-2 backdrop-blur md:hidden">
           <Link href="/feed" className="font-display text-2xl font-bold text-[var(--color-primary)]">vulu</Link>
           <button onClick={() => setMenuOpen(true)} aria-label="Ouvrir le menu">
             {me && <Avatar name={me.displayName} src={me.avatarUrl} size={32} />}

@@ -61,7 +61,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
             </div>
           </header>
 
-          <div className="mt-2 pl-6">
+          <div className="mt-2">
             {item.entry.text && <p className="mb-2 line-clamp-3 text-sm text-[var(--color-text)]">{item.entry.text}</p>}
             <Link href={`/work/${item.work.id}`} className="block">
               <p className="font-display text-lg font-semibold leading-tight">{item.work.title}</p>
@@ -82,7 +82,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
             </Link>
           </div>
 
-          <footer className="mt-2 flex items-center gap-1 pl-6 text-[var(--color-text-muted)]">
+          <footer className="mt-2 flex items-center gap-1 text-[var(--color-text-muted)]">
             <button onClick={toggleLike} aria-pressed={liked}
               className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)] ${liked ? "text-[var(--color-primary)]" : ""}`}>
               <Icon name={liked ? "heart-filled" : "heart"} size={19} /> {likes}

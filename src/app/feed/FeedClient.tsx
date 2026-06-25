@@ -48,7 +48,7 @@ export function FeedClient({ activeTabs, displayName, avatarUrl }: { activeTabs:
 
   return (
     <>
-      <div className="mb-4 flex gap-1 overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1">
+      <div className="sticky top-12 z-30 mb-3 flex gap-1 overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 md:static md:top-auto md:z-auto md:mb-4">
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${tab === t.id ? "bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-[var(--color-primary)]" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}>

@@ -17,10 +17,13 @@ export function SearchIsland({ activeTabs }: { activeTabs: Domain[] }) {
 
   return (
     <div className="md:hidden">
+      {/* Pilule flottante : fixe, superposée au feed, suit le scroll. Sous l'en-tête + les onglets épinglés. */}
       <button onClick={() => setOpen(true)}
-        className="sticky top-14 z-20 mb-3 flex w-full items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-2.5 text-sm text-[var(--color-text-muted)] shadow-sm backdrop-blur">
+        className="fixed inset-x-3 top-[6.25rem] z-30 flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-2.5 text-sm text-[var(--color-text-muted)] shadow-md backdrop-blur">
         <Icon name="search" size={18} /> Rechercher une œuvre, @un membre…
       </button>
+      {/* Réserve la hauteur de la pilule (hors-flux) pour ne pas masquer le premier post. */}
+      <div className="mb-3 h-11" aria-hidden />
 
       {open && (
         <div className="fixed inset-0 z-50 flex flex-col bg-[var(--color-bg)]">
