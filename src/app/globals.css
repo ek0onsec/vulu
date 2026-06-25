@@ -9,6 +9,8 @@
   --color-border: #E7DDED;
   --color-text: #2A2233;
   --color-text-muted: #6B6276;
+  --motif-pattern: none;
+  --motif-ink: rgba(30, 20, 45, 0.05);
 }
 
 .dark {
@@ -20,6 +22,7 @@
   --color-border: #352C44;
   --color-text: #ECE6F2;
   --color-text-muted: #9C93AB;
+  --motif-ink: rgba(255, 255, 255, 0.05);
 }
 
 /* Thèmes de couleur vulu+ — surchargent l'accent de marque par-dessus clair/sombre.
@@ -34,6 +37,28 @@
 .dark[data-palette="ocean"]  { --color-primary: #22D3EE; --color-accent: #FB7185; }
 :root[data-palette="crepuscule"] { --color-primary: #C2410C; --color-accent: #7C3AED; }
 .dark[data-palette="crepuscule"] { --color-primary: #FB923C; --color-accent: #A78BFA; }
+
+/* Motifs d'arrière-plan par thème vulu+ (style fond WhatsApp).
+   La forme (SVG masque) est commune clair/sombre ; seule l'encre --motif-ink bascule.
+   Le thème vulu (sans data-palette) n'affiche aucun motif (couche display:none). */
+:root[data-palette="foret"], .dark[data-palette="foret"] { --motif-pattern: url("/motifs/foret.svg"); }
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  display: none;
+  background-color: var(--motif-ink);
+  -webkit-mask-image: var(--motif-pattern);
+  mask-image: var(--motif-pattern);
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  -webkit-mask-size: 150px 150px;
+  mask-size: 150px 150px;
+}
+:root[data-palette] body::before { display: block; }
 
 @theme inline {
   --color-primary: var(--color-primary);

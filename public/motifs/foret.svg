@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+  <g fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- feuille -->
+    <path d="M34 26c-11 10-11 26 0 36 11-10 11-26 0-36z"/>
+    <path d="M34 30v28"/>
+    <!-- fronde de fougère -->
+    <path d="M116 22v34"/>
+    <path d="M116 27l-8-5m8 5l8-5m-8 13l-9-5m9 5l9-5m-9 13l-8-5m8 5l8-5"/>
+    <!-- petit cerf stylisé -->
+    <path d="M58 116v-12l7-7h14l7 7v12"/>
+    <path d="M65 97l-5-12m5 12l5-12"/>
+    <path d="M60 85l-4 5m4-5l4 5m6-5l-4 5m4-5l4 5"/>
+  </g>
+</svg>
