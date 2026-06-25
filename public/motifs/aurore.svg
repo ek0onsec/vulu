@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+  <g fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- voiles d'aurore -->
+    <path d="M26 18c8 14 0 22-6 32s2 22 8 34"/>
+    <path d="M40 16c8 14 0 22-6 32s2 22 8 34"/>
+    <!-- étoiles 4 branches -->
+    <path d="M104 21c2 5 4 7 9 9-5 2-7 4-9 9-2-5-4-7-9-9 5-2 7-4 9-9z" fill="#000" stroke="none"/>
+    <path d="M126 64c1.4 3.5 2.8 4.9 6.3 6.3-3.5 1.4-4.9 2.8-6.3 6.3-1.4-3.5-2.8-4.9-6.3-6.3 3.5-1.4 4.9-2.8 6.3-6.3z" fill="#000" stroke="none"/>
+    <!-- sommet -->
+    <path d="M96 122l16-26 16 26"/>
+    <path d="M108 102l4 6 4-6"/>
+  </g>
+</svg>
