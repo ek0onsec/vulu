@@ -12,6 +12,12 @@ export const metadata: Metadata = {
   title: "vulu — vu & lu",
   description: "Tes films, séries et livres, entre amis.",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
 export const viewport: Viewport = { themeColor: "#9461C0" };
