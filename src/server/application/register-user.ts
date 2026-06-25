@@ -37,6 +37,8 @@ export async function registerUser(deps: Deps, input: RegisterInput): Promise<Us
     staff: false,
     private: false,
     twoFactorEnabled: false,
+    twoFactorSecret: null,
+    twoFactorBackupCodes: [],
     deactivatedAt: null,
     notificationsSeenAt: null,
     createdAt: deps.clock.now(),

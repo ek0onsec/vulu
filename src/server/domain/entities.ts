@@ -46,6 +46,8 @@ export interface User {
   staff: boolean;
   private: boolean;
   twoFactorEnabled: boolean;
+  twoFactorSecret: string | null;
+  twoFactorBackupCodes: string[];
   deactivatedAt: Date | null;
   notificationsSeenAt: Date | null;
   createdAt: Date;

@@ -16,7 +16,11 @@ export type WithIdCommunity = WithId<Community>;
 export type WithIdMembership = Membership & { _id: string };
 
 export const toUserDoc = (u: User): WithIdUser => ({ _id: u.id, ...u });
-export const fromUserDoc = (d: WithIdUser): User => strip(d);
+export const fromUserDoc = (d: WithIdUser): User => ({
+  ...strip(d),
+  twoFactorSecret: d.twoFactorSecret ?? null,
+  twoFactorBackupCodes: d.twoFactorBackupCodes ?? [],
+});
 
 export const toFollowDoc = (f: Follow): WithIdFollow => ({ _id: `${f.followerId}:${f.followeeId}`, ...f });
 export const fromFollowDoc = (d: WithIdFollow): Follow => strip(d);
