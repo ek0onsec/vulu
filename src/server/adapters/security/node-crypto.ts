@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes, randomInt } from "node:crypto";
 import type { Crypto } from "@/server/ports/security";
 
 // Étiquette de séparation de domaine : la clé AES est dérivée du secret racine AVEC ce contexte,
@@ -28,4 +28,6 @@ export class NodeCrypto implements Crypto {
   }
 
   hash(value: string): string { return createHash("sha256").update(value).digest("hex"); }
+
+  randomInt(maxExclusive: number): number { return randomInt(maxExclusive); }
 }

@@ -1,6 +1,6 @@
 import { getDeps } from "@/server/container";
-import { authenticateUser } from "@/server/application/authenticate-user";
-import { loginSchema } from "@/lib/zod-schemas";
+import { completeTwoFactorLogin } from "@/server/application/two-factor";
+import { twoFactorLoginSchema } from "@/lib/zod-schemas";
 import { setSessionCookie, json } from "@/server/http/session";
 import { toErrorResponse } from "@/server/http/errors";
 import { selfUser } from "@/lib/serialize";
@@ -10,15 +10,13 @@ import { AuthError } from "@/server/domain/errors";
 export async function POST(req: Request) {
   try {
     if (!authLimiter.allow(clientIp(req))) throw new AuthError("Trop de tentatives, réessaie plus tard");
-    const input = loginSchema.parse(await req.json());
+    const { challenge, code } = twoFactorLoginSchema.parse(await req.json());
     const deps = await getDeps();
-    const { user, token, reactivated } = await authenticateUser(deps, input);
-    // 2FA active : pas de session immédiate, on renvoie un challenge à durée limitée.
-    if (user.twoFactorEnabled) {
-      const challenge = await deps.tokens.issueChallenge(user.id);
-      return json({ twoFactorRequired: true, challenge });
-    }
+    const { token } = await completeTwoFactorLogin(deps, challenge, code);
     await setSessionCookie(token);
-    return json({ user: selfUser(user), reactivated: Boolean(reactivated) });
+    const payload = await deps.tokens.verify(token);
+    const user = payload ? await deps.users.findById(payload.userId) : null;
+    if (!user) throw new AuthError("Session invalide");
+    return json({ user: selfUser(user) });
   } catch (e) { return toErrorResponse(e); }
 }

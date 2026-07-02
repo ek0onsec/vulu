@@ -1,4 +1,5 @@
 import type { Deps } from "@/server/container";
+import type { Crypto } from "@/server/ports/security";
 import { AuthError, NotFoundError, ValidationError } from "@/server/domain/errors";
 import { qrSvgFromUri } from "@/lib/qr";
 
@@ -6,9 +7,10 @@ const ISSUER = "vulu";
 const BACKUP_CODE_COUNT = 8;
 const BACKUP_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sans 0/O/1/I ambigus
 
-function randomBackupCode(): string {
+/** Code de secours au format XXXX-XXXX, tiré d'une source aléatoire cryptographiquement sûre. */
+function randomBackupCode(crypto: Crypto): string {
   const pick = (n: number) =>
-    Array.from({ length: n }, () => BACKUP_ALPHABET[Math.floor(Math.random() * BACKUP_ALPHABET.length)]).join("");
+    Array.from({ length: n }, () => BACKUP_ALPHABET[crypto.randomInt(BACKUP_ALPHABET.length)]).join("");
   return `${pick(4)}-${pick(4)}`;
 }
 
@@ -45,7 +47,7 @@ export async function confirmTwoFactorSetup(
   if (!user.twoFactorSecret) throw new ValidationError("Aucune configuration 2FA en attente");
   const secret = deps.crypto.decrypt(user.twoFactorSecret);
   if (!deps.totp.verify(normalizeCode(code), secret)) throw new AuthError("Code invalide");
-  const backupCodes = Array.from({ length: BACKUP_CODE_COUNT }, randomBackupCode);
+  const backupCodes = Array.from({ length: BACKUP_CODE_COUNT }, () => randomBackupCode(deps.crypto));
   await deps.users.update({
     ...user,
     twoFactorEnabled: true,

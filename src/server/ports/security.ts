@@ -17,6 +17,8 @@ export interface Crypto {
   encrypt(plain: string): string;
   decrypt(cipher: string): string;
   hash(value: string): string;
+  /** Entier aléatoire cryptographiquement sûr dans [0, maxExclusive). */
+  randomInt(maxExclusive: number): number;
 }
 export interface IdGenerator {
   next(): string;

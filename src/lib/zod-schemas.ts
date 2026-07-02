@@ -57,3 +57,8 @@ export const showcaseSchema = z.object({
 });
 
 export const isbnSchema = z.object({ isbn: z.string().min(10).max(20) });
+
+// 2FA — le code accepte TOTP à 6 chiffres ou code de secours (ex. ABCD-EFGH), espaces/tirets tolérés.
+export const totpCodeSchema = z.object({ code: z.string().min(6).max(20) });
+export const twoFactorLoginSchema = z.object({ challenge: z.string().min(1), code: z.string().min(6).max(20) });
+export const disable2faSchema = z.object({ password: z.string().min(1) });
