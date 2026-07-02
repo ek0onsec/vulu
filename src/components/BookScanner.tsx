@@ -20,9 +20,16 @@ export function BookScanner({ onIsbn, onClose }: { onIsbn: (isbn: string) => voi
         ]);
         const hints = new Map();
         hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.EAN_13]);
+        hints.set(DecodeHintType.TRY_HARDER, true);
         const reader = new BrowserMultiFormatReader(hints);
         if (cancelled || !videoRef.current) return;
-        controls = await reader.decodeFromVideoDevice(undefined, videoRef.current, (result, _err, ctrl) => {
+        // Forcer la caméra arrière (facingMode environment) : sur mobile, deviceId indéfini
+        // sélectionne souvent la caméra frontale, inadaptée au scan de code-barres.
+        const constraints: MediaStreamConstraints = {
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        };
+        controls = await reader.decodeFromConstraints(constraints, videoRef.current, (result, _err, ctrl) => {
           if (!result) return;
           const text = result.getText();
           if (/^(978|979)\d{10}$/.test(text)) {
@@ -34,7 +41,7 @@ export function BookScanner({ onIsbn, onClose }: { onIsbn: (isbn: string) => voi
         const name = (e as { name?: string })?.name;
         setError(
           name === "NotAllowedError" ? "Accès à la caméra refusé."
-            : name === "NotFoundError" ? "Aucune caméra détectée."
+            : name === "NotFoundError" || name === "OverconstrainedError" ? "Aucune caméra arrière détectée."
               : "Impossible d'ouvrir la caméra.",
         );
       }
