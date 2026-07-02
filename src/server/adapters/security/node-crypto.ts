@@ -1,10 +1,15 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import type { Crypto } from "@/server/ports/security";
 
-/** AES-256-GCM (clé dérivée du secret par sha256) + sha256 pour le hachage de jetons. */
+// Étiquette de séparation de domaine : la clé AES est dérivée du secret racine AVEC ce contexte,
+// pour qu'elle soit cryptographiquement distincte de toute autre utilisation du même secret
+// (ex. signature JWT). Réutiliser le secret racine reste donc sûr.
+const KEY_CONTEXT = "vulu:totp-secret-encryption:v1";
+
+/** AES-256-GCM (clé dérivée du secret + contexte par sha256) + sha256 pour le hachage de jetons. */
 export class NodeCrypto implements Crypto {
   private key: Buffer;
-  constructor(secret: string) { this.key = createHash("sha256").update(secret).digest(); }
+  constructor(secret: string) { this.key = createHash("sha256").update(KEY_CONTEXT).update(secret).digest(); }
 
   encrypt(plain: string): string {
     const iv = randomBytes(12);
