@@ -32,8 +32,14 @@ function authorId(name: string): number {
 }
 
 function cover(info: Volume["volumeInfo"]): string | null {
-  const url = info?.imageLinks?.thumbnail ?? info?.imageLinks?.smallThumbnail;
-  return url ? url.replace(/^http:/, "https:") : null;
+  const raw = info?.imageLinks?.thumbnail ?? info?.imageLinks?.smallThumbnail;
+  if (!raw) return null;
+  // Miniatures Google Books : forcer https, retirer l'effet page-curl (dégrade le rendu)
+  // et demander un zoom lisible plutôt que la vignette minuscule par défaut (zoom=1).
+  return raw
+    .replace(/^http:/, "https:")
+    .replace("&edge=curl", "")
+    .replace(/([?&]zoom=)\d+/, "$12");
 }
 
 export class GoogleBooksCatalog {

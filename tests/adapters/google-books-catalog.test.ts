@@ -23,6 +23,19 @@ describe("GoogleBooksCatalog", () => {
     expect(res[0]).toMatchObject({ source: "googlebooks", type: "book", title: "Neuromancien", year: 1984 });
     expect(res[0]?.posterUrl).toBe("https://x/c.jpg"); // http → https
   });
+  it("searchWorks normalise la miniature Google Books (https, sans edge=curl, zoom lisible)", async () => {
+    const c = new GoogleBooksCatalog(cfg, fakeFetch({
+      "/volumes": { items: [
+        { id: "abc", volumeInfo: { title: "T", imageLinks: {
+          thumbnail: "http://books.google.com/books/content?id=Z&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+        } } },
+      ] },
+    }));
+    const res = await c.searchWorks("t");
+    expect(res[0]?.posterUrl).toBe(
+      "https://books.google.com/books/content?id=Z&printsec=frontcover&img=1&zoom=2&source=gbs_api",
+    );
+  });
   it("getWork renvoie les auteurs comme people 'author'", async () => {
     const c = new GoogleBooksCatalog(cfg, fakeFetch({
       "/volumes/abc": { id: "abc", volumeInfo: { title: "Dune", authors: ["Frank Herbert"], categories: ["Science-fiction"], description: "..." } },
