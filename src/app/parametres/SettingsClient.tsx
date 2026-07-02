@@ -10,6 +10,7 @@ import { ThemePicker } from "@/components/ThemePicker";
 import { Modal } from "@/components/Modal";
 import { Icon, type IconName } from "@/components/Icon";
 import { BrandLogo } from "@/components/BrandLogo";
+import { TwoFactorSettings } from "@/components/TwoFactorSettings";
 import type { Tastes } from "@/server/domain/entities";
 
 const DELETE_PHRASE = "SUPPRIMER MON COMPTE";
@@ -120,10 +121,7 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
     if (cur === "security") return (
       <>
         <h2 className="mb-4 font-display text-xl font-bold">Sécurité</h2>
-        <div className="mb-3 flex items-center justify-between rounded-xl border border-[var(--color-border)] p-3">
-          <div><p className="text-sm font-medium">Double authentification (2FA)</p><p className="text-xs text-[var(--color-text-muted)]">Application d’authentification (TOTP).</p></div>
-          <span className="rounded-full bg-[var(--color-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">{twoFactorEnabled ? "Activée" : "Bientôt"}</span>
-        </div>
+        <div className="mb-3"><TwoFactorSettings enabled={twoFactorEnabled} /></div>
         <div className="flex items-center justify-between rounded-xl border border-[var(--color-border)] p-3">
           <div><p className="text-sm font-medium">Sessions actives</p><p className="text-xs text-[var(--color-text-muted)]">Gérer les appareils connectés.</p></div>
           <span className="rounded-full bg-[var(--color-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">Bientôt</span>
