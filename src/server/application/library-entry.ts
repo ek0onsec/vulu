@@ -15,8 +15,10 @@ async function loadOrCreateEntry(deps: Deps, userId: string, ref: Ref): Promise<
   const existing = await deps.entries.findByUserAndWork(userId, work.id);
   if (existing) return existing;
   const now = deps.clock.now();
+  // Défaut « gardé pour soi » : un ajout de statut sans note ni commentaire reste privé
+  // (invisible au feed et aux avis d'œuvre) tant que l'utilisateur ne choisit pas de partager.
   return { id: deps.ids.next(), userId, workId: work.id, domain: work.domain,
-    status: "planned", rating: null, text: null, audiences: { public: false, circle: true, communityIds: [] },
+    status: "planned", rating: null, text: null, audiences: { public: false, circle: false, communityIds: [] },
     progress: null, activityAt: null, createdAt: now, updatedAt: now };
 }
 
@@ -38,9 +40,7 @@ export async function rateOrReviewWork(
     throw new ValidationError("Note invalide (0 à 5, par pas de 0,1)");
   }
   const { audiences } = input;
-  if (!audiences.public && !audiences.circle && audiences.communityIds.length === 0) {
-    throw new ValidationError("Choisis au moins une destination");
-  }
+  // Aucune destination = entrée « gardée pour soi » (note/avis privé, hors feed) : autorisé.
   // Pour chaque communauté ciblée, l'auteur doit en être membre.
   for (const communityId of audiences.communityIds) {
     const member = await deps.memberships.find(communityId, userId);

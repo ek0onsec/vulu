@@ -8,10 +8,17 @@ let deps: Deps; const ref = { source: "tmdb" as const, externalId: "603", type: 
 beforeEach(() => { deps = makeInMemoryDeps(new FakeCatalog()); });
 
 describe("library entry", () => {
-  it("setEntryStatus 'planned' crée une watchlist sans note", async () => {
+  it("setEntryStatus 'planned' crée une watchlist sans note, gardée pour soi (privée)", async () => {
     const e = await setEntryStatus(deps, "u1", ref, "planned");
     expect(e.status).toBe("planned");
     expect(e.rating).toBeNull();
+    expect(e.audiences).toEqual({ public: false, circle: false, communityIds: [] });
+  });
+  it("rateOrReview « gardé pour moi » : note enregistrée, audiences privées", async () => {
+    const e = await rateOrReviewWork(deps, "u1", ref, { rating: 4, text: null, audiences: { public: false, circle: false, communityIds: [] } });
+    expect(e.status).toBe("done");
+    expect(e.rating).toBe(4);
+    expect(e.audiences).toEqual({ public: false, circle: false, communityIds: [] });
   });
   it("rateOrReview force done et enregistre note + visibilité", async () => {
     const e = await rateOrReviewWork(deps, "u1", ref, { rating: 4.2, text: "top", audiences: { public: false, circle: true, communityIds: [] } });

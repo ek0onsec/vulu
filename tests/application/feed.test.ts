@@ -5,7 +5,8 @@ import { registerUser } from "@/server/application/register-user";
 import { rateOrReviewWork } from "@/server/application/library-entry";
 import { followUser } from "@/server/application/social";
 import { likeEntry } from "@/server/application/engagement";
-import { buildFeed, getWorkReviews } from "@/server/application/feed";
+import { buildFeed, getWorkReviews, getEntryItem } from "@/server/application/feed";
+import { NotFoundError } from "@/server/domain/errors";
 
 let deps: Deps; let me: string; let friend: string; let stranger: string;
 const tastes = { filmGenreIds: [878, 18, 35], people: [] };
@@ -88,5 +89,21 @@ describe("getWorkReviews", () => {
     await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "secret", audiences: { public: false, circle: true, communityIds: [] } });
     const work = await deps.works.findByExternal("tmdb", "603");
     expect(await getWorkReviews(deps, me, work!.id)).toHaveLength(0);
+  });
+  it("cache l'avis privé (circle=false) d'un membre du cercle", async () => {
+    await rateOrReviewWork(deps, friend, ref, { rating: 3, text: "gardé pour moi", audiences: { public: false, circle: false, communityIds: [] } });
+    const work = await deps.works.findByExternal("tmdb", "603");
+    expect(await getWorkReviews(deps, me, work!.id)).toHaveLength(0);
+  });
+});
+
+describe("getEntryItem (visibilité)", () => {
+  const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+  it("une entrée privée (circle=false) n'est pas visible d'un membre du cercle mais l'est du propriétaire", async () => {
+    // friend et me sont dans le cercle l'un de l'autre (me suit friend)
+    const entry = await rateOrReviewWork(deps, friend, ref, { rating: 4, text: "privé", audiences: { public: false, circle: false, communityIds: [] } });
+    await expect(getEntryItem(deps, me, entry.id)).rejects.toBeInstanceOf(NotFoundError);
+    const own = await getEntryItem(deps, friend, entry.id);
+    expect(own.entry.id).toBe(entry.id);
   });
 });

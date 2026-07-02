@@ -70,10 +70,7 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
       const communityIds = [...shareCommunities];
       const audiences = { public: sharePublic, circle: shareCircle, communityIds };
       const isReview = !(status === "planned" && rating === 0 && !text.trim());
-      if (isReview && !sharePublic && !shareCircle && communityIds.length === 0) {
-        const m = "Choisis au moins une destination";
-        setMsg(m); toast(m, "error"); setBusy(false); return;
-      }
+      // Aucune destination = « gardé pour moi » : l'entrée (note/avis) reste privée, hors feed.
       const body = isReview
         ? { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, audiences }
         : { ref: workRef, status: "planned" };
@@ -89,6 +86,8 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
       setBusy(false);
     }
   }
+
+  const keepPrivate = !sharePublic && !shareCircle && shareCommunities.size === 0;
 
   const seg = (on: boolean) =>
     `px-4 py-2 text-sm ${on ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-text-muted)]"}`;
@@ -142,8 +141,12 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
       />
 
       <p className="mt-4 mb-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Partager dans</p>
-      <p className="mb-1.5 text-xs text-[var(--color-text-muted)]">Plusieurs destinations possibles — pas de doublon dans le feed.</p>
+      <p className="mb-1.5 text-xs text-[var(--color-text-muted)]">Plusieurs destinations possibles — ou garde ça pour toi (rien n'apparaît dans le feed).</p>
       <div className="flex flex-wrap gap-2">
+        <button onClick={() => { setSharePublic(false); setShareCircle(false); setShareCommunities(new Set()); }}
+          className={`rounded-full border px-4 py-1.5 text-sm ${keepPrivate ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>
+          {keepPrivate ? "✓ " : ""}🔒 Garder pour moi
+        </button>
         <button onClick={() => setSharePublic((v) => !v)}
           className={`rounded-full border px-4 py-1.5 text-sm ${sharePublic ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>
           {sharePublic ? "✓ " : ""}● Public

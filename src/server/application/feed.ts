@@ -60,24 +60,44 @@ export async function buildFeed(
   return enrichEntries(deps, viewerId, entries);
 }
 
-/** Un post (entrée) enrichi, visible pour le viewer (public, cercle, ou le sien). */
+/**
+ * Une entrée est visible d'un viewer ssi : c'est la sienne, OU elle est publique,
+ * OU elle cible le cercle (audiences.circle) et le viewer est dans le cercle de l'auteur,
+ * OU elle cible une communauté dont le viewer est membre. Une entrée « gardée pour soi »
+ * (public:false, circle:false, communityIds:[]) n'est visible que de son auteur.
+ */
+export function isEntryVisibleTo(
+  entry: LibraryEntry, viewerId: string, circle: Set<string>, viewerCommunityIds: Set<string>,
+): boolean {
+  if (entry.userId === viewerId) return true;
+  if (entry.audiences.public) return true;
+  if (entry.audiences.circle && circle.has(entry.userId)) return true;
+  return entry.audiences.communityIds.some((id) => viewerCommunityIds.has(id));
+}
+
+async function viewerCommunityIdSet(deps: Deps, viewerId: string): Promise<Set<string>> {
+  const memberships = await deps.memberships.listForUser(viewerId);
+  return new Set(memberships.map((m) => m.communityId));
+}
+
+/** Un post (entrée) enrichi, visible pour le viewer (public, cercle, communauté, ou le sien). */
 export async function getEntryItem(deps: Deps, viewerId: string, entryId: string): Promise<FeedItem> {
   const entry = await deps.entries.findById(entryId);
   if (!entry) throw new NotFoundError("Publication introuvable");
-  if (entry.userId !== viewerId && !entry.audiences.public) {
-    const circle = await getCircle(deps, viewerId);
-    if (!circle.has(entry.userId)) throw new NotFoundError("Publication introuvable");
+  if (entry.userId !== viewerId) {
+    const [circle, communityIds] = await Promise.all([getCircle(deps, viewerId), viewerCommunityIdSet(deps, viewerId)]);
+    if (!isEntryVisibleTo(entry, viewerId, circle, communityIds)) throw new NotFoundError("Publication introuvable");
   }
   const [item] = await enrichEntries(deps, viewerId, [entry]);
   if (!item) throw new NotFoundError("Publication introuvable");
   return item;
 }
 
-/** Avis d'autres membres sur une œuvre, visibles pour le viewer (public ou cercle), hors soi. */
+/** Avis d'autres membres sur une œuvre, visibles pour le viewer (public, cercle, communauté), hors soi. */
 export async function getWorkReviews(deps: Deps, viewerId: string, workId: string): Promise<FeedItem[]> {
-  const circle = await getCircle(deps, viewerId);
+  const [circle, communityIds] = await Promise.all([getCircle(deps, viewerId), viewerCommunityIdSet(deps, viewerId)]);
   const entries = (await deps.entries.listByWork(workId)).filter(
-    (e) => e.userId !== viewerId && (e.audiences.public || circle.has(e.userId)),
+    (e) => e.userId !== viewerId && isEntryVisibleTo(e, viewerId, circle, communityIds),
   );
   return enrichEntries(deps, viewerId, entries);
 }
