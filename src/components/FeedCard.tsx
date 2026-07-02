@@ -29,9 +29,12 @@ export function FeedCard({ item }: { item: FeedItem }) {
   const isPublic = item.entry.audiences.public || item.entry.audiences.communityIds.length > 0;
   const typeLabel = item.work.type === "book" ? "Livre" : item.work.type === "tv" ? "Série" : "Film";
   return (
-    <article className="mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-shadow hover:shadow-[0_2px_20px_rgba(0,0,0,0.05)]">
+    <article className="relative mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-shadow hover:shadow-[0_2px_20px_rgba(0,0,0,0.05)]">
+      {/* Lien-overlay : le fond « vide » de la carte mène au post. Frère (non parent)
+          des liens internes -> aucun <a> imbriqué. Les éléments interactifs sont en z-10. */}
+      <Link href={`/post/${item.entry.id}`} className="absolute inset-0 z-0" aria-label="Voir la publication" />
       <div className="flex gap-3">
-        <Link href={`/u/${item.author.username}`} className="shrink-0">
+        <Link href={`/u/${item.author.username}`} className="relative z-10 shrink-0">
           <Avatar name={item.author.displayName} src={item.author.avatarUrl} size={42} />
         </Link>
 
@@ -39,7 +42,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
           <header className="flex items-start gap-2 text-sm">
             <div className="min-w-0">
               <span className="font-semibold">
-                <Link href={`/u/${item.author.username}`} className="hover:underline">{item.author.displayName}</Link>
+                <Link href={`/u/${item.author.username}`} className="relative z-10 hover:underline">{item.author.displayName}</Link>
                 {item.author.staff && <StaffBadge />}
                 {item.author.plus && <CertifiedBadge />}
               </span>
@@ -49,7 +52,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
             <div className="ml-auto flex shrink-0 items-center gap-1.5">
               {item.communities.length > 0 && (
                 <Link href={`/communaute/${item.communities[0]!.id}`}
-                  className="rounded-full bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-2.5 py-1 text-xs font-medium text-[var(--color-primary)] hover:underline">
+                  className="relative z-10 rounded-full bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-2.5 py-1 text-xs font-medium text-[var(--color-primary)] hover:underline">
                   via {item.communities[0]!.name}{item.communities.length > 1 ? ` +${item.communities.length - 1}` : ""}
                 </Link>
               )}
@@ -63,7 +66,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
 
           <div className="mt-2">
             {item.entry.text && <p className="mb-2 line-clamp-3 text-sm text-[var(--color-text)]">{item.entry.text}</p>}
-            <Link href={`/work/${item.work.id}`} className="block">
+            <Link href={`/work/${item.work.id}`} className="relative z-10 block">
               <p className="font-display text-lg font-semibold leading-tight">{item.work.title}</p>
               <p className="text-xs text-[var(--color-text-muted)]">{item.work.year ?? ""} · {typeLabel}</p>
               <div className="mt-2 aspect-[2/3] w-40 max-w-[55%] overflow-hidden rounded-xl bg-[var(--color-border)]"
@@ -84,11 +87,11 @@ export function FeedCard({ item }: { item: FeedItem }) {
 
           <footer className="mt-2 flex items-center gap-1 text-[var(--color-text-muted)]">
             <button onClick={toggleLike} aria-pressed={liked}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)] ${liked ? "text-[var(--color-primary)]" : ""}`}>
+              className={`relative z-10 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)] ${liked ? "text-[var(--color-primary)]" : ""}`}>
               <Icon name={liked ? "heart-filled" : "heart"} size={19} /> {likes}
             </button>
             <Link href={`/post/${item.entry.id}`}
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)]">
+              className="relative z-10 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)]">
               <Icon name="comment" size={19} /> {item.commentCount}
             </Link>
           </footer>
