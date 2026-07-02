@@ -83,7 +83,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
             <span className="-mt-10 block rounded-full ring-4 ring-[var(--color-surface)]">
               <Avatar name={target.displayName} src={target.avatarUrl} size={80} />
             </span>
-            <div className="flex-1 pb-1">
+            <div className="min-w-0 flex-1 pb-1">
               <h1 className="font-display flex items-center gap-1 text-xl font-bold">
                 {target.displayName}{target.staff && <StaffBadge />}{target.plus && <CertifiedBadge />}
               </h1>

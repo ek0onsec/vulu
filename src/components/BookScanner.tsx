@@ -47,8 +47,8 @@ export function BookScanner({ onIsbn, onClose }: { onIsbn: (isbn: string) => voi
       <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" muted playsInline />
 
       {/* En-tête superposé */}
-      <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 bg-gradient-to-b from-black/70 to-transparent px-3 pb-8 pt-3 text-white">
-        <button onClick={onClose} aria-label="Fermer" className="rounded-full p-2 hover:bg-white/10"><Icon name="back" size={22} /></button>
+      <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 bg-gradient-to-b from-black/70 to-transparent px-3 pb-8 pt-[max(0.75rem,env(safe-area-inset-top))] text-white">
+        <button onClick={onClose} aria-label="Fermer" className="flex min-h-11 min-w-11 items-center justify-center rounded-full p-2 hover:bg-white/10"><Icon name="back" size={22} /></button>
         <span className="font-semibold">Scanner un livre</span>
       </div>
 
@@ -71,7 +71,7 @@ export function BookScanner({ onIsbn, onClose }: { onIsbn: (isbn: string) => voi
             </div>
           </div>
 
-          <p className="absolute inset-x-0 bottom-10 z-10 px-8 text-center text-sm text-white/85">
+          <p className="absolute inset-x-0 bottom-[max(2.5rem,env(safe-area-inset-bottom))] z-10 px-8 text-center text-sm text-white/85">
             Centre le code-barres au dos du livre dans le cadre.
           </p>
         </>

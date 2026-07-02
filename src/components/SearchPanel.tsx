@@ -84,7 +84,7 @@ export function SearchPanel({ activeTabs, autoFocus = true }: { activeTabs: Doma
       <div className="mb-5 flex items-center gap-2">
         <input autoFocus={autoFocus} value={q} onChange={(e) => setQ(e.target.value)}
           placeholder={domain === "books" ? "Un livre, un auteur, @pseudo…" : "Un film, une série, @pseudo…"}
-          className="w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm" />
+          className="w-full min-w-0 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm" />
         {domain === "books" && (
           <button type="button" onClick={() => setScanning(true)} aria-label="Scanner un code-barres"
             className="shrink-0 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]">
