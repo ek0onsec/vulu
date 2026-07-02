@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
 import type { PersonProfile, PersonWork, DiscoveryWork } from "@/server/application/person";
+import { statusLabel } from "@/lib/status-label";
 
 function PosterLink({ href, title, posterUrl, badge }: { href: string; title: string; posterUrl: string | null; badge?: string }) {
   return (
@@ -29,7 +30,8 @@ export function PersonClient({ profile }: { profile: PersonProfile }) {
     } catch { toast("Import impossible", "error"); setOpening(null); }
   }
 
-  const statusLabel = (w: PersonWork) => w.status === "done" ? (w.rating ? `${w.rating.toFixed(1).replace(".", ",")}/5` : "Vu") : w.status === "in_progress" ? "En cours" : "À voir";
+  const workBadge = (w: PersonWork) =>
+    w.status === "done" && w.rating ? `${w.rating.toFixed(1).replace(".", ",")}/5` : statusLabel(w.status, w.type);
 
   return (
     <>
@@ -39,7 +41,7 @@ export function PersonClient({ profile }: { profile: PersonProfile }) {
       {profile.library.length === 0
         ? <p className="text-sm text-[var(--color-text-muted)]">Aucune œuvre de cette personne dans ta bibliothèque.</p>
         : <div className="flex gap-3 overflow-x-auto pb-1">
-            {profile.library.map((w) => <PosterLink key={w.workId} href={`/work/${w.workId}`} title={w.title} posterUrl={w.posterUrl} badge={statusLabel(w)} />)}
+            {profile.library.map((w) => <PosterLink key={w.workId} href={`/work/${w.workId}`} title={w.title} posterUrl={w.posterUrl} badge={workBadge(w)} />)}
           </div>}
 
       {profile.discovery.length > 0 && (

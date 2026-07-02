@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { RatingSlider } from "./RatingSlider";
 import { api, ApiError } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
+import { statusLabel } from "@/lib/status-label";
 import type { LibraryEntry, WorkSource, WorkType } from "@/server/domain/entities";
 
 interface Ref { source: WorkSource; externalId: string; type: WorkType }
@@ -106,9 +107,9 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Mon entrée</p>
 
       <div className="mb-4 inline-flex overflow-hidden rounded-full border border-[var(--color-border)]">
-        <button className={seg(status === "planned")} onClick={() => setStatus("planned")}>À voir</button>
-        <button className={seg(status === "in_progress")} onClick={() => setStatus("in_progress")}>En cours</button>
-        <button className={seg(status === "done")} onClick={() => setStatus("done")}>Vu ✓</button>
+        <button className={seg(status === "planned")} onClick={() => setStatus("planned")}>{statusLabel("planned", workType)}</button>
+        <button className={seg(status === "in_progress")} onClick={() => setStatus("in_progress")}>{statusLabel("in_progress", workType)}</button>
+        <button className={seg(status === "done")} onClick={() => setStatus("done")}>{statusLabel("done", workType)} ✓</button>
       </div>
 
       {status === "in_progress" && workType === "tv" && (
