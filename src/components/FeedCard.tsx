@@ -14,6 +14,7 @@ import type { FeedItem } from "@/server/application/feed";
 export function FeedCard({ item }: { item: FeedItem }) {
   const [liked, setLiked] = useState(item.likedByMe);
   const [likes, setLikes] = useState(item.likeCount);
+  const [expanded, setExpanded] = useState(false);
 
   async function toggleLike() {
     const next = !liked;
@@ -65,7 +66,22 @@ export function FeedCard({ item }: { item: FeedItem }) {
           </header>
 
           <div className="mt-2">
-            {item.entry.text && <p className="mb-2 line-clamp-3 text-sm text-[var(--color-text)]">{item.entry.text}</p>}
+            {item.entry.text && (
+              <div className="mb-2">
+                <p className={`whitespace-pre-wrap text-sm text-[var(--color-text)] ${expanded ? "" : "line-clamp-3"}`}>
+                  {item.entry.text}
+                </p>
+                {!expanded && item.entry.text.length > 180 && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setExpanded(true); }}
+                    className="relative z-10 mt-0.5 text-sm font-semibold text-[var(--color-primary)] hover:underline"
+                  >
+                    Lire plus
+                  </button>
+                )}
+              </div>
+            )}
             <Link href={`/work/${item.work.id}`} className="relative z-10 block">
               <p className="font-display text-lg font-semibold leading-tight">{item.work.title}</p>
               <p className="text-xs text-[var(--color-text-muted)]">{item.work.year ?? ""} · {typeLabel}</p>
