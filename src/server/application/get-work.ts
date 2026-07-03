@@ -6,11 +6,30 @@ export function domainOf(type: WorkType): Domain {
   return type === "book" ? "books" : "films";
 }
 
+/** Re-récupère le runtime d'un film/série dont il manque (import antérieur), et le persiste. */
+export async function backfillRuntime(deps: Deps, work: Work): Promise<Work> {
+  if (work.type === "book" || work.runtime !== null) return work;
+  try {
+    const details = await deps.catalog.getWork(work.externalId, work.type);
+    if (!details || details.runtime === null || details.runtime === undefined) return work;
+    const updated: Work = {
+      ...work,
+      runtime: details.runtime,
+      episodeCounts: details.episodeCounts ?? work.episodeCounts,
+      cachedAt: deps.clock.now(),
+    };
+    await deps.works.upsert(updated);
+    return updated;
+  } catch {
+    return work;
+  }
+}
+
 export async function getOrImportWork(
   deps: Deps, ref: { source: WorkSource; externalId: string; type: WorkType },
 ): Promise<Work> {
   const cached = await deps.works.findByExternal(ref.source, ref.externalId);
-  if (cached) return cached;
+  if (cached) return backfillRuntime(deps, cached);
   const details = await deps.catalog.getWork(ref.externalId, ref.type);
   if (!details) throw new NotFoundError("Œuvre introuvable dans le catalogue");
   const work: Work = {

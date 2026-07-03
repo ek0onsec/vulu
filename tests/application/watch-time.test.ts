@@ -27,4 +27,10 @@ describe("computeWatchMinutes", () => {
     await updateProgress(deps, "u1", tv, { season: 2, episode: 3 });
     expect(await computeWatchMinutes(deps, "u1")).toBe(10 * 47);
   });
+  it("backfille le runtime manquant d'un film déjà en base puis le compte", async () => {
+    await rateOrReviewWork(deps, "u1", movie, { rating: 4, text: null, audiences: { public: false, circle: false, communityIds: [] } });
+    const work = await deps.works.findByExternal("tmdb", "603");
+    await deps.works.upsert({ ...work!, runtime: null }); // simule une œuvre importée avant le champ runtime
+    expect(await computeWatchMinutes(deps, "u1")).toBe(136); // backfill depuis FakeCatalog (603 = 136 min)
+  });
 });
