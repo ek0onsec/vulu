@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "./Modal";
 import { Icon } from "./Icon";
+import { BookScanner } from "./BookScanner";
 import { api, ApiError } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
 import { resizeImage } from "@/lib/image-resize";
@@ -20,6 +21,7 @@ export function ListDetailModal({ listId, onClose, onChanged, editable = true }:
   const [results, setResults] = useState<WorkSummary[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bannerInput = useRef<HTMLInputElement>(null);
 
@@ -60,6 +62,19 @@ export function ListDetailModal({ listId, onClose, onChanged, editable = true }:
     setQ(""); setResults([]); setAdding(false);
     toast(`« ${r.title} » ajouté`);
   }
+
+  async function addScannedIsbn(isbn: string) {
+    try {
+      const { result } = await api.get<{ result: WorkSummary | null }>(`/api/catalog/isbn?isbn=${encodeURIComponent(isbn)}`);
+      if (!result) { toast("Livre introuvable pour ce code-barres", "error"); return; }
+      setScanning(false);
+      await addWork(result);
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Ajout impossible", "error");
+    }
+  }
+
+  const acceptsBooks = list?.kind === "books" || list?.kind === "mixed";
 
   async function removeWork(w: Work) {
     setWorks((prev) => prev.filter((x) => x.id !== w.id));
@@ -117,12 +132,22 @@ export function ListDetailModal({ listId, onClose, onChanged, editable = true }:
       <div className="mb-4 flex items-center justify-between">
         <span className="text-sm text-[var(--color-text-muted)]">{kindLabel} · {works.length} œuvre{works.length > 1 ? "s" : ""}</span>
         {editable && (
-          <button onClick={() => setAdding((a) => !a)}
-            className="flex items-center gap-1.5 rounded-full border border-[var(--color-primary)] px-3 py-1.5 text-sm font-semibold text-[var(--color-primary)]">
-            <Icon name="plus" size={16} /> Ajouter
-          </button>
+          <div className="flex items-center gap-2">
+            {acceptsBooks && (
+              <button onClick={() => setScanning(true)} aria-label="Scanner un livre"
+                className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]">
+                <Icon name="camera" size={16} /> Scanner
+              </button>
+            )}
+            <button onClick={() => setAdding((a) => !a)}
+              className="flex items-center gap-1.5 rounded-full border border-[var(--color-primary)] px-3 py-1.5 text-sm font-semibold text-[var(--color-primary)]">
+              <Icon name="plus" size={16} /> Ajouter
+            </button>
+          </div>
         )}
       </div>
+
+      {scanning && <BookScanner onClose={() => setScanning(false)} onIsbn={addScannedIsbn} />}
 
       {editable && adding && (
         <div className="mb-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3">

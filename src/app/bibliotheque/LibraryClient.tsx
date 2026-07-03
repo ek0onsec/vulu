@@ -8,8 +8,10 @@ import { Icon } from "@/components/Icon";
 import { personHref } from "@/lib/person";
 import { PlaylistCard } from "@/components/PlaylistCard";
 import { ListDetailModal } from "@/components/ListDetailModal";
+import { BookScanner } from "@/components/BookScanner";
 import type { Library, LibraryPoster } from "@/server/application/library";
 import type { WorkType } from "@/server/domain/entities";
+import type { WorkSummary } from "@/server/ports/catalog";
 import type { ListVisibility } from "@/server/domain/entities";
 
 type TypeFilter = "all" | "movie" | "tv" | "book";
@@ -45,6 +47,7 @@ export function LibraryClient() {
   const [visibility, setVisibility] = useState<ListVisibility>("public");
   const [busy, setBusy] = useState(false);
   const [viewing, setViewing] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
 
   const load = useCallback(() => {
     api.get<Library>("/api/library").then(setData).catch(() => setData({ playlists: [], watchlist: [], seen: [], people: [] }));
@@ -61,6 +64,17 @@ export function LibraryClient() {
       setName(""); setDescription(""); setKind("mixed"); setVisibility("public"); setCreating(false);
       toast("Collection créée"); load();
     } catch { toast("Action impossible", "error"); } finally { setBusy(false); }
+  }
+
+  async function addScannedBook(isbn: string) {
+    try {
+      const { result } = await api.get<{ result: WorkSummary | null }>(`/api/catalog/isbn?isbn=${encodeURIComponent(isbn)}`);
+      if (!result) { toast("Livre introuvable pour ce code-barres", "error"); return; }
+      await api.put("/api/works/entry", { ref: { source: result.source, externalId: result.externalId, type: result.type }, status: "planned" });
+      setScanning(false);
+      toast(`« ${result.title} » ajouté à ta liste à lire`);
+      load();
+    } catch { toast("Ajout impossible", "error"); }
   }
 
   if (!data) {
@@ -117,7 +131,15 @@ export function LibraryClient() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-3 font-display text-lg font-bold">À voir / à lire <span className="text-sm font-normal text-[var(--color-text-muted)]">· {watchlist.length}</span></h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-bold">À voir / à lire <span className="text-sm font-normal text-[var(--color-text-muted)]">· {watchlist.length}</span></h2>
+          {(filter === "book" || filter === "all") && (
+            <button onClick={() => setScanning(true)} aria-label="Scanner un livre"
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]">
+              <Icon name="camera" size={16} /> Scanner un livre
+            </button>
+          )}
+        </div>
         <PosterRow items={watchlist} empty="Rien dans ta liste d’envies pour ce filtre." />
       </section>
 
@@ -165,6 +187,7 @@ export function LibraryClient() {
       </Modal>
 
       {viewing && <ListDetailModal listId={viewing} editable onClose={() => setViewing(null)} onChanged={() => load()} />}
+      {scanning && <BookScanner onClose={() => setScanning(false)} onIsbn={addScannedBook} />}
     </>
   );
 }
