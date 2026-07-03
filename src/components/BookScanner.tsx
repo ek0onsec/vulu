@@ -50,7 +50,7 @@ export function BookScanner({ onIsbn, onClose }: { onIsbn: (isbn: string) => voi
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[60] overflow-hidden bg-black">
+    <div className="fixed inset-0 z-[60] h-[100dvh] w-screen overflow-hidden bg-black">
       <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" muted playsInline />
 
       {/* En-tête superposé */}
