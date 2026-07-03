@@ -88,7 +88,7 @@ export function LibraryClient() {
     <>
       <div className="mb-5 flex items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">Bibliothèque</h1>
-        <button onClick={() => setCreating(true)} className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white">
+        <button onClick={() => setCreating(true)} data-tour="create-collection" className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white">
           <Icon name="plus" size={18} /> Collection
         </button>
       </div>

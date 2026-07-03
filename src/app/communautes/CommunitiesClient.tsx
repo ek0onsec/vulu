@@ -40,8 +40,8 @@ export function CommunitiesClient({ plus }: { plus: boolean }) {
       <div className="mb-5 flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Communautés</h1>
         {plus
-          ? <button onClick={() => setCreating(true)} className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white"><Icon name="plus" size={18} /> Créer</button>
-          : <Link href="/plus" title="Réservé à vulu+" className="flex items-center gap-1.5 rounded-full border border-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-primary)]"><Icon name="lock" size={16} /> Créer · vulu+</Link>}
+          ? <button onClick={() => setCreating(true)} data-tour="community-cta" className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white"><Icon name="plus" size={18} /> Créer</button>
+          : <Link href="/plus" title="Réservé à vulu+" data-tour="community-cta" className="flex items-center gap-1.5 rounded-full border border-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-primary)]"><Icon name="lock" size={16} /> Créer · vulu+</Link>}
       </div>
 
       {!plus && (

@@ -12,22 +12,22 @@ import { SideMenu } from "./SideMenu";
 import { VuluLogo } from "./VuluLogo";
 import { api } from "@/lib/api-client";
 
-const NAV: { href: string; label: string; icon: IconName; pulse?: boolean }[] = [
-  { href: "/feed", label: "Feed", icon: "home", pulse: true },
-  { href: "/search", label: "Recherche", icon: "search" },
+const NAV: { href: string; label: string; icon: IconName; pulse?: boolean; tour?: string }[] = [
+  { href: "/feed", label: "Feed", icon: "home", pulse: true, tour: "nav-feed" },
+  { href: "/search", label: "Recherche", icon: "search", tour: "nav-search" },
   { href: "/notifications", label: "Notifications", icon: "bell" },
-  { href: "/communautes", label: "Communautés", icon: "community" },
-  { href: "/bibliotheque", label: "Bibliothèque", icon: "lists" },
-  { href: "/u/me", label: "Profil", icon: "profile" },
+  { href: "/communautes", label: "Communautés", icon: "community", tour: "nav-communities" },
+  { href: "/bibliotheque", label: "Bibliothèque", icon: "lists", tour: "nav-library" },
+  { href: "/u/me", label: "Profil", icon: "profile", tour: "nav-profile" },
   { href: "/plus", label: "vulu+", icon: "star" },
   { href: "/parametres", label: "Paramètres", icon: "settings" },
 ];
 
 // Barre du bas (mobile) : 4 entrées. Recherche = island flottante ; profil/réglages/vulu+ = side menu.
-const BOTTOM_NAV: { href: string; label: string; icon: IconName; pulse?: boolean }[] = [
-  { href: "/feed", label: "Accueil", icon: "home", pulse: true },
-  { href: "/communautes", label: "Communautés", icon: "community" },
-  { href: "/bibliotheque", label: "Bibliothèque", icon: "lists" },
+const BOTTOM_NAV: { href: string; label: string; icon: IconName; pulse?: boolean; tour?: string }[] = [
+  { href: "/feed", label: "Accueil", icon: "home", pulse: true, tour: "nav-feed" },
+  { href: "/communautes", label: "Communautés", icon: "community", tour: "nav-communities" },
+  { href: "/bibliotheque", label: "Bibliothèque", icon: "lists", tour: "nav-library" },
   { href: "/notifications", label: "Notifications", icon: "bell" },
 ];
 
@@ -65,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="sticky top-0 hidden h-screen flex-col gap-1 border-r border-[var(--color-border)] px-3 py-4 md:flex">
         <Link href="/feed" className="mb-3 px-3"><VuluLogo height={30} /></Link>
         {NAV.map((n) => (
-          <Link key={n.href} href={n.href}
+          <Link key={n.href} href={n.href} data-tour={n.tour}
             className={`flex items-center gap-3 rounded-full px-3 py-2.5 text-[0.95rem] transition-colors ${
               active(n.href)
                 ? "bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] font-semibold text-[var(--color-primary)]"
@@ -126,7 +126,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-[var(--color-border)] bg-[var(--color-surface)] py-2 md:hidden">
         {BOTTOM_NAV.map((n) => (
-          <Link key={n.href} href={n.href} aria-label={n.label}
+          <Link key={n.href} href={n.href} aria-label={n.label} data-tour={n.tour}
             className={`relative rounded-full p-2 ${active(n.href) ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}`}>
             <Icon name={n.icon} size={24} />
             {n.pulse && !active(n.href) && (

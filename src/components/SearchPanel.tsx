@@ -93,6 +93,7 @@ export function SearchPanel({ activeTabs, autoFocus = true, initialQuery, initia
       <div className="mb-5 flex items-center gap-2">
         <input autoFocus={autoFocus} value={q} onChange={(e) => setQ(e.target.value)}
           placeholder={domain === "books" ? "Un livre, un auteur, @pseudo…" : "Un film, une série, @pseudo…"}
+          data-tour="search-input"
           className="w-full min-w-0 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm" />
         {domain === "books" && (
           <button type="button" onClick={() => setScanning(true)} aria-label="Scanner un code-barres"

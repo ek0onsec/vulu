@@ -80,7 +80,7 @@ export function ProfileTabs({ watched, planned, lists, isSelf, showFilms, showBo
   tabs.push({
     id: "vitrine", label: "Vitrine",
     render: () => (
-      <div>
+      <div data-tour="profile-showcase">
         {isSelf && (
           <button onClick={() => setManaging(true)} className="mb-4 flex items-center gap-1.5 rounded-full border border-[var(--color-primary)] px-4 py-1.5 text-sm font-semibold text-[var(--color-primary)]">
             <Icon name="settings" size={16} /> Éditer ma vitrine
