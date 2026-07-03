@@ -14,10 +14,10 @@ import type { Domain } from "@/server/domain/entities";
 import type { WorkSummary, WorkDetails } from "@/server/ports/catalog";
 import type { UserSearchResult } from "@/server/application/search-users";
 
-export function SearchPanel({ activeTabs, autoFocus = true }: { activeTabs: Domain[]; autoFocus?: boolean }) {
+export function SearchPanel({ activeTabs, autoFocus = true, initialQuery, initialDomain }: { activeTabs: Domain[]; autoFocus?: boolean; initialQuery?: string; initialDomain?: Domain }) {
   const router = useRouter();
-  const [domain, setDomain] = useState<Domain>(activeTabs[0] ?? "films");
-  const [q, setQ] = useState("");
+  const [domain, setDomain] = useState<Domain>(initialDomain && activeTabs.includes(initialDomain) ? initialDomain : (activeTabs[0] ?? "films"));
+  const [q, setQ] = useState(initialQuery ?? "");
   const [results, setResults] = useState<WorkSummary[]>([]);
   const [members, setMembers] = useState<UserSearchResult[]>([]);
   const [unavailable, setUnavailable] = useState(false);
@@ -25,6 +25,15 @@ export function SearchPanel({ activeTabs, autoFocus = true }: { activeTabs: Doma
   const [opening, setOpening] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Refléter q/domaine dans l'URL (sans empiler l'historique) : « retour » depuis une fiche
+  // œuvre revient alors sur la recherche déjà filtrée.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (q.trim()) params.set("q", q.trim());
+    params.set("domain", domain);
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+  }, [q, domain, router]);
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
