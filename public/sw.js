@@ -3,7 +3,7 @@
 // - navigations : réseau d'abord (jamais servir une redirection depuis le cache)
 // - assets statiques : cache-first avec revalidation
 // - données API : réseau d'abord, jamais mises en cache (données privées/fraîches)
-const CACHE = "vulu-v2"; // bump : évince l'ancien cache qui contenait "/" (redirection)
+const CACHE = "vulu-v3"; // bump : évince tout cache obsolète servant la redirection "/"
 const SHELL = ["/login", "/icon.svg", "/manifest.webmanifest"]; // pas de "/" ni "/feed" (redirections/authentifié)
 
 self.addEventListener("install", (event) => {
