@@ -64,8 +64,8 @@ export function ProfileEditModal({ initial }: { initial: ProfileEditInitial }) {
   return (
     <>
       <button onClick={() => setOpen(true)}
-        className="flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]">
-        <Icon name="settings" size={16} /> Éditer le profil
+        className="flex min-h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]">
+        <Icon name="settings" size={16} /> <span className="hidden sm:inline">Éditer le profil</span>
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Éditer le profil">
