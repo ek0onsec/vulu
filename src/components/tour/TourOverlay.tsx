@@ -28,7 +28,9 @@ export function TourOverlay({ step, index, total, targetEl, onPrev, onNext, onSk
 
   const pad = 8;
   const hole = rect ? { top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 } : null;
-  const panel = "fixed bg-black/55 backdrop-blur-sm";
+  // Assombrissement léger, SANS flou : la page reste nette et lisible ; seule la
+  // zone spotlightée est mise en valeur (trou clair + halo).
+  const panel = "fixed bg-black/25";
 
   const tipStyle: React.CSSProperties = hole
     ? step.placement === "top"
@@ -44,12 +46,12 @@ export function TourOverlay({ step, index, total, targetEl, onPrev, onNext, onSk
           <div className={panel} style={{ top: hole.top + hole.height, left: 0, width: "100vw", height: `calc(100vh - ${hole.top + hole.height}px)` }} />
           <div className={panel} style={{ top: hole.top, left: 0, width: Math.max(0, hole.left), height: hole.height }} />
           <div className={panel} style={{ top: hole.top, left: hole.left + hole.width, width: `calc(100vw - ${hole.left + hole.width}px)`, height: hole.height }} />
-          <div className="pointer-events-none fixed rounded-xl ring-2 ring-[var(--color-primary)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-primary)_35%,transparent)]"
+          <div className="pointer-events-none fixed rounded-xl ring-4 ring-[var(--color-primary)] shadow-[0_0_0_3px_#fff,0_0_28px_8px_color-mix(in_srgb,var(--color-primary)_60%,transparent)]"
             style={{ top: hole.top, left: hole.left, width: hole.width, height: hole.height }} />
         </>
-      ) : (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
-      )}
+      ) : step.placement === "center" ? (
+        <div className="fixed inset-0 bg-black/25" />
+      ) : null}
 
       <div style={tipStyle} className="w-[min(20rem,calc(100vw-24px))] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-2xl">
         <div className="mb-2 flex items-center justify-between">
