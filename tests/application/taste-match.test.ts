@@ -19,7 +19,7 @@ async function makeUser(id: string, isPrivate = false): Promise<User> {
     bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"],
     tastes: { filmGenreIds: [1, 2, 3], people: [] }, showcase: { movie: [], tv: [], book: [] },
     plus: false, staff: false, private: isPrivate, twoFactorEnabled: false, twoFactorSecret: null, twoFactorBackupCodes: [],
-    deactivatedAt: null, notificationsSeenAt: null, createdAt: new Date(),
+    deactivatedAt: null, notificationsSeenAt: null, tourCompletedAt: null, createdAt: new Date(),
   };
   await deps.users.create(u);
   return u;

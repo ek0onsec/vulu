@@ -8,7 +8,7 @@ const u: User = {
   tastes: { filmGenreIds: [], people: [] }, showcase: { movie: [], tv: [], book: [] },
   plus: false, staff: false, private: false, twoFactorEnabled: true,
   twoFactorSecret: "ENCRYPTED", twoFactorBackupCodes: ["hash1"],
-  deactivatedAt: null, notificationsSeenAt: null, createdAt: new Date(),
+  deactivatedAt: null, notificationsSeenAt: null, tourCompletedAt: null, createdAt: new Date(),
 };
 
 describe("serialize n'expose pas les secrets 2FA", () => {

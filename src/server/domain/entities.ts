@@ -50,6 +50,7 @@ export interface User {
   twoFactorBackupCodes: string[];
   deactivatedAt: Date | null;
   notificationsSeenAt: Date | null;
+  tourCompletedAt: Date | null;    // null = app tour jamais vu/complété
   createdAt: Date;
 }
 

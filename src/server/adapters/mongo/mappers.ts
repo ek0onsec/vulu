@@ -20,6 +20,7 @@ export const fromUserDoc = (d: WithIdUser): User => ({
   ...strip(d),
   twoFactorSecret: d.twoFactorSecret ?? null,
   twoFactorBackupCodes: d.twoFactorBackupCodes ?? [],
+  tourCompletedAt: d.tourCompletedAt ?? null,
 });
 
 export const toFollowDoc = (f: Follow): WithIdFollow => ({ _id: `${f.followerId}:${f.followeeId}`, ...f });
