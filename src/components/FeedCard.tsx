@@ -103,7 +103,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
 
           <footer className="mt-2 flex items-center gap-1 text-[var(--color-text-muted)]">
             <button onClick={toggleLike} aria-pressed={liked}
-              className={`relative z-10 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)] ${liked ? "text-[var(--color-primary)]" : ""}`}>
+              className={`relative z-10 flex items-center gap-1.5 overflow-visible rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)] ${liked ? "text-[var(--color-primary)]" : ""}`}>
               <Icon name={liked ? "heart-filled" : "heart"} size={19} /> {likes}
             </button>
             <Link href={`/post/${item.entry.id}`}

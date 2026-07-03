@@ -38,7 +38,7 @@ export function Icon({ name, size = 22, className }: { name: IconName; size?: nu
     <svg
       width={size} height={size} viewBox="0 0 24 24" fill="none" overflow="visible"
       stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"
-      className={`shrink-0${className ? ` ${className}` : ""}`} aria-hidden="true"
+      className={`block shrink-0${className ? ` ${className}` : ""}`} aria-hidden="true"
     >
       {PATHS[name]}
     </svg>
