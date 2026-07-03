@@ -45,11 +45,11 @@ export function CommunitiesClient({ plus }: { plus: boolean }) {
       </div>
 
       {!plus && (
-        <Link href="/plus" className="relative mb-6 block overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] p-8 text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-          <span aria-hidden className="pointer-events-none absolute -right-6 -top-8 select-none font-display text-[7rem] font-black leading-none text-white/10">vulu+</span>
-          <p className="relative font-display text-2xl font-black leading-tight sm:text-3xl">Crée ta communauté<br />avec vulu+</p>
-          <p className="relative mt-2 max-w-sm text-sm text-white/85">Rassemble tes proches autour de vos films, séries et livres. Réservé aux membres vulu+.</p>
-          <span className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[var(--color-primary)]">
+        <Link href="/plus" className="relative mb-6 flex min-h-52 flex-col justify-end overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] p-6 text-white shadow-[0_10px_40px_rgba(0,0,0,0.15)] transition-transform active:scale-[0.99] sm:min-h-64 sm:p-8">
+          <span aria-hidden className="pointer-events-none absolute -right-4 -top-6 select-none font-display text-[28vw] font-black leading-[0.8] tracking-tighter text-white/10 sm:-top-10 sm:text-[12rem]">vulu+</span>
+          <p className="relative font-display text-3xl font-black leading-[1.05] sm:text-5xl">Créer une communauté<br /><span className="text-white/90">avec vulu+</span></p>
+          <p className="relative mt-3 max-w-md text-sm text-white/85 sm:text-base">Rassemble tes proches autour de vos films, séries et livres. La création de communautés est réservée aux membres vulu+.</p>
+          <span className="relative mt-5 inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-[var(--color-primary)] shadow-md">
             <Icon name="lock" size={16} /> Débloquer avec vulu+
           </span>
         </Link>
