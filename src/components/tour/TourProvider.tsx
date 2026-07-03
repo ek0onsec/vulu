@@ -44,29 +44,36 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
 
   const markSeen = useCallback(() => { api.post("/api/me/tour-seen").catch(() => {}); }, []);
 
-  // Charge l'étape : navigue si besoin, attend la cible (repli fallback), la résout.
-  const loadStep = useCallback(async (i: number) => {
-    const step = TOUR_STEPS[i];
+  // Charge l'étape courante APRÈS le rendu (effet) : navigue si besoin, attend la
+  // cible (repli fallback), la résout. Jamais de router.push pendant le rendu.
+  useEffect(() => {
+    if (!running) return;
+    const step = TOUR_STEPS[index];
     if (!step) return;
-    if (step.placement === "center") { setTargetEl(null); return; }
-    if (pathname !== step.route) router.push(step.route);
+    let cancelled = false;
     setTargetEl(null);
-    let finalName: string | null = null;
-    const primary = await waitForTarget(step.target);
-    if (primary) finalName = step.target;
-    else if (step.fallbackTarget) { const fb = await waitForTarget(step.fallbackTarget, 800); if (fb) finalName = step.fallbackTarget; }
-    setTargetEl(finalName ? document.querySelector(`[data-tour="${finalName}"]`) : null);
-  }, [pathname, router]);
+    if (step.placement === "center") return;
+    if (window.location.pathname !== step.route) router.push(step.route);
+    (async () => {
+      let finalName: string | null = null;
+      const primary = await waitForTarget(step.target);
+      if (cancelled) return;
+      if (primary) finalName = step.target;
+      else if (step.fallbackTarget) { const fb = await waitForTarget(step.fallbackTarget, 800); if (cancelled) return; if (fb) finalName = step.fallbackTarget; }
+      if (cancelled) return;
+      setTargetEl(finalName ? document.querySelector(`[data-tour="${finalName}"]`) : null);
+    })();
+    return () => { cancelled = true; };
+  }, [running, index, router]);
 
-  const startTour = useCallback(() => { setWelcome(false); setRunning(true); setIndex(0); void loadStep(0); }, [loadStep]);
-  const finish = useCallback(() => { setRunning(false); markSeen(); }, [markSeen]);
+  const startTour = useCallback(() => { setWelcome(false); setIndex(0); setRunning(true); }, []);
   const next = useCallback(() => {
     setIndex((i) => {
-      if (i >= TOUR_STEPS.length - 1) { finish(); return i; }
-      const ni = i + 1; void loadStep(ni); return ni;
+      if (i >= TOUR_STEPS.length - 1) { setRunning(false); markSeen(); return i; }
+      return i + 1;
     });
-  }, [finish, loadStep]);
-  const prev = useCallback(() => { setIndex((i) => { const pi = Math.max(0, i - 1); void loadStep(pi); return pi; }); }, [loadStep]);
+  }, [markSeen]);
+  const prev = useCallback(() => { setIndex((i) => Math.max(0, i - 1)); }, []);
   const skip = useCallback(() => { setRunning(false); markSeen(); }, [markSeen]);
 
   const step = TOUR_STEPS[index];
