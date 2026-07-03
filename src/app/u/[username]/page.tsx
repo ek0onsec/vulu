@@ -102,9 +102,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           {tasteMatch && <TasteMatchBadge score={tasteMatch.score} overlap={tasteMatch.overlap} sample={tasteMatch.sample} />}
           {target.bio && <p className="mt-3 text-sm text-[var(--color-text)]">{target.bio}</p>}
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-            {showFilms && <span><b>{vusCount}</b> <span className="text-[var(--color-text-muted)]">vus</span></span>}
+            {showFilms && <a href="#vus" className="active:scale-95"><b>{vusCount}</b> <span className="text-[var(--color-text-muted)]">vus</span></a>}
             {showFilms && watchMinutes > 0 && <span><b>{formatWatchDuration(watchMinutes)}</b> <span className="text-[var(--color-text-muted)]">de visionnage</span></span>}
-            {showBooks && <span><b>{lusCount}</b> <span className="text-[var(--color-text-muted)]">lus</span></span>}
+            {showBooks && <a href="#lus" className="active:scale-95"><b>{lusCount}</b> <span className="text-[var(--color-text-muted)]">lus</span></a>}
             <span><b>{followers}</b> <span className="text-[var(--color-text-muted)]">abonnés</span></span>
             <span><b>{following}</b> <span className="text-[var(--color-text-muted)]">abonnements</span></span>
           </div>

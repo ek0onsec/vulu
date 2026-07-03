@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ListDetailModal } from "./ListDetailModal";
 import { Modal } from "./Modal";
@@ -124,8 +124,24 @@ export function ProfileTabs({ watched, planned, lists, isSelf, showFilms, showBo
   const [active, setActive] = useState(tabs[0]!.id);
   const current = tabs.find((t) => t.id === active) ?? tabs[0];
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const tabIds = tabs.map((t) => t.id);
+  useEffect(() => {
+    const applyHash = () => {
+      const id = window.location.hash.slice(1);
+      if (id && tabIds.includes(id)) {
+        setActive(id);
+        rootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabIds.join(",")]);
+
   return (
-    <div className="mt-6">
+    <div ref={rootRef} className="mt-6">
       <div className="mb-4 flex gap-1 overflow-x-auto border-b border-[var(--color-border)]">
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setActive(t.id)}
