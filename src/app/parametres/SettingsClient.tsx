@@ -25,7 +25,7 @@ const SECTIONS: { id: SectionId; label: string; icon: IconName; desc: string }[]
   { id: "privacy", label: "Confidentialité", icon: "lock", desc: "Compte privé, anti-spoiler" },
   { id: "display", label: "Affichage", icon: "sun", desc: "Thème et apparence" },
   { id: "interests", label: "Centres d’intérêt", icon: "heart", desc: "Genres et favoris" },
-  { id: "community", label: "Rejoins-nous", icon: "user-plus", desc: "Discord, Instagram, X" },
+  { id: "community", label: "Rejoins-nous", icon: "user-plus", desc: "Discord" },
   { id: "legal", label: "Légal", icon: "dots", desc: "Conditions, confidentialité, cookies" },
 ];
 
@@ -163,9 +163,7 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
       <>
         <h2 className="mb-4 font-display text-xl font-bold">Rejoins la communauté vulu</h2>
         <div className="flex flex-col gap-2">
-          <a href="https://discord.gg/vulu" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-3 text-sm font-medium transition-colors hover:border-[var(--color-primary)]"><BrandLogo brand="discord" /> Rejoins le serveur Discord</a>
-          <a href="https://instagram.com/vulu.app" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-3 text-sm font-medium transition-colors hover:border-[var(--color-primary)]"><BrandLogo brand="instagram" /> @vulu.app sur Instagram</a>
-          <a href="https://x.com/vulu_app" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-3 text-sm font-medium transition-colors hover:border-[var(--color-primary)]"><BrandLogo brand="x" /> @vulu_app sur X</a>
+          <a href="https://discord.gg/sgnZmxxUnx" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-3 text-sm font-medium transition-colors hover:border-[var(--color-primary)]"><BrandLogo brand="discord" /> Rejoins le serveur Discord</a>
         </div>
       </>
     );
