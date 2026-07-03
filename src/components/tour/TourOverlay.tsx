@@ -30,7 +30,7 @@ export function TourOverlay({ step, index, total, targetEl, onPrev, onNext, onSk
   const hole = rect ? { top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 } : null;
   // Assombrissement léger, SANS flou : la page reste nette et lisible ; seule la
   // zone spotlightée est mise en valeur (trou clair + halo).
-  const panel = "fixed bg-black/25";
+  const panel = "fixed bg-black/10";
 
   const tipStyle: React.CSSProperties = hole
     ? step.placement === "top"
@@ -50,7 +50,7 @@ export function TourOverlay({ step, index, total, targetEl, onPrev, onNext, onSk
             style={{ top: hole.top, left: hole.left, width: hole.width, height: hole.height }} />
         </>
       ) : step.placement === "center" ? (
-        <div className="fixed inset-0 bg-black/25" />
+        <div className="fixed inset-0 bg-black/10" />
       ) : null}
 
       <div style={tipStyle} className="w-[min(20rem,calc(100vw-24px))] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-2xl">
