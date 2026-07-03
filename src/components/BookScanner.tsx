@@ -2,12 +2,22 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
 
-/** Overlay caméra : lit un EAN-13 (ISBN) et appelle onIsbn. ZXing chargé en lazy. */
-export function BookScanner({ onIsbn, onClose }: { onIsbn: (isbn: string) => void; onClose: () => void }) {
+type ScanResult = { ok: boolean; title?: string; posterUrl?: string | null };
+
+/** Overlay caméra : lit un EAN-13 (ISBN) et appelle onIsbn. ZXing chargé en lazy.
+ *  mode "batch" : enchaîne les ajouts sans fermer, avec animation + compteur + « Terminer ». */
+export function BookScanner({ onIsbn, onClose, mode = "single" }: {
+  onIsbn: (isbn: string) => void | Promise<ScanResult | void>;
+  onClose: () => void;
+  mode?: "single" | "batch";
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const onIsbnRef = useRef(onIsbn);
   onIsbnRef.current = onIsbn;
+  const lastCodeRef = useRef<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [count, setCount] = useState(0);
+  const [flash, setFlash] = useState<{ posterUrl: string | null; title: string } | null>(null);
 
   useEffect(() => {
     let controls: { stop: () => void } | null = null;
@@ -32,10 +42,19 @@ export function BookScanner({ onIsbn, onClose }: { onIsbn: (isbn: string) => voi
         controls = await reader.decodeFromConstraints(constraints, videoRef.current, (result, _err, ctrl) => {
           if (!result) return;
           const text = result.getText();
-          if (/^(978|979)\d{10}$/.test(text)) {
-            ctrl.stop();
-            onIsbnRef.current(text);
-          }
+          if (!/^(978|979)\d{10}$/.test(text)) return;
+          if (mode === "single") { ctrl.stop(); onIsbnRef.current(text); return; }
+          // batch : anti-doublon (même code consécutif ignoré ~1,5 s) + animation, sans fermer.
+          if (lastCodeRef.current === text) return;
+          lastCodeRef.current = text;
+          setTimeout(() => { if (lastCodeRef.current === text) lastCodeRef.current = null; }, 1500);
+          Promise.resolve(onIsbnRef.current(text)).then((res) => {
+            if (res && res.ok) {
+              setCount((n) => n + 1);
+              setFlash({ posterUrl: res.posterUrl ?? null, title: res.title ?? "" });
+              setTimeout(() => setFlash(null), 900);
+            }
+          });
         });
       } catch (e) {
         const name = (e as { name?: string })?.name;
@@ -78,9 +97,25 @@ export function BookScanner({ onIsbn, onClose }: { onIsbn: (isbn: string) => voi
             </div>
           </div>
 
-          <p className="absolute inset-x-0 bottom-[max(2.5rem,env(safe-area-inset-bottom))] z-10 px-8 text-center text-sm text-white/85">
-            Centre le code-barres au dos du livre dans le cadre.
-          </p>
+          {mode === "single" && (
+            <p className="absolute inset-x-0 bottom-[max(2.5rem,env(safe-area-inset-bottom))] z-10 px-8 text-center text-sm text-white/85">
+              Centre le code-barres au dos du livre dans le cadre.
+            </p>
+          )}
+
+          {mode === "batch" && (
+            <div className="absolute inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-10 flex items-center justify-between gap-3 px-5">
+              <span className="rounded-full bg-black/60 px-3 py-1.5 text-sm font-semibold text-white">{count} ajouté{count > 1 ? "s" : ""}</span>
+              <button onClick={onClose} className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black">Terminer</button>
+            </div>
+          )}
+
+          {flash && (
+            <div className="pointer-events-none absolute bottom-24 left-1/2 z-20 -translate-x-1/2 animate-[fly_0.9s_ease-in]">
+              <div className="h-24 w-16 overflow-hidden rounded-md border-2 border-white bg-[var(--color-border)] shadow-lg"
+                style={flash.posterUrl ? { backgroundImage: `url("${flash.posterUrl}")`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
+            </div>
+          )}
         </>
       )}
     </div>

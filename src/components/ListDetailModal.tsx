@@ -63,14 +63,15 @@ export function ListDetailModal({ listId, onClose, onChanged, editable = true }:
     toast(`« ${r.title} » ajouté`);
   }
 
-  async function addScannedIsbn(isbn: string) {
+  async function addScannedIsbn(isbn: string): Promise<{ ok: boolean; title?: string; posterUrl?: string | null }> {
     try {
       const { result } = await api.get<{ result: WorkSummary | null }>(`/api/catalog/isbn?isbn=${encodeURIComponent(isbn)}`);
-      if (!result) { toast("Livre introuvable pour ce code-barres", "error"); return; }
-      setScanning(false);
-      await addWork(result);
+      if (!result) { toast("Livre introuvable pour ce code-barres", "error"); return { ok: false }; }
+      await api.post(`/api/lists/${listId}/items`, { source: result.source, externalId: result.externalId, type: result.type });
+      return { ok: true, title: result.title, posterUrl: result.posterUrl };
     } catch (e) {
       toast(e instanceof ApiError ? e.message : "Ajout impossible", "error");
+      return { ok: false };
     }
   }
 
@@ -147,7 +148,7 @@ export function ListDetailModal({ listId, onClose, onChanged, editable = true }:
         )}
       </div>
 
-      {scanning && <BookScanner onClose={() => setScanning(false)} onIsbn={addScannedIsbn} />}
+      {scanning && <BookScanner mode="batch" onClose={() => { setScanning(false); refresh(); }} onIsbn={addScannedIsbn} />}
 
       {editable && adding && (
         <div className="mb-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3">

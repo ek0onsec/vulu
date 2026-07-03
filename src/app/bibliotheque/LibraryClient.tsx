@@ -66,15 +66,13 @@ export function LibraryClient() {
     } catch { toast("Action impossible", "error"); } finally { setBusy(false); }
   }
 
-  async function addScannedBook(isbn: string) {
+  async function addScannedBook(isbn: string): Promise<{ ok: boolean; title?: string; posterUrl?: string | null }> {
     try {
       const { result } = await api.get<{ result: WorkSummary | null }>(`/api/catalog/isbn?isbn=${encodeURIComponent(isbn)}`);
-      if (!result) { toast("Livre introuvable pour ce code-barres", "error"); return; }
+      if (!result) { toast("Livre introuvable pour ce code-barres", "error"); return { ok: false }; }
       await api.put("/api/works/entry", { ref: { source: result.source, externalId: result.externalId, type: result.type }, status: "planned" });
-      setScanning(false);
-      toast(`« ${result.title} » ajouté à ta liste à lire`);
-      load();
-    } catch { toast("Ajout impossible", "error"); }
+      return { ok: true, title: result.title, posterUrl: result.posterUrl };
+    } catch { toast("Ajout impossible", "error"); return { ok: false }; }
   }
 
   if (!data) {
@@ -187,7 +185,7 @@ export function LibraryClient() {
       </Modal>
 
       {viewing && <ListDetailModal listId={viewing} editable onClose={() => setViewing(null)} onChanged={() => load()} />}
-      {scanning && <BookScanner onClose={() => setScanning(false)} onIsbn={addScannedBook} />}
+      {scanning && <BookScanner mode="batch" onClose={() => { setScanning(false); load(); }} onIsbn={addScannedBook} />}
     </>
   );
 }
