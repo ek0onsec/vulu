@@ -11,19 +11,21 @@ import { Modal } from "@/components/Modal";
 import { Icon, type IconName } from "@/components/Icon";
 import { BrandLogo } from "@/components/BrandLogo";
 import { TwoFactorSettings } from "@/components/TwoFactorSettings";
+import { useTour } from "@/components/tour/TourProvider";
 import type { Tastes } from "@/server/domain/entities";
 
 const DELETE_PHRASE = "SUPPRIMER MON COMPTE";
 const field = "w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm";
 const primaryBtn = "rounded-full bg-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50";
 
-type SectionId = "account" | "plus" | "security" | "privacy" | "display" | "interests" | "legal" | "community";
+type SectionId = "account" | "plus" | "security" | "privacy" | "display" | "interests" | "accessibility" | "legal" | "community";
 const SECTIONS: { id: SectionId; label: string; icon: IconName; desc: string }[] = [
   { id: "account", label: "Votre compte", icon: "profile", desc: "Infos, mot de passe, archive, suppression" },
   { id: "plus", label: "vulu+", icon: "star", desc: "Gérer l’abonnement" },
   { id: "security", label: "Sécurité", icon: "shield", desc: "2FA, sessions actives" },
   { id: "privacy", label: "Confidentialité", icon: "lock", desc: "Compte privé, anti-spoiler" },
   { id: "display", label: "Affichage", icon: "sun", desc: "Thème et apparence" },
+  { id: "accessibility", label: "Accessibilité", icon: "shield", desc: "Tutoriel, aides" },
   { id: "interests", label: "Centres d’intérêt", icon: "heart", desc: "Genres et favoris" },
   { id: "community", label: "Rejoins-nous", icon: "user-plus", desc: "Discord" },
   { id: "legal", label: "Légal", icon: "dots", desc: "Conditions, confidentialité, cookies" },
@@ -33,6 +35,7 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
   initialTastes: Tastes; initialPrivate: boolean; username: string; email: string; twoFactorEnabled: boolean; plus: boolean;
 }) {
   const router = useRouter();
+  const { startTour } = useTour();
   const [section, setSection] = useState<SectionId | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -150,6 +153,18 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
         </div>
         <p className="mb-2 text-sm font-semibold">Thèmes de couleur {!plus && <span className="text-xs font-normal text-[var(--color-text-muted)]">(aperçu — sauvegarde réservée à vulu+)</span>}</p>
         <ThemePicker plus={plus} />
+      </>
+    );
+    if (cur === "accessibility") return (
+      <>
+        <h2 className="mb-4 font-display text-xl font-bold">Accessibilité</h2>
+        <div className="rounded-2xl border border-[var(--color-border)] p-4">
+          <h3 className="mb-1 font-display text-lg font-bold">Tutoriel</h3>
+          <p className="mb-3 text-sm text-[var(--color-text-muted)]">Revois le fonctionnement de l'app avec l'app tour guidé.</p>
+          <button onClick={startTour} className="rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white active:scale-[0.98]">
+            (Re)lancer l'app tour
+          </button>
+        </div>
       </>
     );
     if (cur === "interests") return (
