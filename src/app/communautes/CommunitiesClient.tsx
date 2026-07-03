@@ -44,19 +44,22 @@ export function CommunitiesClient({ plus }: { plus: boolean }) {
           : <Link href="/plus" title="Réservé à vulu+" data-tour="community-cta" className="flex items-center gap-1.5 rounded-full border border-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-primary)]"><Icon name="lock" size={16} /> Créer · vulu+</Link>}
       </div>
 
-      {!plus && (
-        <Link href="/plus" className="relative mb-6 flex min-h-52 flex-col justify-end overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] p-6 text-white shadow-[0_10px_40px_rgba(0,0,0,0.15)] transition-transform active:scale-[0.99] sm:min-h-64 sm:p-8">
-          <span aria-hidden className="pointer-events-none absolute -right-4 -top-6 select-none font-display text-[28vw] font-black leading-[0.8] tracking-tighter text-white/10 sm:-top-10 sm:text-[12rem]">vulu+</span>
-          <p className="relative font-display text-3xl font-black leading-[1.05] sm:text-5xl">Créer une communauté<br /><span className="text-white/90">avec vulu+</span></p>
-          <p className="relative mt-3 max-w-md text-sm text-white/85 sm:text-base">Rassemble tes proches autour de vos films, séries et livres. La création de communautés est réservée aux membres vulu+.</p>
-          <span className="relative mt-5 inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-[var(--color-primary)] shadow-md">
-            <Icon name="lock" size={16} /> Débloquer avec vulu+
-          </span>
-        </Link>
-      )}
-
       {list === null && <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-[var(--color-border)]" />)}</div>}
-      {list?.length === 0 && <p className="text-sm text-[var(--color-text-muted)]">Aucune communauté. Crée la première !</p>}
+
+      {list?.length === 0 && (plus
+        ? <p className="text-sm text-[var(--color-text-muted)]">Aucune communauté. Crée la première !</p>
+        : (
+          <div className="pt-2">
+            <p className="text-sm text-[var(--color-text-muted)]">Aucune communauté pour l’instant.</p>
+            <Link href="/plus" aria-label="Créer une communauté avec vulu+" title="Réservé à vulu+"
+              className="mt-16 flex select-none flex-col items-center text-center leading-[0.95] transition-transform active:scale-[0.99]">
+              <span className="text-[clamp(2.5rem,12vw,4rem)] font-black tracking-tight"
+                style={{ color: "color-mix(in srgb, var(--color-primary) 55%, white)", WebkitTextStroke: "7px #fff", paintOrder: "stroke fill", filter: "drop-shadow(0 8px 16px color-mix(in srgb, var(--color-primary) 20%, transparent))" }}>
+                Créer une<br />communauté<br />avec vulu+
+              </span>
+            </Link>
+          </div>
+        ))}
       <div className="flex flex-col gap-3">
         {list?.map((c) => (
           <div key={c.id} className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
