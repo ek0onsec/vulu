@@ -30,7 +30,7 @@ export function FeedCard({ item }: { item: FeedItem }) {
   const isPublic = item.entry.audiences.public || item.entry.audiences.communityIds.length > 0;
   const typeLabel = item.work.type === "book" ? "Livre" : item.work.type === "tv" ? "Série" : "Film";
   return (
-    <article className="relative mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-shadow hover:shadow-[0_2px_20px_rgba(0,0,0,0.05)]">
+    <article className="relative mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition duration-150 hover:shadow-[0_2px_20px_rgba(0,0,0,0.05)] active:scale-[0.995]">
       {/* Lien-overlay : le fond « vide » de la carte mène au post. Frère (non parent)
           des liens internes -> aucun <a> imbriqué. Les éléments interactifs sont en z-10. */}
       <Link href={`/post/${item.entry.id}`} className="absolute inset-0 z-0" aria-label="Voir la publication" />
