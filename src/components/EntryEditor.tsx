@@ -175,8 +175,8 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
         })}
       </div>
       <button onClick={save} disabled={busy}
-        className="mt-4 rounded-full bg-[var(--color-primary)] px-6 py-2 text-sm font-semibold text-white disabled:opacity-50">
-        {busy ? "…" : "Enregistrer"}
+        className="mt-5 w-full rounded-full bg-[var(--color-primary)] py-3 text-base font-bold text-white shadow-[0_4px_16px_color-mix(in_srgb,var(--color-primary)_45%,transparent)] transition-transform active:scale-[0.98] disabled:opacity-50">
+        {busy ? "…" : "Valider"}
       </button>
       {entryId && (
         <div className="mt-4 border-t border-[var(--color-border)] pt-3">
