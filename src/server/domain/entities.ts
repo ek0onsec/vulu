@@ -84,6 +84,7 @@ export interface Work {
   watchProviders: { name: string; logoUrl: string | null }[];
   episodeCounts: number[] | null;  // tv : nb d'épisodes par saison ; total = somme
   pageCount: number | null;        // livre : pages totales
+  runtime: number | null;          // minutes : film = durée ; série = durée d'un épisode
   cachedAt: Date;
 }
 

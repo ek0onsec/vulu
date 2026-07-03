@@ -11,7 +11,8 @@ interface TmdbDetails { id: number; title?: string; name?: string; release_date?
   genres?: { id: number; name: string }[];
   credits?: { cast?: { id: number; name: string }[]; crew?: { id: number; name: string; job: string }[] };
   "watch/providers"?: { results?: Record<string, { flatrate?: TmdbProvider[] }> };
-  seasons?: { season_number: number; episode_count: number }[]; }
+  seasons?: { season_number: number; episode_count: number }[];
+  runtime?: number | null; episode_run_time?: number[]; }
 
 function yearOf(d?: string): number | null { return d ? Number(d.slice(0, 4)) || null : null; }
 
@@ -79,6 +80,7 @@ export class TmdbCatalog {
     const episodeCounts = type === "tv"
       ? (d.seasons ?? []).filter((s) => s.season_number >= 1).sort((a, b) => a.season_number - b.season_number).map((s) => s.episode_count)
       : null;
+    const runtime = type === "tv" ? (d.episode_run_time?.[0] ?? null) : (d.runtime ?? null);
     return {
       source: "tmdb", externalId: String(d.id), type,
       title: d.title ?? d.name ?? "Sans titre",
@@ -92,6 +94,7 @@ export class TmdbCatalog {
       watchProviders,
       episodeCounts: episodeCounts && episodeCounts.length ? episodeCounts : null,
       pageCount: null,
+      runtime,
     };
   }
 

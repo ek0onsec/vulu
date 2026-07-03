@@ -30,6 +30,7 @@ export async function getOrImportWork(
     watchProviders: details.watchProviders,
     episodeCounts: details.episodeCounts ?? null,
     pageCount: details.pageCount ?? null,
+    runtime: details.runtime ?? null,
     cachedAt: deps.clock.now(),
   };
   await deps.works.upsert(work);

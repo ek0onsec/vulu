@@ -48,7 +48,7 @@ export const fromCommunityRequestDoc = (d: WithIdCommunityRequest): CommunityReq
 export const toWorkDoc = (w: Work): WithIdWork => ({ _id: w.id, ...w });
 export const fromWorkDoc = (d: WithIdWork): Work => {
   const w = strip(d);
-  return { ...w, episodeCounts: w.episodeCounts ?? null, pageCount: w.pageCount ?? null };
+  return { ...w, episodeCounts: w.episodeCounts ?? null, pageCount: w.pageCount ?? null, runtime: w.runtime ?? null };
 };
 
 type LegacyEntryDoc = WithIdEntry & { visibility?: "circle" | "public"; communityId?: string | null };

@@ -7,7 +7,7 @@ export class FakeCatalog implements CatalogProvider {
       source: "tmdb", externalId: "603", type: "movie", title: "The Matrix", year: 1999,
       posterUrl: "p.jpg", backdropUrl: "b.jpg", overview: "Neo…",
       genres: ["Science-fiction"], people: [{ tmdbId: 6384, name: "Keanu Reeves", role: "actor" }],
-      externalRating: 8.2, watchProviders: [{ name: "Netflix", logoUrl: "n.jpg" }],
+      externalRating: 8.2, watchProviders: [{ name: "Netflix", logoUrl: "n.jpg" }], runtime: 136,
     },
     "book-1": {
       source: "googlebooks", externalId: "book-1", type: "book", title: "Neuromancien", year: 1984,
@@ -20,7 +20,7 @@ export class FakeCatalog implements CatalogProvider {
       posterUrl: "p.jpg", backdropUrl: "b.jpg", overview: "Walter White…",
       genres: ["Drame"], people: [{ tmdbId: 1, name: "Bryan Cranston", role: "actor" }],
       externalRating: 8.9, watchProviders: [{ name: "Netflix", logoUrl: "n.jpg" }],
-      episodeCounts: [7, 13],
+      episodeCounts: [7, 13], runtime: 47,
     },
   };
   async searchWorks(_query: string, domain: Domain): Promise<WorkSummary[]> {

@@ -3,6 +3,8 @@ import { currentUser } from "@/server/http/session";
 import { getDeps } from "@/server/container";
 import { getCircle, canViewProfile } from "@/server/application/social";
 import { computeTasteMatch } from "@/server/application/taste-match";
+import { computeWatchMinutes } from "@/server/application/watch-time";
+import { formatWatchDuration } from "@/lib/format-duration";
 import { TasteMatchBadge } from "@/components/TasteMatchBadge";
 import { AppShell } from "@/components/AppShell";
 import { FollowButton } from "@/components/FollowButton";
@@ -72,6 +74,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const showBooks = target.activeTabs.includes("books");
   const vusCount = watched.filter((w) => w.type !== "book").length;
   const lusCount = watched.filter((w) => w.type === "book").length;
+  const watchMinutes = showFilms && canView ? await computeWatchMinutes(deps, target.id) : 0;
 
   return (
     <AppShell>
@@ -100,6 +103,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           {target.bio && <p className="mt-3 text-sm text-[var(--color-text)]">{target.bio}</p>}
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
             {showFilms && <span><b>{vusCount}</b> <span className="text-[var(--color-text-muted)]">vus</span></span>}
+            {showFilms && watchMinutes > 0 && <span><b>{formatWatchDuration(watchMinutes)}</b> <span className="text-[var(--color-text-muted)]">de visionnage</span></span>}
             {showBooks && <span><b>{lusCount}</b> <span className="text-[var(--color-text-muted)]">lus</span></span>}
             <span><b>{followers}</b> <span className="text-[var(--color-text-muted)]">abonnés</span></span>
             <span><b>{following}</b> <span className="text-[var(--color-text-muted)]">abonnements</span></span>

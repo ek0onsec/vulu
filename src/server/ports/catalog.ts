@@ -17,6 +17,7 @@ export interface WorkDetails extends WorkSummary {
   watchProviders: { name: string; logoUrl: string | null }[];
   episodeCounts?: number[] | null;  // tv uniquement
   pageCount?: number | null;        // livre uniquement
+  runtime?: number | null;          // minutes (film = durée ; série = durée d'un épisode)
 }
 export interface Genre { id: number; name: string; }
 export interface Person { tmdbId: number; name: string; role: PersonRole; profileUrl: string | null; }
