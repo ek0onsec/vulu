@@ -14,6 +14,7 @@ import { StaffBadge } from "@/components/StaffBadge";
 import { Icon } from "@/components/Icon";
 import { ProfileEditModal } from "@/components/ProfileEditModal";
 import { ProfileTabs, type PosterItem, type ListItem, type ShowcaseWork } from "@/components/ProfileTabs";
+import { ProfileStats } from "@/components/ProfileStats";
 import { InProgressShelf } from "@/components/InProgressShelf";
 import type { LibraryEntry } from "@/server/domain/entities";
 
@@ -105,8 +106,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
             {showFilms && <a href="#vus" className="active:scale-95"><b>{vusCount}</b> <span className="text-[var(--color-text-muted)]">vus</span></a>}
             {showFilms && watchMinutes > 0 && <span><b>{formatWatchDuration(watchMinutes)}</b> <span className="text-[var(--color-text-muted)]">de visionnage</span></span>}
             {showBooks && <a href="#lus" className="active:scale-95"><b>{lusCount}</b> <span className="text-[var(--color-text-muted)]">lus</span></a>}
-            <span><b>{followers}</b> <span className="text-[var(--color-text-muted)]">abonnés</span></span>
-            <span><b>{following}</b> <span className="text-[var(--color-text-muted)]">abonnements</span></span>
+            <ProfileStats username={target.username} followers={followers} following={following} />
           </div>
         </div>
       </div>
