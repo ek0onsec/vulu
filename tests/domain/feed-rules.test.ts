@@ -6,7 +6,7 @@ function entry(over: Partial<LibraryEntry>): LibraryEntry {
   return {
     id: "e1", userId: "u1", workId: "w1", domain: "films",
     status: "done", rating: 4, text: null, audiences: { public: true, circle: true, communityIds: [] },
-    progress: null, activityAt: null, createdAt: new Date(), updatedAt: new Date(), ...over,
+    completedAt: null, progress: null, activityAt: null, createdAt: new Date(), updatedAt: new Date(), ...over,
   };
 }
 

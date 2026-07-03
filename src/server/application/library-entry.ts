@@ -19,19 +19,20 @@ async function loadOrCreateEntry(deps: Deps, userId: string, ref: Ref): Promise<
   // (invisible au feed et aux avis d'œuvre) tant que l'utilisateur ne choisit pas de partager.
   return { id: deps.ids.next(), userId, workId: work.id, domain: work.domain,
     status: "planned", rating: null, text: null, audiences: { public: false, circle: false, communityIds: [] },
-    progress: null, activityAt: null, createdAt: now, updatedAt: now };
+    completedAt: null, progress: null, activityAt: null, createdAt: now, updatedAt: now };
 }
 
-export async function setEntryStatus(deps: Deps, userId: string, ref: Ref, status: EntryStatus): Promise<LibraryEntry> {
+export async function setEntryStatus(deps: Deps, userId: string, ref: Ref, status: EntryStatus, completedAt?: Date | null): Promise<LibraryEntry> {
   const entry = await loadOrCreateEntry(deps, userId, ref);
-  const updated: LibraryEntry = { ...entry, status, updatedAt: deps.clock.now() };
+  const resolvedCompletedAt = completedAt !== undefined ? completedAt : (status === "done" ? entry.completedAt ?? deps.clock.now() : entry.completedAt);
+  const updated: LibraryEntry = { ...entry, status, completedAt: resolvedCompletedAt, updatedAt: deps.clock.now() };
   await deps.entries.upsert(updated);
   return updated;
 }
 
 export async function rateOrReviewWork(
   deps: Deps, userId: string, ref: Ref,
-  input: { rating: number | null; text: string | null; audiences: EntryAudiences },
+  input: { rating: number | null; text: string | null; completedAt?: Date | null; audiences: EntryAudiences },
 ): Promise<LibraryEntry> {
   if (input.rating === null && (input.text === null || input.text.trim() === "")) {
     throw new ValidationError("Ajoute une note ou un commentaire");
@@ -49,6 +50,7 @@ export async function rateOrReviewWork(
   const entry = await loadOrCreateEntry(deps, userId, ref);
   const updated: LibraryEntry = { ...entry, status: "done", rating: input.rating,
     text: input.text?.trim() ? input.text.trim() : null, audiences,
+    completedAt: input.completedAt !== undefined ? input.completedAt : (entry.completedAt ?? deps.clock.now()),
     activityAt: deps.clock.now(), updatedAt: deps.clock.now() };
   await deps.entries.upsert(updated);
   return updated;

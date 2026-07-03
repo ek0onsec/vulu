@@ -96,6 +96,7 @@ export interface LibraryEntry {
   rating: number | null;
   text: string | null;
   audiences: EntryAudiences;
+  completedAt: Date | null;        // date de visionnage/lecture (null si non renseignée)
   progress: EntryProgress | null;  // null pour les films « en cours » (statut seul)
   activityAt: Date | null;         // date d'apparition/remontée dans le feed (null = absent du feed)
   createdAt: Date;

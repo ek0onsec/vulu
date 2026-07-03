@@ -9,7 +9,7 @@ function user(id: string, over: Partial<User> = {}): User {
 }
 function entry(id: string, over: Partial<LibraryEntry> = {}): LibraryEntry {
   return { id, userId: "u1", workId: "w1", domain: "films", status: "done", rating: 4,
-    text: null, audiences: { public: true, circle: true, communityIds: [] }, progress: null, activityAt: null, createdAt: new Date(), updatedAt: new Date(), ...over };
+    text: null, audiences: { public: true, circle: true, communityIds: [] }, completedAt: null, progress: null, activityAt: null, createdAt: new Date(), updatedAt: new Date(), ...over };
 }
 
 describe("InMemory repos", () => {
@@ -74,7 +74,7 @@ describe("InMemory repos", () => {
 describe("InMemoryLibraryEntryRepository — feed activityAt", () => {
   const mk = (id: string, activityAt: Date | null, over: Partial<LibraryEntry> = {}): LibraryEntry => ({
     id, userId: "u", workId: "w-" + id, domain: "films", status: "done",
-    rating: 4, text: null, audiences: { public: true, circle: true, communityIds: [] }, progress: null,
+    rating: 4, text: null, audiences: { public: true, circle: true, communityIds: [] }, completedAt: null, progress: null,
     activityAt, createdAt: new Date(2020, 0, 1), updatedAt: new Date(2020, 0, 1), ...over,
   });
   it("exclut les entrées sans activityAt et trie par activityAt desc", async () => {

@@ -12,10 +12,12 @@ export async function PUT(req: Request) {
     const body = await req.json();
     if ("rating" in body || "text" in body) {
       const input = rateSchema.parse(body);
-      return json({ entry: await rateOrReviewWork(deps, user.id, input.ref, input) });
+      const completedAt = input.completedAt === undefined ? undefined : (input.completedAt === null ? null : new Date(input.completedAt));
+      return json({ entry: await rateOrReviewWork(deps, user.id, input.ref, { ...input, completedAt }) });
     }
     const input = setStatusSchema.parse(body);
-    return json({ entry: await setEntryStatus(deps, user.id, input.ref, input.status) });
+    const completedAt = input.completedAt === undefined ? undefined : (input.completedAt === null ? null : new Date(input.completedAt));
+    return json({ entry: await setEntryStatus(deps, user.id, input.ref, input.status, completedAt) });
   } catch (e) { return toErrorResponse(e); }
 }
 

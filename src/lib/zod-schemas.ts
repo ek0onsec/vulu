@@ -19,11 +19,12 @@ export const updateProfileSchema = z.object({
   avatarUrl: z.url().nullable(), activeTabs: z.array(z.enum(["films", "books"])).min(1),
 });
 export const workRefSchema = z.object({ source: z.enum(["tmdb", "googlebooks"]), externalId: z.string(), type: z.enum(["movie", "tv", "book"]) });
-export const setStatusSchema = z.object({ ref: workRefSchema, status: z.enum(["planned", "in_progress", "done"]) });
+export const setStatusSchema = z.object({ ref: workRefSchema, status: z.enum(["planned", "in_progress", "done"]), completedAt: z.string().datetime().nullable().optional() });
 export const rateSchema = z.object({
   ref: workRefSchema,
   rating: z.number().min(0).max(5).nullable(),
   text: z.string().max(2000).nullable(),
+  completedAt: z.string().datetime().nullable().optional(),
   audiences: z.object({
     public: z.boolean(),
     circle: z.boolean(),

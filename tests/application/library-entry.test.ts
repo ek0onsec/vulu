@@ -14,6 +14,15 @@ describe("library entry", () => {
     expect(e.rating).toBeNull();
     expect(e.audiences).toEqual({ public: false, circle: false, communityIds: [] });
   });
+  it("rateOrReview pose completedAt = maintenant par défaut", async () => {
+    const e = await rateOrReviewWork(deps, "u1", ref, { rating: 4, text: null, audiences: { public: false, circle: false, communityIds: [] } });
+    expect(e.completedAt).not.toBeNull();
+  });
+  it("rateOrReview respecte un completedAt explicite", async () => {
+    const d = new Date("2024-01-02T00:00:00.000Z");
+    const e = await rateOrReviewWork(deps, "u1", ref, { rating: 4, text: null, completedAt: d, audiences: { public: false, circle: false, communityIds: [] } });
+    expect(e.completedAt?.toISOString()).toBe(d.toISOString());
+  });
   it("rateOrReview « gardé pour moi » : note enregistrée, audiences privées", async () => {
     const e = await rateOrReviewWork(deps, "u1", ref, { rating: 4, text: null, audiences: { public: false, circle: false, communityIds: [] } });
     expect(e.status).toBe("done");

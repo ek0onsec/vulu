@@ -7,7 +7,7 @@ const user: User = { id: "u1", email: "a@x.io", passwordHash: "h", username: "al
   tastes: { filmGenreIds: [1, 2, 3], people: [] }, showcase: { movie: [], tv: [], book: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, twoFactorSecret: null, twoFactorBackupCodes: [], deactivatedAt: null, notificationsSeenAt: null, createdAt: new Date("2024-01-01") };
 const entry: LibraryEntry = { id: "e1", userId: "u1", workId: "w1", domain: "films",
   status: "done", rating: 4.2, text: "top", audiences: { public: true, circle: true, communityIds: [] },
-  progress: null, activityAt: new Date("2024-01-02"),
+  completedAt: null, progress: null, activityAt: new Date("2024-01-02"),
   createdAt: new Date("2024-01-02"), updatedAt: new Date("2024-01-03") };
 
 describe("mongo mappers", () => {

@@ -64,7 +64,7 @@ export const fromEntryDoc = (d: WithIdEntry): LibraryEntry => {
     communityIds: raw.communityId ? [raw.communityId] : [],
   };
   const activityAt = e.activityAt ?? (isPublishable({ ...e, audiences, progress, activityAt: null }) ? e.createdAt : null);
-  return { ...e, audiences, progress, activityAt };
+  return { ...e, audiences, progress, activityAt, completedAt: e.completedAt ?? null };
 };
 
 export const toListDoc = (l: List): WithIdList => ({ _id: l.id, ...l });

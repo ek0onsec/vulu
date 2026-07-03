@@ -18,6 +18,7 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
   const [status, setStatus] = useState<"planned" | "in_progress" | "done">(initial?.status ?? "planned");
   const [rating, setRating] = useState<number>(initial?.rating ?? 0);
   const [text, setText] = useState(initial?.text ?? "");
+  const [completedAt, setCompletedAt] = useState<string>(initial?.completedAt ? new Date(initial.completedAt).toISOString().slice(0, 10) : "");
   const [sharePublic, setSharePublic] = useState<boolean>(initial?.audiences.public ?? false);
   const [shareCircle, setShareCircle] = useState<boolean>(initial?.audiences.circle ?? true);
   const [shareCommunities, setShareCommunities] = useState<Set<string>>(
@@ -71,8 +72,9 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
       const audiences = { public: sharePublic, circle: shareCircle, communityIds };
       const isReview = !(status === "planned" && rating === 0 && !text.trim());
       // Aucune destination = « gardé pour moi » : l'entrée (note/avis) reste privée, hors feed.
+      const completedIso = completedAt ? new Date(completedAt).toISOString() : null;
       const body = isReview
-        ? { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, audiences }
+        ? { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, completedAt: completedIso, audiences }
         : { ref: workRef, status: "planned" };
       const { entry } = await api.put<{ entry: LibraryEntry }>("/api/works/entry", body);
       setEntryId(entry.id);
@@ -108,7 +110,7 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
       <div className="mb-4 inline-flex overflow-hidden rounded-full border border-[var(--color-border)]">
         <button className={seg(status === "planned")} onClick={() => setStatus("planned")}>{statusLabel("planned", workType)}</button>
         <button className={seg(status === "in_progress")} onClick={() => setStatus("in_progress")}>{statusLabel("in_progress", workType)}</button>
-        <button className={seg(status === "done")} onClick={() => setStatus("done")}>{statusLabel("done", workType)} ✓</button>
+        <button className={seg(status === "done")} onClick={() => { setStatus("done"); if (!completedAt) setCompletedAt(new Date().toISOString().slice(0, 10)); }}>{statusLabel("done", workType)} ✓</button>
       </div>
 
       {status === "in_progress" && workType === "tv" && (
@@ -139,6 +141,13 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
         placeholder="Ton avis (optionnel)…"
         className="mt-4 min-h-20 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3 text-sm"
       />
+
+      {status === "done" && (
+        <label className="mt-4 block text-sm font-semibold">Date de {workType === "book" ? "lecture" : "visionnage"}
+          <input type="date" value={completedAt} onChange={(e) => setCompletedAt(e.target.value)}
+            className="mt-1 block rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm font-normal" />
+        </label>
+      )}
 
       <p className="mt-4 mb-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Partager dans</p>
       <p className="mb-1.5 text-xs text-[var(--color-text-muted)]">Plusieurs destinations possibles — ou garde ça pour toi (rien n'apparaît dans le feed).</p>
