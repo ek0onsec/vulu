@@ -6,6 +6,9 @@ import { Modal } from "./Modal";
 import { Icon } from "./Icon";
 import { api } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
+import { DndContext, PointerSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { WorkType } from "@/server/domain/entities";
 import type { WorkSummary, WorkDetails } from "@/server/ports/catalog";
 
@@ -160,6 +163,27 @@ export function ProfileTabs({ watched, planned, lists, isSelf, showFilms, showBo
   );
 }
 
+function SortablePoster({ id, posterUrl, title, onRemove }: { id: string; posterUrl: string | null; title: string; onRemove: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    touchAction: "none",
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="group relative">
+      <div {...attributes} {...listeners}
+        className="aspect-[2/3] cursor-grab overflow-hidden rounded-md bg-[var(--color-border)] active:cursor-grabbing"
+        style={posterUrl ? { backgroundImage: `url("${posterUrl}")`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+        aria-label={`Déplacer ${title}`} />
+      <button onClick={onRemove} aria-label={`Retirer ${title}`} className="absolute right-0.5 top-0.5 rounded-full bg-black/65 p-0.5 text-white">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      </button>
+    </div>
+  );
+}
+
 function ShowcaseManager({ sc, showFilms, showBooks, onClose, onChange }: {
   sc: Showcase; showFilms: boolean; showBooks: boolean; onClose: () => void; onChange: (s: Showcase) => void;
 }) {
@@ -167,6 +191,7 @@ function ShowcaseManager({ sc, showFilms, showBooks, onClose, onChange }: {
   const [domain, setDomain] = useState<"films" | "books">(showFilms ? "films" : "books");
   const [results, setResults] = useState<WorkSummary[]>([]);
   const [searching, setSearching] = useState(false);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   async function search() {
     if (!q.trim()) { setResults([]); return; }
@@ -197,6 +222,16 @@ function ShowcaseManager({ sc, showFilms, showBooks, onClose, onChange }: {
 
   function removeFrom(cat: Cat, workId: string) {
     persist({ ...sc, [cat]: sc[cat].filter((x) => x.workId !== workId) });
+  }
+
+  function reorder(cat: Cat, event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const items = sc[cat];
+    const oldIndex = items.findIndex((x) => x.workId === active.id);
+    const newIndex = items.findIndex((x) => x.workId === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    persist({ ...sc, [cat]: arrayMove(items, oldIndex, newIndex) });
   }
 
   const cats: { cat: Cat; label: string; show: boolean }[] = [
@@ -236,17 +271,16 @@ function ShowcaseManager({ sc, showFilms, showBooks, onClose, onChange }: {
       {cats.filter((c) => c.show).map(({ cat, label }) => (
         <div key={cat} className="mb-4">
           <p className="mb-2 text-sm font-semibold">{label} <span className="text-xs font-normal text-[var(--color-text-muted)]">{sc[cat].length}/5</span></p>
-          <div className="grid grid-cols-5 gap-2">
-            {sc[cat].map((wk) => (
-              <div key={wk.workId} className="group relative">
-                <div className="aspect-[2/3] overflow-hidden rounded-md bg-[var(--color-border)]" style={wk.posterUrl ? { backgroundImage: `url(${wk.posterUrl})`, backgroundSize: "cover" } : undefined} />
-                <button onClick={() => removeFrom(cat, wk.workId)} aria-label={`Retirer ${wk.title}`} className="absolute right-0.5 top-0.5 rounded-full bg-black/65 p-0.5 text-white">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
-                </button>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => reorder(cat, e)}>
+            <SortableContext items={sc[cat].map((x) => x.workId)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-5 gap-2">
+                {sc[cat].map((wk) => (
+                  <SortablePoster key={wk.workId} id={wk.workId} posterUrl={wk.posterUrl} title={wk.title} onRemove={() => removeFrom(cat, wk.workId)} />
+                ))}
+                {sc[cat].length === 0 && <p className="col-span-5 text-xs text-[var(--color-text-muted)]">Rien pour l’instant.</p>}
               </div>
-            ))}
-            {sc[cat].length === 0 && <p className="col-span-5 text-xs text-[var(--color-text-muted)]">Rien pour l’instant.</p>}
-          </div>
+            </SortableContext>
+          </DndContext>
         </div>
       ))}
     </Modal>
