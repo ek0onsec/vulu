@@ -22,6 +22,9 @@ export function ListDetailModal({ listId, onClose, onChanged, editable = true }:
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bannerInput = useRef<HTMLInputElement>(null);
 
@@ -93,6 +96,32 @@ export function ListDetailModal({ listId, onClose, onChanged, editable = true }:
     });
   }
 
+  function openMetaEdit() {
+    if (!list) return;
+    setEditName(list.name);
+    setEditDescription(list.description ?? "");
+    setEditingMeta(true);
+  }
+
+  async function saveMeta() {
+    if (!list) return;
+    const name = editName.trim();
+    if (name.length < 1 || name.length > 60) { toast("Nom : 1 à 60 caractères", "error"); return; }
+    try {
+      await api.patch(`/api/lists/${listId}`, {
+        name,
+        kind: list.kind,
+        description: editDescription.trim() ? editDescription.trim().slice(0, 300) : null,
+        visibility: list.visibility,
+      });
+      setEditingMeta(false);
+      await refresh();
+      toast("Collection mise à jour");
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Modification impossible", "error");
+    }
+  }
+
   async function uploadBanner(file: File) {
     try {
       const blob = await resizeImage(file, 1500, 500);
@@ -127,6 +156,25 @@ export function ListDetailModal({ listId, onClose, onChanged, editable = true }:
       )}
       <input ref={bannerInput} type="file" accept="image/*" className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBanner(f); }} />
+
+      {editable && list && (
+        editingMeta ? (
+          <div className="mb-3 flex flex-col gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+            <input value={editName} onChange={(e) => setEditName(e.target.value)} maxLength={60} placeholder="Nom de la collection"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold" />
+            <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} maxLength={300} rows={2} placeholder="Description (optionnel)"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm" />
+            <div className="flex gap-2">
+              <button onClick={saveMeta} className="rounded-full bg-[var(--color-primary)] px-4 py-1.5 text-sm font-semibold text-white">Enregistrer</button>
+              <button onClick={() => setEditingMeta(false)} className="rounded-full border border-[var(--color-border)] px-4 py-1.5 text-sm font-semibold">Annuler</button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={openMetaEdit} className="mb-3 flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]">
+            <Icon name="settings" size={15} /> Renommer / éditer
+          </button>
+        )
+      )}
 
       {list?.description && <p className="mb-3 text-sm text-[var(--color-text-muted)]">{list.description}</p>}
 
