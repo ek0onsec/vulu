@@ -5,7 +5,7 @@ import { registerUser } from "@/server/application/register-user";
 import { rateOrReviewWork } from "@/server/application/library-entry";
 import { followUser } from "@/server/application/social";
 import { likeEntry } from "@/server/application/engagement";
-import { buildFeed, getWorkReviews, getEntryItem } from "@/server/application/feed";
+import { buildFeed, getWorkReviews, getEntryItem, getMyWorkReview } from "@/server/application/feed";
 import { NotFoundError } from "@/server/domain/errors";
 
 let deps: Deps; let me: string; let friend: string; let stranger: string;
@@ -105,5 +105,24 @@ describe("getEntryItem (visibilité)", () => {
     await expect(getEntryItem(deps, me, entry.id)).rejects.toBeInstanceOf(NotFoundError);
     const own = await getEntryItem(deps, friend, entry.id);
     expect(own.entry.id).toBe(entry.id);
+  });
+});
+
+describe("getMyWorkReview", () => {
+  const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+  it("renvoie ton avis s'il est partagé (cercle)", async () => {
+    await rateOrReviewWork(deps, me, ref, { rating: 4, text: "top", audiences: { public: false, circle: true, communityIds: [] } });
+    const work = await deps.works.findByExternal("tmdb", "603");
+    const mine = await getMyWorkReview(deps, me, work!.id);
+    expect(mine?.author.id).toBe(me);
+  });
+  it("renvoie null si gardé pour moi (non partagé)", async () => {
+    await rateOrReviewWork(deps, me, ref, { rating: 4, text: "privé", audiences: { public: false, circle: false, communityIds: [] } });
+    const work = await deps.works.findByExternal("tmdb", "603");
+    expect(await getMyWorkReview(deps, me, work!.id)).toBeNull();
+  });
+  it("renvoie null si aucune note ni texte", async () => {
+    const work = await deps.works.findByExternal("tmdb", "603");
+    expect(await getMyWorkReview(deps, me, work?.id ?? "x")).toBeNull();
   });
 });

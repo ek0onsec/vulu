@@ -93,6 +93,17 @@ export async function getEntryItem(deps: Deps, viewerId: string, entryId: string
   return item;
 }
 
+/** Ton propre avis sur une œuvre, s'il est publishable ET partagé (sinon null). */
+export async function getMyWorkReview(deps: Deps, viewerId: string, workId: string): Promise<FeedItem | null> {
+  const entry = await deps.entries.findByUserAndWork(viewerId, workId);
+  if (!entry) return null;
+  const publishable = entry.status === "done" && (entry.rating !== null || entry.text !== null);
+  const shared = entry.audiences.public || entry.audiences.circle || entry.audiences.communityIds.length > 0;
+  if (!publishable || !shared) return null;
+  const [item] = await enrichEntries(deps, viewerId, [entry]);
+  return item ?? null;
+}
+
 /** Avis d'autres membres sur une œuvre, visibles pour le viewer (public, cercle, communauté), hors soi. */
 export async function getWorkReviews(deps: Deps, viewerId: string, workId: string): Promise<FeedItem[]> {
   const [circle, communityIds] = await Promise.all([getCircle(deps, viewerId), viewerCommunityIdSet(deps, viewerId)]);
