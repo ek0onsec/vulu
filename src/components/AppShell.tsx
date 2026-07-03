@@ -10,7 +10,6 @@ import { StaffBadge } from "./StaffBadge";
 import { DiscoverRail } from "./DiscoverRail";
 import { SideMenu } from "./SideMenu";
 import { VuluLogo } from "./VuluLogo";
-import { TourProvider } from "@/components/tour/TourProvider";
 import { api } from "@/lib/api-client";
 
 const NAV: { href: string; label: string; icon: IconName; pulse?: boolean; tour?: string }[] = [
@@ -62,7 +61,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <TourProvider>
     <div className="mx-auto grid min-h-screen max-w-[1320px] grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[240px_minmax(0,1fr)_340px]">
       <aside className="sticky top-0 hidden h-screen flex-col gap-1 border-r border-[var(--color-border)] px-3 py-4 md:flex">
         <Link href="/feed" className="mb-3 px-3"><VuluLogo height={30} /></Link>
@@ -141,6 +139,5 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ))}
       </nav>
     </div>
-    </TourProvider>
   );
 }

@@ -4,6 +4,7 @@ import { Fraunces, Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { ToastViewport } from "@/components/ToastViewport";
+import { TourProvider } from "@/components/tour/TourProvider";
 
 const display = Fraunces({ subsets: ["latin"], variable: "--font-display", weight: ["400", "600", "700"] });
 const body = Inter({ subsets: ["latin"], variable: "--font-body" });
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script src="/theme-no-flash.js" />
       </head>
       <body className="min-h-full">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider><TourProvider>{children}</TourProvider></ThemeProvider>
         <ToastViewport />
         <ServiceWorkerRegister />
       </body>
