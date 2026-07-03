@@ -44,6 +44,17 @@ export function CommunitiesClient({ plus }: { plus: boolean }) {
           : <Link href="/plus" title="Réservé à vulu+" className="flex items-center gap-1.5 rounded-full border border-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-primary)]"><Icon name="lock" size={16} /> Créer · vulu+</Link>}
       </div>
 
+      {!plus && (
+        <Link href="/plus" className="relative mb-6 block overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] p-8 text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+          <span aria-hidden className="pointer-events-none absolute -right-6 -top-8 select-none font-display text-[7rem] font-black leading-none text-white/10">vulu+</span>
+          <p className="relative font-display text-2xl font-black leading-tight sm:text-3xl">Crée ta communauté<br />avec vulu+</p>
+          <p className="relative mt-2 max-w-sm text-sm text-white/85">Rassemble tes proches autour de vos films, séries et livres. Réservé aux membres vulu+.</p>
+          <span className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[var(--color-primary)]">
+            <Icon name="lock" size={16} /> Débloquer avec vulu+
+          </span>
+        </Link>
+      )}
+
       {list === null && <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-[var(--color-border)]" />)}</div>}
       {list?.length === 0 && <p className="text-sm text-[var(--color-text-muted)]">Aucune communauté. Crée la première !</p>}
       <div className="flex flex-col gap-3">
