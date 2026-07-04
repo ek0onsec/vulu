@@ -62,9 +62,39 @@ function clampPositive(n: number | null | undefined, max: number | null): number
   return max && max > 0 ? Math.min(v, max) : v;
 }
 
+function normalizeGrid(grid: number[][] | null | undefined, counts: number[] | null): number[][] {
+  if (!grid) return [];
+  const out: number[][] = [];
+  for (let i = 0; i < grid.length; i++) {
+    if (counts && i >= counts.length) continue; // saison inexistante
+    const max = counts?.[i] ?? null;
+    out[i] = [...new Set(grid[i] ?? [])]
+      .filter((n) => Number.isInteger(n) && n >= 1 && (max === null || n <= max))
+      .sort((a, b) => a - b);
+  }
+  return out;
+}
+
+function derivePosition(grid: number[][]): { season: number | null; episode: number | null } {
+  for (let i = grid.length - 1; i >= 0; i--) {
+    const eps = grid[i];
+    if (eps && eps.length) return { season: i + 1, episode: Math.max(...eps) };
+  }
+  return { season: null, episode: null };
+}
+
+function gridWithEpisode(grid: number[][] | null | undefined, season: number, episode: number): number[][] {
+  const out = (grid ?? []).map((s) => [...(s ?? [])]);
+  const idx = season - 1;
+  while (out.length <= idx) out.push([]);
+  const seasonEps = out[idx]!;
+  if (!seasonEps.includes(episode)) seasonEps.push(episode);
+  return out;
+}
+
 export async function updateProgress(
   deps: Deps, userId: string, ref: Ref,
-  input: { season?: number | null; episode?: number | null; tome?: number | null; page?: number | null },
+  input: { season?: number | null; episode?: number | null; tome?: number | null; page?: number | null; watchedEpisodes?: number[][] | null },
 ): Promise<LibraryEntry> {
   for (const v of [input.season, input.episode, input.tome, input.page]) {
     if (v !== null && v !== undefined && (!Number.isInteger(v) || v < 1)) {
@@ -77,14 +107,25 @@ export async function updateProgress(
 
   let progress: EntryProgress | null = null;
   if (work.type === "tv") {
-    const season = clampPositive(input.season, null) ?? base.progress?.season ?? 1;
-    const epMax = work.episodeCounts?.[season - 1] ?? null;
-    progress = { season, episode: clampPositive(input.episode, epMax) ?? base.progress?.episode ?? 1, tome: null, page: null };
+    const counts = work.episodeCounts;
+    let grid: number[][];
+    if (input.watchedEpisodes !== undefined && input.watchedEpisodes !== null) {
+      grid = normalizeGrid(input.watchedEpisodes, counts);
+    } else {
+      const s = clampPositive(input.season, null) ?? base.progress?.season ?? 1;
+      const epMax = counts?.[s - 1] ?? null;
+      const e = clampPositive(input.episode, epMax);
+      const start = base.progress?.watchedEpisodes ?? [];
+      grid = normalizeGrid(e !== null ? gridWithEpisode(start, s, e) : start, counts);
+    }
+    const pos = derivePosition(grid);
+    progress = { season: pos.season, episode: pos.episode, tome: null, page: null, watchedEpisodes: grid.some((s) => s.length) ? grid : null };
   } else if (work.type === "book") {
     progress = {
       season: null, episode: null,
       tome: clampPositive(input.tome, null) ?? base.progress?.tome ?? null,
       page: clampPositive(input.page, work.pageCount) ?? base.progress?.page ?? null,
+      watchedEpisodes: null,
     };
   } // film : progress reste null
 

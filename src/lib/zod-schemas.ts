@@ -35,6 +35,7 @@ const progInt = z.number().int().min(1).nullable().optional();
 export const progressSchema = z.object({
   ref: workRefSchema,
   season: progInt, episode: progInt, tome: progInt, page: progInt,
+  watchedEpisodes: z.array(z.array(z.number().int().min(1))).nullable().optional(),
 });
 export const createListSchema = z.object({
   name: z.string().min(1).max(60),
