@@ -54,7 +54,7 @@ export function CommunitiesClient({ plus }: { plus: boolean }) {
             <Link href="/plus" aria-label="Créer une communauté avec vulu+" title="Réservé à vulu+"
               className="mt-16 flex select-none flex-col items-center text-center leading-[0.95] transition-transform active:scale-[0.99]">
               <span className="text-[clamp(2.5rem,12vw,4rem)] font-black tracking-tight"
-                style={{ color: "color-mix(in srgb, var(--color-primary) 55%, white)", WebkitTextStroke: "7px #fff", paintOrder: "stroke fill", filter: "drop-shadow(0 8px 16px color-mix(in srgb, var(--color-primary) 20%, transparent))" }}>
+                style={{ color: "var(--color-primary)", textShadow: "0 2px 28px color-mix(in srgb, var(--color-primary) 28%, transparent)" }}>
                 Créer une<br />communauté<br />avec vulu+
               </span>
             </Link>
