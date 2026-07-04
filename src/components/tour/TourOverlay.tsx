@@ -1,35 +1,56 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { TourStep } from "@/lib/tour-target";
 
 interface Rect { top: number; left: number; width: number; height: number }
 
-function readRect(el: Element | null): Rect | null {
+function elementRect(el: Element | null): Rect | null {
   if (!el) return null;
   const r = el.getBoundingClientRect();
   if (r.width === 0 && r.height === 0) return null;
   return { top: r.top, left: r.left, width: r.width, height: r.height };
 }
 
-export function TourOverlay({ step, index, total, targetEl, onPrev, onNext, onSkip }: {
-  step: TourStep; index: number; total: number; targetEl: Element | null;
+/** Cible visible pour l'étape : cible principale, sinon repli. */
+function findTarget(step: TourStep): Element | null {
+  const q = (name: string) => {
+    const el = document.querySelector(`[data-tour="${name}"]`);
+    return el && elementRect(el) ? el : null;
+  };
+  return q(step.target) ?? (step.fallbackTarget ? q(step.fallbackTarget) : null);
+}
+
+export function TourOverlay({ step, index, total, onPrev, onNext, onSkip }: {
+  step: TourStep; index: number; total: number;
   onPrev: () => void; onNext: () => void; onSkip: () => void;
 }) {
-  const [rect, setRect] = useState<Rect | null>(() => readRect(targetEl));
+  const [rect, setRect] = useState<Rect | null>(null);
+  const scrolledFor = useRef<string | null>(null);
 
+  // Résolution CONTINUE de la cible : dès qu'elle est montée (après un squelette /
+  // chargement), le halo s'y applique et suit les changements de layout.
   useEffect(() => {
-    const update = () => setRect(readRect(targetEl));
-    update();
-    const t = setTimeout(update, 250); // laisser le layout se stabiliser
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    return () => { clearTimeout(t); window.removeEventListener("resize", update); window.removeEventListener("scroll", update, true); };
-  }, [targetEl]);
+    setRect(null);
+    if (step.placement === "center") return;
+
+    const recompute = () => {
+      const el = findTarget(step);
+      setRect(elementRect(el));
+      if (el && scrolledFor.current !== step.id) {
+        scrolledFor.current = step.id;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    };
+    recompute();
+    const interval = setInterval(recompute, 200);
+    window.addEventListener("resize", recompute);
+    window.addEventListener("scroll", recompute, true);
+    return () => { clearInterval(interval); window.removeEventListener("resize", recompute); window.removeEventListener("scroll", recompute, true); };
+  }, [step]);
 
   const pad = 8;
   const hole = rect ? { top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 } : null;
-  // Assombrissement léger, SANS flou : la page reste nette et lisible ; seule la
-  // zone spotlightée est mise en valeur (trou clair + halo).
+  // Assombrissement très léger, SANS flou : la page reste nette et lisible.
   const panel = "fixed bg-black/10";
 
   const tipStyle: React.CSSProperties = hole

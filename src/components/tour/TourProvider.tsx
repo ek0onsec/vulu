@@ -10,27 +10,12 @@ interface TourCtx { startTour: () => void }
 const Ctx = createContext<TourCtx>({ startTour: () => {} });
 export const useTour = () => useContext(Ctx);
 
-/** Attend qu'une cible data-tour soit visible (borné). */
-function waitForTarget(name: string, timeoutMs = 3000): Promise<Element | null> {
-  return new Promise((resolve) => {
-    const start = Date.now();
-    const tick = () => {
-      const el = document.querySelector(`[data-tour="${name}"]`);
-      if (el) { const r = el.getBoundingClientRect(); if (r.width > 0 || r.height > 0) return resolve(el); }
-      if (Date.now() - start > timeoutMs) return resolve(null);
-      setTimeout(tick, 100);
-    };
-    tick();
-  });
-}
-
 export function TourProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [welcome, setWelcome] = useState(false);
   const [running, setRunning] = useState(false);
   const [index, setIndex] = useState(0);
-  const [targetEl, setTargetEl] = useState<Element | null>(null);
   const shownWelcome = useRef(false);
 
   // Modale de bienvenue une fois, à la 1ʳᵉ arrivée sur /feed si tour jamais vu.
@@ -44,26 +29,13 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
 
   const markSeen = useCallback(() => { api.post("/api/me/tour-seen").catch(() => {}); }, []);
 
-  // Charge l'étape courante APRÈS le rendu (effet) : navigue si besoin, attend la
-  // cible (repli fallback), la résout. Jamais de router.push pendant le rendu.
+  // Navigue vers la route de l'étape courante APRÈS le rendu (jamais pendant).
+  // La résolution/spotlight de la cible est gérée en continu par TourOverlay.
   useEffect(() => {
     if (!running) return;
     const step = TOUR_STEPS[index];
     if (!step) return;
-    let cancelled = false;
-    setTargetEl(null);
-    if (step.placement === "center") return;
     if (window.location.pathname !== step.route) router.push(step.route);
-    (async () => {
-      let finalName: string | null = null;
-      const primary = await waitForTarget(step.target);
-      if (cancelled) return;
-      if (primary) finalName = step.target;
-      else if (step.fallbackTarget) { const fb = await waitForTarget(step.fallbackTarget, 800); if (cancelled) return; if (fb) finalName = step.fallbackTarget; }
-      if (cancelled) return;
-      setTargetEl(finalName ? document.querySelector(`[data-tour="${finalName}"]`) : null);
-    })();
-    return () => { cancelled = true; };
   }, [running, index, router]);
 
   const startTour = useCallback(() => { setWelcome(false); setIndex(0); setRunning(true); }, []);
@@ -83,7 +55,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       {children}
       {welcome && <WelcomeModal onStart={startTour} onSkip={() => { setWelcome(false); markSeen(); }} />}
       {running && step && (
-        <TourOverlay step={step} index={index} total={TOUR_STEPS.length} targetEl={targetEl}
+        <TourOverlay step={step} index={index} total={TOUR_STEPS.length}
           onPrev={prev} onNext={next} onSkip={skip} />
       )}
     </Ctx.Provider>
