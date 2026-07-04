@@ -17,6 +17,6 @@ export async function POST(req: Request) {
     const payload = await deps.tokens.verify(token);
     const user = payload ? await deps.users.findById(payload.userId) : null;
     if (!user) throw new AuthError("Session invalide");
-    return json({ user: selfUser(user) });
+    return json({ user: selfUser(user), token });
   } catch (e) { return toErrorResponse(e); }
 }

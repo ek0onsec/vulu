@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getDeps } from "@/server/container";
 import { getCurrentUser } from "@/server/application/get-current-user";
@@ -16,7 +16,12 @@ export async function setSessionCookie(token: string): Promise<void> {
 export async function clearSessionCookie(): Promise<void> { (await cookies()).delete(COOKIE); }
 
 export async function currentUser(): Promise<User | null> {
-  const token = (await cookies()).get(COOKIE)?.value;
+  const cookieToken = (await cookies()).get(COOKIE)?.value;
+  let token = cookieToken;
+  if (!token) {
+    const authz = (await headers()).get("authorization");
+    if (authz?.startsWith("Bearer ")) token = authz.slice(7);
+  }
   const deps = await getDeps();
   return getCurrentUser(deps, token);
 }

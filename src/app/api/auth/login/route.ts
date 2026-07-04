@@ -19,6 +19,6 @@ export async function POST(req: Request) {
       return json({ twoFactorRequired: true, challenge });
     }
     await setSessionCookie(token);
-    return json({ user: selfUser(user), reactivated: Boolean(reactivated) });
+    return json({ user: selfUser(user), token, reactivated: Boolean(reactivated) });
   } catch (e) { return toErrorResponse(e); }
 }

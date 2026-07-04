@@ -16,6 +16,6 @@ export async function POST(req: Request) {
     await registerUser(deps, input);
     const { user, token } = await authenticateUser(deps, { email: input.email, password: input.password });
     await setSessionCookie(token);
-    return json({ user: selfUser(user) }, { status: 201 });
+    return json({ user: selfUser(user), token }, { status: 201 });
   } catch (e) { return toErrorResponse(e); }
 }
