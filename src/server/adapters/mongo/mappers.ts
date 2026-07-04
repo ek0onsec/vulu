@@ -58,7 +58,7 @@ export const toEntryDoc = (e: LibraryEntry): WithIdEntry => ({ _id: e.id, ...e }
 export const fromEntryDoc = (d: WithIdEntry): LibraryEntry => {
   const raw = d as LegacyEntryDoc;
   const e = strip(d);
-  const progress = e.progress ?? null;
+  const progress = e.progress ? { ...e.progress, watchedEpisodes: e.progress.watchedEpisodes ?? null } : null;
   const audiences = e.audiences ?? {
     public: raw.visibility === "public",
     circle: true,

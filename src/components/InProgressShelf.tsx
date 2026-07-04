@@ -13,10 +13,10 @@ interface Item {
 
 export function InProgressShelf({ items }: { items: Item[] }) {
   const [state, setState] = useState(items);
-  async function bump(it: Item) {
+  async function bump(it: Item, step = 1) {
     const body: Record<string, unknown> = { ref: { source: it.source, externalId: it.externalId, type: it.type } };
     if (it.type === "tv") { body.season = it.progress?.season ?? 1; body.episode = (it.progress?.episode ?? 0) + 1; }
-    else if (it.type === "book") { body.page = (it.progress?.page ?? 0) + 1; body.tome = it.progress?.tome ?? null; }
+    else if (it.type === "book") { body.page = (it.progress?.page ?? 0) + step; body.tome = it.progress?.tome ?? null; }
     else return;
     try {
       const { entry } = await api.put<{ entry: { progress: EntryProgress | null } }>("/api/works/progress", body);
@@ -36,9 +36,16 @@ export function InProgressShelf({ items }: { items: Item[] }) {
             </Link>
             <p className="text-xs text-[var(--color-text-muted)]">{formatProgress(it, it) ?? "Commencé"}</p>
             {it.type !== "movie" && (
-              <button onClick={() => bump(it)} className="mt-1 w-full rounded-full border border-[var(--color-primary)] py-1 text-xs font-semibold text-[var(--color-primary)]">
-                +1 {it.type === "book" ? "page" : "épisode"}
-              </button>
+              <div className="mt-1 flex gap-1">
+                <button onClick={() => bump(it)} className="flex-1 rounded-full border border-[var(--color-primary)] py-1 text-xs font-semibold text-[var(--color-primary)]">
+                  +1 {it.type === "book" ? "page" : "épisode"}
+                </button>
+                {it.type === "book" && (
+                  <button onClick={() => bump(it, 10)} className="rounded-full border border-[var(--color-primary)] px-2 py-1 text-xs font-semibold text-[var(--color-primary)]">
+                    +10
+                  </button>
+                )}
+              </div>
             )}
           </div>
         ))}

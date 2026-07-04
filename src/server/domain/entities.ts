@@ -9,10 +9,11 @@ export interface EntryAudiences {
 }
 
 export interface EntryProgress {
-  season: number | null;   // séries
-  episode: number | null;  // séries
+  season: number | null;   // séries — position courante (dérivée)
+  episode: number | null;  // séries — position courante (dérivée)
   tome: number | null;     // livres
   page: number | null;     // livres
+  watchedEpisodes: number[][] | null;  // séries — index = saison−1, valeurs = n° d'épisodes vus
 }
 export type ListVisibility = "public" | "private";
 export type PersonRole = "actor" | "director" | "author";
