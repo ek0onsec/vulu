@@ -28,16 +28,39 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
-  const [season, setSeason] = useState(initial?.progress?.season ?? 1);
-  const [episode, setEpisode] = useState(initial?.progress?.episode ?? 1);
   const [tome, setTome] = useState(initial?.progress?.tome ?? 1);
   const [page, setPage] = useState(initial?.progress?.page ?? 1);
+  const [watched, setWatched] = useState<number[][]>(() => {
+    const init = initial?.progress?.watchedEpisodes;
+    if (init) return init.map((s) => [...s]);
+    return (episodeCounts ?? []).map(() => []);
+  });
+
+  const toggleEp = (si: number, ep: number) =>
+    setWatched((prev) => {
+      const next = prev.map((s) => [...s]);
+      while (next.length <= si) next.push([]);
+      const seasonEps = next[si]!;
+      const i = seasonEps.indexOf(ep);
+      if (i >= 0) seasonEps.splice(i, 1); else seasonEps.push(ep);
+      seasonEps.sort((a, b) => a - b);
+      return next;
+    });
+
+  const toggleSeason = (si: number, count: number) =>
+    setWatched((prev) => {
+      const next = prev.map((s) => [...s]);
+      while (next.length <= si) next.push([]);
+      const full = next[si]!.length === count;
+      next[si] = full ? [] : Array.from({ length: count }, (_, k) => k + 1);
+      return next;
+    });
 
   async function saveProgress(share: boolean) {
     setBusy(true);
     try {
       const body: Record<string, unknown> = { ref: workRef };
-      if (workType === "tv") { body.season = season; body.episode = episode; }
+      if (workType === "tv") { body.watchedEpisodes = watched; }
       else if (workType === "book") { body.tome = tome; body.page = page; }
       const { entry } = await api.put<{ entry: LibraryEntry }>("/api/works/progress", body);
       setEntryId(entry.id);
@@ -94,6 +117,8 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
   const seg = (on: boolean) =>
     `px-4 py-2 text-sm ${on ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-text-muted)]"}`;
 
+  const clampPage = (n: number) => Math.max(1, pageCount ? Math.min(pageCount, n) : n);
+
   const Stepper = ({ label, value, set, max }: { label: string; value: number; set: (n: number) => void; max: number | null }) => (
     <div className="flex items-center gap-2">
       <span className="w-16 text-sm text-[var(--color-text-muted)]">{label}</span>
@@ -114,9 +139,35 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
       </div>
 
       {status === "in_progress" && workType === "tv" && (
-        <div className="mb-4 flex flex-col gap-2 rounded-xl border border-[var(--color-border)] p-3">
-          <Stepper label="Saison" value={season} set={setSeason} max={episodeCounts ? episodeCounts.length : null} />
-          <Stepper label="Épisode" value={episode} set={setEpisode} max={episodeCounts?.[season - 1] ?? null} />
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-[var(--color-border)] p-3">
+          {(episodeCounts ?? []).map((count, si) => {
+            const done = watched[si]?.length ?? 0;
+            return (
+              <div key={si} className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">Saison {si + 1}
+                    <span className="ml-2 text-xs font-normal text-[var(--color-text-muted)]">{done}/{count}</span>
+                  </span>
+                  <button onClick={() => toggleSeason(si, count)}
+                    className="rounded-full border border-[var(--color-border)] px-3 py-0.5 text-xs font-semibold text-[var(--color-text-muted)]">
+                    {done === count ? "Tout décocher" : "Tout cocher"}
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {Array.from({ length: count }, (_, k) => k + 1).map((ep) => {
+                    const on = watched[si]?.includes(ep) ?? false;
+                    return (
+                      <button key={ep} onClick={() => toggleEp(si, ep)}
+                        className={`h-8 min-w-8 rounded-full border px-2 text-sm font-semibold ${on ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-[var(--color-text-muted)]"}`}>
+                        {on ? "✓" : ""}{ep}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+          {!episodeCounts && <p className="text-sm text-[var(--color-text-muted)]">Nombre d'épisodes inconnu pour cette série.</p>}
           <div className="flex gap-2 pt-1">
             <button onClick={() => saveProgress(false)} disabled={busy} className="rounded-full bg-[var(--color-primary)] px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50">Enregistrer</button>
             <button onClick={() => saveProgress(true)} disabled={busy} className="rounded-full border border-[var(--color-primary)] px-4 py-1.5 text-sm font-semibold text-[var(--color-primary)]">Partager ce jalon</button>
@@ -126,7 +177,26 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
       {status === "in_progress" && workType === "book" && (
         <div className="mb-4 flex flex-col gap-2 rounded-xl border border-[var(--color-border)] p-3">
           <Stepper label="Tome" value={tome} set={setTome} max={null} />
-          <Stepper label="Page" value={page} set={setPage} max={pageCount} />
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="w-16 text-sm text-[var(--color-text-muted)]">Page</span>
+              <input
+                type="number" min={1} max={pageCount ?? undefined} value={page}
+                onChange={(e) => setPage(clampPage(Number(e.target.value) || 1))}
+                className="w-24 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1.5 text-center text-sm font-semibold"
+              />
+              {pageCount ? <span className="text-sm text-[var(--color-text-muted)]">/ {pageCount}</span> : null}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {[-100, -10, -1, 1, 10, 100].map((d) => (
+                <button key={d} onClick={() => setPage((p) => clampPage(p + d))}
+                  className="min-w-12 rounded-full border border-[var(--color-border)] px-3 py-1 text-sm font-semibold text-[var(--color-text)] disabled:opacity-40"
+                  disabled={(d < 0 && page <= 1) || (d > 0 && pageCount != null && page >= pageCount)}>
+                  {d > 0 ? `+${d}` : d}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex gap-2 pt-1">
             <button onClick={() => saveProgress(false)} disabled={busy} className="rounded-full bg-[var(--color-primary)] px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50">Enregistrer</button>
             <button onClick={() => saveProgress(true)} disabled={busy} className="rounded-full border border-[var(--color-primary)] px-4 py-1.5 text-sm font-semibold text-[var(--color-primary)]">Partager ce jalon</button>
