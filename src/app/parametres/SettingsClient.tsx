@@ -201,7 +201,7 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
         <ul className="flex flex-col gap-1">
           {SECTIONS.map((s) => (
             <li key={s.id}>
-              <button onClick={() => setSection(s.id)}
+              <button onClick={() => setSection(s.id)} data-tour={s.id === "accessibility" ? "settings-accessibility" : undefined}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${section === s.id ? "bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] text-[var(--color-primary)]" : "hover:bg-[var(--color-border)]"}`}>
                 <Icon name={s.icon} size={20} />
                 <span className="min-w-0"><span className="block text-sm font-semibold">{s.label}</span><span className="block truncate text-xs text-[var(--color-text-muted)]">{s.desc}</span></span>

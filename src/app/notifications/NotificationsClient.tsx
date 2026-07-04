@@ -38,7 +38,7 @@ export function NotificationsClient() {
 
   return (
     <>
-      <h1 className="font-display mb-4 text-2xl font-bold">Notifications</h1>
+      <h1 data-tour="notifications-heading" className="font-display mb-4 text-2xl font-bold">Notifications</h1>
       {notifs === null && <div className="space-y-2">{[0, 1, 2].map((i) => <div key={i} className="h-16 animate-pulse rounded-2xl bg-[var(--color-border)]" />)}</div>}
       {notifs?.length === 0 && <p className="text-sm text-[var(--color-text-muted)]">Pas encore de notifications. Publie un avis et fais-toi des amis !</p>}
       <ul className="flex flex-col gap-2">

@@ -15,12 +15,12 @@ import { api } from "@/lib/api-client";
 const NAV: { href: string; label: string; icon: IconName; pulse?: boolean; tour?: string }[] = [
   { href: "/feed", label: "Feed", icon: "home", pulse: true, tour: "nav-feed" },
   { href: "/search", label: "Recherche", icon: "search", tour: "nav-search" },
-  { href: "/notifications", label: "Notifications", icon: "bell" },
+  { href: "/notifications", label: "Notifications", icon: "bell", tour: "nav-notifications" },
   { href: "/communautes", label: "Communautés", icon: "community", tour: "nav-communities" },
   { href: "/bibliotheque", label: "Bibliothèque", icon: "lists", tour: "nav-library" },
   { href: "/u/me", label: "Profil", icon: "profile", tour: "nav-profile" },
-  { href: "/plus", label: "vulu+", icon: "star" },
-  { href: "/parametres", label: "Paramètres", icon: "settings" },
+  { href: "/plus", label: "vulu+", icon: "star", tour: "nav-plus" },
+  { href: "/parametres", label: "Paramètres", icon: "settings", tour: "nav-settings" },
 ];
 
 // Barre du bas (mobile) : 4 entrées. Recherche = island flottante ; profil/réglages/vulu+ = side menu.
@@ -28,7 +28,7 @@ const BOTTOM_NAV: { href: string; label: string; icon: IconName; pulse?: boolean
   { href: "/feed", label: "Accueil", icon: "home", pulse: true, tour: "nav-feed" },
   { href: "/communautes", label: "Communautés", icon: "community", tour: "nav-communities" },
   { href: "/bibliotheque", label: "Bibliothèque", icon: "lists", tour: "nav-library" },
-  { href: "/notifications", label: "Notifications", icon: "bell" },
+  { href: "/notifications", label: "Notifications", icon: "bell", tour: "nav-notifications" },
 ];
 
 interface Me { username: string; displayName: string; avatarUrl: string | null; plus: boolean; staff: boolean; private: boolean; followers: number; following: number }
