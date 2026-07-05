@@ -67,6 +67,28 @@ describe("updateEpisode", () => {
     const e = await updateEpisode(deps, "u1", tv, 1, 1, { audiences: { public: false, circle: false, communityIds: [] } });
     expect(e.activityAt).toBeNull();
   });
+  it("cocher tous les épisodes → status done + completedAt", async () => {
+    const { markAllEpisodes } = await import("@/server/application/episode-entry");
+    await markAllEpisodes(deps, "u1", tv, true);
+    const lib = await deps.entries.findByUserAndWork("u1", await workId());
+    expect(lib?.status).toBe("done");
+    expect(lib?.completedAt).not.toBeNull();
+  });
+  it("décocher le dernier épisode repasse en in_progress + completedAt null", async () => {
+    const { markAllEpisodes } = await import("@/server/application/episode-entry");
+    await markAllEpisodes(deps, "u1", tv, true);
+    await updateEpisode(deps, "u1", tv, 2, 13, { watched: false });
+    const lib = await deps.entries.findByUserAndWork("u1", await workId());
+    expect(lib?.status).toBe("in_progress");
+    expect(lib?.completedAt).toBeNull();
+  });
+  it("markAllEpisodes false → status planned", async () => {
+    const { markAllEpisodes } = await import("@/server/application/episode-entry");
+    await markAllEpisodes(deps, "u1", tv, true);
+    await markAllEpisodes(deps, "u1", tv, false);
+    const lib = await deps.entries.findByUserAndWork("u1", await workId());
+    expect(lib?.status).toBe("planned");
+  });
   it("getEpisodeEntries renvoie les entrées de l'utilisateur", async () => {
     await updateEpisode(deps, "u1", tv, 1, 1, { watched: true });
     await updateEpisode(deps, "u1", tv, 1, 2, { watched: true });
