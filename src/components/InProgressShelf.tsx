@@ -8,7 +8,7 @@ import type { EntryProgress, WorkSource, WorkType } from "@/server/domain/entiti
 
 interface Item {
   entryId: string; workId: string; source: WorkSource; externalId: string; title: string; posterUrl: string | null;
-  type: WorkType; episodeCounts: number[] | null; pageCount: number | null; progress: EntryProgress | null;
+  type: WorkType; episodeCounts: number[] | null; pageCount: number | null; progress: EntryProgress | null; peopleIds: number[];
 }
 
 export function InProgressShelf({ items }: { items: Item[] }) {

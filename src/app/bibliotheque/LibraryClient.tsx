@@ -9,6 +9,7 @@ import { personHref } from "@/lib/person";
 import { PlaylistCard } from "@/components/PlaylistCard";
 import { ListDetailModal } from "@/components/ListDetailModal";
 import { BookScanner } from "@/components/BookScanner";
+import { InProgressShelf } from "@/components/InProgressShelf";
 import type { Library, LibraryPoster } from "@/server/application/library";
 import type { WorkType } from "@/server/domain/entities";
 import type { WorkSummary } from "@/server/ports/catalog";
@@ -50,7 +51,7 @@ export function LibraryClient() {
   const [scanning, setScanning] = useState(false);
 
   const load = useCallback(() => {
-    api.get<Library>("/api/library").then(setData).catch(() => setData({ playlists: [], watchlist: [], seen: [], people: [] }));
+    api.get<Library>("/api/library").then(setData).catch(() => setData({ playlists: [], watchlist: [], seen: [], inProgress: [], people: [] }));
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -82,6 +83,7 @@ export function LibraryClient() {
   const matchPerson = (ids: number[]) => person === null || ids.includes(person);
   const watchlist = data.watchlist.filter((x) => match(x.type) && matchPerson(x.peopleIds));
   const seen = data.seen.filter((x) => match(x.type) && matchPerson(x.peopleIds));
+  const inProgress = data.inProgress.filter((x) => match(x.type) && matchPerson(x.peopleIds));
   const selectedPerson = person !== null ? data.people.find((x) => x.id === person) ?? null : null;
 
   return (
@@ -115,6 +117,8 @@ export function LibraryClient() {
           )}
         </div>
       )}
+
+      {inProgress.length > 0 && <InProgressShelf items={inProgress} />}
 
       <section className="mb-8">
         <div className="mb-3 flex items-center justify-between">
