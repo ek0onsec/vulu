@@ -53,4 +53,13 @@ describe("library entry", () => {
     await removeEntry(deps, "u1", e.id);
     expect(await deps.entries.findById(e.id)).toBeNull();
   });
+
+  it("noter une série partiellement vue ne la passe pas en done", async () => {
+    const tv = { source: "tmdb" as const, externalId: "1396", type: "tv" as const };
+    const { updateEpisode } = await import("@/server/application/episode-entry");
+    await updateEpisode(deps, "u1", tv, 1, 1, { watched: true }); // 1/20 → in_progress
+    const e = await rateOrReviewWork(deps, "u1", tv, { rating: 5, text: null, audiences: { public: true, circle: true, communityIds: [] } });
+    expect(e.status).toBe("in_progress");
+    expect(e.rating).toBe(5);
+  });
 });
