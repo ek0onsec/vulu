@@ -1,6 +1,6 @@
 import type { Deps } from "@/server/container";
-import type { EpisodeEntry, LibraryEntry, WorkSource, WorkType } from "@/server/domain/entities";
-import { ValidationError } from "@/server/domain/errors";
+import type { EpisodeEntry, EntryAudiences, LibraryEntry, WorkSource, WorkType } from "@/server/domain/entities";
+import { ForbiddenError, ValidationError } from "@/server/domain/errors";
 import { getOrImportWork } from "./get-work";
 import { loadOrCreateEntry, normalizeGrid, derivePosition, isValidRating } from "./library-entry";
 
@@ -8,7 +8,7 @@ type Ref = { source: WorkSource; externalId: string; type: WorkType };
 
 export async function updateEpisode(
   deps: Deps, userId: string, ref: Ref, season: number, episode: number,
-  input: { watched?: boolean; watchedAt?: Date | null; rating?: number | null; text?: string | null },
+  input: { watched?: boolean; watchedAt?: Date | null; rating?: number | null; text?: string | null; audiences?: EntryAudiences },
 ): Promise<EpisodeEntry> {
   if (!Number.isInteger(season) || season < 1 || !Number.isInteger(episode) || episode < 1) {
     throw new ValidationError("Saison/épisode invalide");
@@ -36,6 +36,17 @@ export async function updateEpisode(
   }
   if (input.rating !== undefined) next.rating = input.rating;
   if (input.text !== undefined) next.text = input.text?.trim() ? input.text.trim() : null;
+  if (input.audiences !== undefined) {
+    const hasContent = next.rating !== null || (next.text !== null && next.text.trim() !== "");
+    const anyDest = input.audiences.public || input.audiences.circle || input.audiences.communityIds.length > 0;
+    if (anyDest && !hasContent) throw new ValidationError("Ajoute une note ou un commentaire");
+    for (const communityId of input.audiences.communityIds) {
+      const member = await deps.memberships.find(communityId, userId);
+      if (!member) throw new ForbiddenError("Tu n'es pas membre de cette communauté");
+    }
+    next.audiences = input.audiences;
+    next.activityAt = anyDest ? now : null;
+  }
   await deps.episodeEntries.upsert(next);
 
   // Recalcule la progression de la LibraryEntry parente depuis les épisodes vus.
