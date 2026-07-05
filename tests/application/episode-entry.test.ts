@@ -47,6 +47,11 @@ describe("updateEpisode", () => {
     await expect(updateEpisode(deps, "u1", tv, 0, 1, { watched: true })).rejects.toThrow(ValidationError);
     await expect(updateEpisode(deps, "u1", tv, 1, 1, { rating: 4.05 })).rejects.toThrow(ValidationError);
   });
+  it("initialise audiences vides et activityAt null à la création", async () => {
+    const e = await updateEpisode(deps, "u1", tv, 1, 1, { watched: true });
+    expect(e.audiences).toEqual({ public: false, circle: false, communityIds: [] });
+    expect(e.activityAt).toBeNull();
+  });
   it("getEpisodeEntries renvoie les entrées de l'utilisateur", async () => {
     await updateEpisode(deps, "u1", tv, 1, 1, { watched: true });
     await updateEpisode(deps, "u1", tv, 1, 2, { watched: true });

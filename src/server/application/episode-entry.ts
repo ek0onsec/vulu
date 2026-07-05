@@ -21,7 +21,9 @@ export async function updateEpisode(
   const existing = await deps.episodeEntries.findOne(userId, work.id, season, episode);
   const base: EpisodeEntry = existing ?? {
     id: deps.ids.next(), userId, workId: work.id, season, episode,
-    watched: false, watchedAt: null, rating: null, text: null, createdAt: now, updatedAt: now,
+    watched: false, watchedAt: null, rating: null, text: null,
+    audiences: { public: false, circle: false, communityIds: [] }, activityAt: null,
+    createdAt: now, updatedAt: now,
   };
   const next: EpisodeEntry = { ...base, updatedAt: now };
   if (input.watched !== undefined) {

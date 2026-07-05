@@ -52,7 +52,14 @@ export const fromSeasonEpisodesDoc = (d: WithIdSeasonEpisodes): SeasonEpisodes =
 
 export type WithIdEpisodeEntry = WithId<EpisodeEntry>;
 export const toEpisodeEntryDoc = (e: EpisodeEntry): WithIdEpisodeEntry => ({ _id: e.id, ...e });
-export const fromEpisodeEntryDoc = (d: WithIdEpisodeEntry): EpisodeEntry => strip(d);
+export const fromEpisodeEntryDoc = (d: WithIdEpisodeEntry): EpisodeEntry => {
+  const e = strip(d);
+  return {
+    ...e,
+    audiences: e.audiences ?? { public: false, circle: false, communityIds: [] },
+    activityAt: e.activityAt ?? null,
+  };
+};
 
 export const toWorkDoc = (w: Work): WithIdWork => ({ _id: w.id, ...w });
 export const fromWorkDoc = (d: WithIdWork): Work => {

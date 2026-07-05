@@ -5,6 +5,7 @@ import type { EpisodeEntry } from "@/server/domain/entities";
 const mk = (season: number, episode: number): EpisodeEntry => ({
   id: `${season}-${episode}`, userId: "u1", workId: "w1", season, episode,
   watched: true, watchedAt: new Date("2026-07-01T00:00:00Z"), rating: 4, text: "top",
+  audiences: { public: false, circle: false, communityIds: [] }, activityAt: null,
   createdAt: new Date(0), updatedAt: new Date(0),
 });
 
