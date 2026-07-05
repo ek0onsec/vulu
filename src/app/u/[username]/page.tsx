@@ -53,7 +53,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
     ? await Promise.all((await deps.entries.listByUser(target.id, { status: "in_progress" })).map(async (e) => {
         const w = await deps.works.findById(e.workId);
         return w ? { entryId: e.id, workId: w.id, source: w.source, externalId: w.externalId, title: w.title, posterUrl: w.posterUrl,
-          type: w.type, episodeCounts: w.episodeCounts, pageCount: w.pageCount, progress: e.progress } : null;
+          type: w.type, episodeCounts: w.episodeCounts, pageCount: w.pageCount, progress: e.progress, peopleIds: w.people.map((p) => p.tmdbId) } : null;
       })).then((xs) => xs.filter((x): x is NonNullable<typeof x> => x !== null))
     : [];
 
