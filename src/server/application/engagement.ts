@@ -1,21 +1,24 @@
 import type { Deps } from "@/server/container";
-import type { Comment, LibraryEntry } from "@/server/domain/entities";
+import type { Comment, EntryAudiences } from "@/server/domain/entities";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
 import { getCircle } from "./social";
 
-/** Une entrée est visible pour le viewer si : la sienne, OU publique, OU 'circle' et auteur dans le cercle. */
-async function assertVisible(deps: Deps, viewerId: string, entry: LibraryEntry): Promise<void> {
-  if (entry.userId === viewerId) return;
-  if (entry.audiences.public) return;
+type Visible = { userId: string; audiences: EntryAudiences };
+
+/** Une cible (avis d'œuvre ou d'épisode) est visible pour le viewer si : la sienne, OU publique, OU 'circle' et auteur dans le cercle. */
+async function assertVisible(deps: Deps, viewerId: string, target: Visible): Promise<void> {
+  if (target.userId === viewerId) return;
+  if (target.audiences.public) return;
   const circle = await getCircle(deps, viewerId);
-  if (!circle.has(entry.userId)) throw new ForbiddenError("Contenu non accessible");
+  if (!circle.has(target.userId)) throw new ForbiddenError("Contenu non accessible");
 }
 
-async function loadVisible(deps: Deps, viewerId: string, entryId: string): Promise<LibraryEntry> {
-  const entry = await deps.entries.findById(entryId);
-  if (!entry) throw new NotFoundError("Entrée introuvable");
-  await assertVisible(deps, viewerId, entry);
-  return entry;
+async function loadVisible(deps: Deps, viewerId: string, id: string): Promise<Visible> {
+  const entry = await deps.entries.findById(id);
+  if (entry) { await assertVisible(deps, viewerId, entry); return entry; }
+  const ep = await deps.episodeEntries.findById(id);
+  if (ep) { await assertVisible(deps, viewerId, ep); return ep; }
+  throw new NotFoundError("Entrée introuvable");
 }
 
 export async function likeEntry(deps: Deps, userId: string, entryId: string): Promise<void> {
