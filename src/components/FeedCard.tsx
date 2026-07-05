@@ -17,9 +17,19 @@ export function FeedCard({ item }: { item: FeedItem }) {
 
 function EpisodeFeedCard({ item }: { item: EpisodeFeedItem }) {
   const ep = item.episodeEntry;
+  const [liked, setLiked] = useState(item.likedByMe);
+  const [likes, setLikes] = useState(item.likeCount);
+  async function toggleLike() {
+    const next = !liked;
+    setLiked(next); setLikes((n) => n + (next ? 1 : -1));
+    try {
+      if (next) await api.post(`/api/entries/${ep.id}/like`);
+      else await api.del(`/api/entries/${ep.id}/like`);
+    } catch { setLiked(!next); setLikes((n) => n + (next ? -1 : 1)); }
+  }
   return (
-    <article className="relative mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-      <Link href={`/work/${item.work.id}`} className="absolute inset-0 z-0" aria-label="Voir la série" />
+    <article className="relative mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition duration-150 hover:shadow-[0_2px_20px_rgba(0,0,0,0.05)]">
+      <Link href={`/post/${ep.id}`} className="absolute inset-0 z-0" aria-label="Voir la publication" />
       <div className="flex gap-3">
         <Link href={`/u/${item.author.username}`} className="relative z-10 shrink-0">
           <Avatar name={item.author.displayName} src={item.author.avatarUrl} size={42} />
@@ -39,6 +49,16 @@ function EpisodeFeedCard({ item }: { item: EpisodeFeedItem }) {
               <span className="text-sm font-semibold">{ep.rating.toFixed(1).replace(".", ",")}/5</span>
             </div>
           )}
+          <div className="mt-2 flex items-center gap-1 text-[var(--color-text-muted)]">
+            <button onClick={toggleLike} aria-pressed={liked}
+              className={`relative z-10 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)] ${liked ? "text-[var(--color-primary)]" : ""}`}>
+              <Icon name={liked ? "heart-filled" : "heart"} size={19} /> {likes}
+            </button>
+            <Link href={`/post/${ep.id}`}
+              className="relative z-10 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-border)]">
+              <Icon name="comment" size={19} /> {item.commentCount}
+            </Link>
+          </div>
         </div>
       </div>
     </article>
