@@ -45,6 +45,7 @@ export interface EpisodeEntryRepository {
   upsert(entry: EpisodeEntry): Promise<void>;
   findOne(userId: string, workId: string, season: number, episode: number): Promise<EpisodeEntry | null>;
   listByUserAndWork(userId: string, workId: string): Promise<EpisodeEntry[]>;
+  feed(opts: { scope: "foryou" | "following"; circleUserIds: string[]; followingUserIds: string[]; viewerId: string; cursor: { activityAt: Date; id: string } | null; limit: number }): Promise<EpisodeEntry[]>;
 }
 export interface LibraryEntryRepository {
   upsert(entry: LibraryEntry): Promise<void>;

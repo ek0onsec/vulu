@@ -1,5 +1,5 @@
 import { getDeps } from "@/server/container";
-import { buildFeed } from "@/server/application/feed";
+import { buildFeed, feedCursor } from "@/server/application/feed";
 import { requireUser, json } from "@/server/http/session";
 import { toErrorResponse } from "@/server/http/errors";
 
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
       limit: 20,
     });
     const last = items.at(-1);
-    const nextCursor = last ? JSON.stringify({ activityAt: last.entry.activityAt ?? last.entry.createdAt, id: last.entry.id }) : null;
+    const nextCursor = last ? JSON.stringify(feedCursor(last)) : null;
     return json({ items, nextCursor });
   } catch (e) { return toErrorResponse(e); }
 }

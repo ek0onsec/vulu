@@ -6,6 +6,7 @@ import { FeedComposer } from "@/components/FeedComposer";
 import { SearchIsland } from "@/components/SearchIsland";
 import type { Domain } from "@/server/domain/entities";
 import type { FeedItem } from "@/server/application/feed";
+import { feedKey } from "@/server/application/feed";
 
 // onglet = "foryou" | "following" | "c:<communityId>"
 export function FeedClient({ activeTabs, displayName, avatarUrl }: { activeTabs: Domain[]; displayName: string; avatarUrl: string | null }) {
@@ -64,7 +65,7 @@ export function FeedClient({ activeTabs, displayName, avatarUrl }: { activeTabs:
       </div>
 
       {!ready && <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-32 animate-pulse rounded-2xl bg-[var(--color-border)]" />)}</div>}
-      {ready && items.map((i) => <FeedCard key={i.entry.id} item={i} />)}
+      {ready && items.map((i) => <FeedCard key={feedKey(i)} item={i} />)}
       {ready && items.length === 0 && !loading && (
         <p className="mt-8 text-center text-[var(--color-text-muted)]">
           {tab === "following" ? "Personne que tu suis n’a publié récemment. Suis plus de monde !" : tab.startsWith("c:") ? "Rien dans cette communauté. Partages-y un avis depuis une fiche !" : "Rien ici pour l’instant. Note un film ou un livre pour lancer ton feed."}

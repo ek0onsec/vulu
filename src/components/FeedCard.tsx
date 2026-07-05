@@ -9,9 +9,43 @@ import { StaffBadge } from "./StaffBadge";
 import { relativeTime } from "@/lib/relative-time";
 import { formatProgress, activityVerb } from "@/lib/progress";
 import { api } from "@/lib/api-client";
-import type { FeedItem } from "@/server/application/feed";
+import type { FeedItem, WorkFeedItem, EpisodeFeedItem } from "@/server/application/feed";
 
 export function FeedCard({ item }: { item: FeedItem }) {
+  return item.kind === "episode" ? <EpisodeFeedCard item={item} /> : <WorkFeedCard item={item} />;
+}
+
+function EpisodeFeedCard({ item }: { item: EpisodeFeedItem }) {
+  const ep = item.episodeEntry;
+  return (
+    <article className="relative mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+      <Link href={`/work/${item.work.id}`} className="absolute inset-0 z-0" aria-label="Voir la série" />
+      <div className="flex gap-3">
+        <Link href={`/u/${item.author.username}`} className="relative z-10 shrink-0">
+          <Avatar name={item.author.displayName} src={item.author.avatarUrl} size={42} />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <Link href={`/u/${item.author.username}`} className="relative z-10 text-sm font-semibold hover:underline">{item.author.displayName}</Link>
+            {item.author.plus && <CertifiedBadge />}
+            {item.author.staff && <StaffBadge />}
+          </div>
+          <p className="text-xs text-[var(--color-text-muted)]">a noté un épisode</p>
+          <p className="mt-1 text-sm font-semibold">{item.work.title} <span className="font-normal text-[var(--color-text-muted)]">· S{item.season}E{item.episode}{item.title ? ` · ${item.title}` : ""}</span></p>
+          {ep.text && <p className="mt-1 whitespace-pre-line text-sm">{ep.text}</p>}
+          {ep.rating !== null && (
+            <div className="mt-2 flex items-center gap-1.5">
+              <RatingStars value={ep.rating} size={16} />
+              <span className="text-sm font-semibold">{ep.rating.toFixed(1).replace(".", ",")}/5</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function WorkFeedCard({ item }: { item: WorkFeedItem }) {
   const [liked, setLiked] = useState(item.likedByMe);
   const [likes, setLikes] = useState(item.likeCount);
   const [expanded, setExpanded] = useState(false);

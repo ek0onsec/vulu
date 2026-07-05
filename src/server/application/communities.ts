@@ -1,7 +1,7 @@
 import type { Deps } from "@/server/container";
 import type { Community, CommunityRole } from "@/server/domain/entities";
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
-import { enrichEntries, type FeedItem } from "./feed";
+import { enrichEntries, type WorkFeedItem } from "./feed";
 import { detectImage } from "./profile-media";
 
 const BANNER_MAX = 1_536 * 1024;
@@ -176,7 +176,7 @@ export async function pinnedCommunities(deps: Deps, userId: string): Promise<{ i
   return communities.map((c) => ({ id: c.id, name: c.name }));
 }
 
-export async function communityFeed(deps: Deps, viewerId: string, communityId: string, cursor: { activityAt: Date; id: string } | null): Promise<FeedItem[]> {
+export async function communityFeed(deps: Deps, viewerId: string, communityId: string, cursor: { activityAt: Date; id: string } | null): Promise<WorkFeedItem[]> {
   const c = await deps.communities.findById(communityId);
   if (!c) throw new NotFoundError("Communauté introuvable");
   if (c.visibility === "private" && !(await deps.memberships.find(communityId, viewerId))) {

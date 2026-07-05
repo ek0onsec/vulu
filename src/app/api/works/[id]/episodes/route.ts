@@ -17,7 +17,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const entry = await updateEpisode(
       deps, user.id, { source: work.source, externalId: work.externalId, type: work.type },
       input.season, input.episode,
-      { watched: input.watched, watchedAt, rating: input.rating, text: input.text },
+      { watched: input.watched, watchedAt, rating: input.rating, text: input.text, audiences: input.audiences },
     );
     return json({ entry });
   } catch (e) { return toErrorResponse(e); }

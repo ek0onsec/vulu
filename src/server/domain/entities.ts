@@ -94,6 +94,8 @@ export interface EpisodeEntry {
   watchedAt: Date | null;
   rating: number | null;   // 0–5, pas de 0,1
   text: string | null;
+  audiences: EntryAudiences;
+  activityAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

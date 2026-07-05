@@ -47,6 +47,26 @@ describe("updateEpisode", () => {
     await expect(updateEpisode(deps, "u1", tv, 0, 1, { watched: true })).rejects.toThrow(ValidationError);
     await expect(updateEpisode(deps, "u1", tv, 1, 1, { rating: 4.05 })).rejects.toThrow(ValidationError);
   });
+  it("initialise audiences vides et activityAt null à la création", async () => {
+    const e = await updateEpisode(deps, "u1", tv, 1, 1, { watched: true });
+    expect(e.audiences).toEqual({ public: false, circle: false, communityIds: [] });
+    expect(e.activityAt).toBeNull();
+  });
+  it("partage : audiences + activityAt posés (exige note ou texte)", async () => {
+    await updateEpisode(deps, "u1", tv, 1, 1, { rating: 3.2 });
+    const e = await updateEpisode(deps, "u1", tv, 1, 1, { audiences: { public: true, circle: false, communityIds: [] } });
+    expect(e.audiences.public).toBe(true);
+    expect(e.activityAt).not.toBeNull();
+  });
+  it("partage sans note ni texte → ValidationError", async () => {
+    await expect(updateEpisode(deps, "u1", tv, 1, 2, { audiences: { public: true, circle: false, communityIds: [] } }))
+      .rejects.toThrow(ValidationError);
+  });
+  it("« gardé pour moi » (aucune destination) → activityAt null", async () => {
+    await updateEpisode(deps, "u1", tv, 1, 1, { rating: 3.2, audiences: { public: true, circle: false, communityIds: [] } });
+    const e = await updateEpisode(deps, "u1", tv, 1, 1, { audiences: { public: false, circle: false, communityIds: [] } });
+    expect(e.activityAt).toBeNull();
+  });
   it("getEpisodeEntries renvoie les entrées de l'utilisateur", async () => {
     await updateEpisode(deps, "u1", tv, 1, 1, { watched: true });
     await updateEpisode(deps, "u1", tv, 1, 2, { watched: true });

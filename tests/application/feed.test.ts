@@ -27,7 +27,8 @@ describe("buildFeed", () => {
 
     const items = await buildFeed(deps, me, { scope: "foryou", cursor: null, limit: 10 });
     expect(items).toHaveLength(2);
-    const circleItem = items.find((i) => !i.entry.audiences.public)!;
+    const workItems = items.flatMap((i) => i.kind === "work" ? [i] : []);
+    const circleItem = workItems.find((i) => !i.entry.audiences.public)!;
     expect(circleItem.author.username).toBe("friend");
     expect(circleItem.work.title).toBe("The Matrix");
     expect(circleItem.likeCount).toBe(1);
@@ -124,5 +125,20 @@ describe("getMyWorkReview", () => {
   it("renvoie null si aucune note ni texte", async () => {
     const work = await deps.works.findByExternal("tmdb", "603");
     expect(await getMyWorkReview(deps, me, work?.id ?? "x")).toBeNull();
+  });
+});
+
+describe("buildFeed — fusion œuvre + épisode", () => {
+  it("fusionne avis d'œuvre et avis d'épisode, triés par activityAt", async () => {
+    const { updateEpisode } = await import("@/server/application/episode-entry");
+    const film = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+    const tv = { source: "tmdb" as const, externalId: "1396", type: "tv" as const };
+    await rateOrReviewWork(deps, me, film, { rating: 4, text: null, audiences: { public: true, circle: false, communityIds: [] } });
+    await updateEpisode(deps, me, tv, 1, 1, { rating: 5 });
+    await updateEpisode(deps, me, tv, 1, 1, { audiences: { public: true, circle: false, communityIds: [] } });
+    const items = await buildFeed(deps, me, { scope: "foryou", cursor: null, limit: 20 });
+    const kinds = items.map((i) => i.kind);
+    expect(kinds).toContain("work");
+    expect(kinds).toContain("episode");
   });
 });
