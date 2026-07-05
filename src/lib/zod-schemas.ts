@@ -39,6 +39,7 @@ export const episodeUpdateSchema = z.object({
   watchedAt: z.string().datetime().nullable().optional(),
   rating: z.number().min(0).max(5).nullable().optional(),
   text: z.string().max(1000).nullable().optional(),
+  audiences: z.object({ public: z.boolean(), circle: z.boolean(), communityIds: z.array(z.string()) }).optional(),
 });
 export const progressSchema = z.object({
   ref: workRefSchema,
