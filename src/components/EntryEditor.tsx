@@ -89,16 +89,19 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
   }
 
   async function save() {
+    // « En cours » : persiste le statut ET la progression (épisodes / page) via le même chemin que « Enregistrer ».
+    if (status === "in_progress") { await saveProgress(false); return; }
     setBusy(true); setMsg(null);
     try {
       const communityIds = [...shareCommunities];
       const audiences = { public: sharePublic, circle: shareCircle, communityIds };
-      const isReview = !(status === "planned" && rating === 0 && !text.trim());
+      // Un avis existe dès qu'il y a une note ou un texte ; sinon on persiste simplement le statut choisi (planned/done).
+      const hasReview = rating > 0 || !!text.trim();
       // Aucune destination = « gardé pour moi » : l'entrée (note/avis) reste privée, hors feed.
       const completedIso = completedAt ? new Date(completedAt).toISOString() : null;
-      const body = isReview
+      const body = hasReview
         ? { ref: workRef, rating: rating > 0 ? rating : null, text: text.trim() || null, completedAt: completedIso, audiences }
-        : { ref: workRef, status: "planned" };
+        : { ref: workRef, status, completedAt: completedIso };
       const { entry } = await api.put<{ entry: LibraryEntry }>("/api/works/entry", body);
       setEntryId(entry.id);
       setMsg("Enregistré ✓");
