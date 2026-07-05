@@ -1,9 +1,9 @@
 import type { Db, Filter } from "mongodb";
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes } from "@/server/domain/entities";
 import * as M from "./mappers";
 
 export class MongoUserRepository implements UserRepository {
@@ -60,6 +60,18 @@ export class MongoWorkRepository implements WorkRepository {
   async upsert(w: Work) { await this.col.replaceOne({ _id: w.id }, M.toWorkDoc(w), { upsert: true }); }
   async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromWorkDoc(d) : null; }
   async findByExternal(source: WorkSource, externalId: string) { const d = await this.col.findOne({ source, externalId }); return d ? M.fromWorkDoc(d) : null; }
+}
+
+export class MongoEpisodeCache implements EpisodeCacheRepository {
+  constructor(private db: Db) {}
+  private get col() { return this.db.collection<M.WithIdSeasonEpisodes>("episode_cache"); }
+  async find(source: WorkSource, externalId: string, season: number) {
+    const d = await this.col.findOne({ source, externalId, season });
+    return d ? M.fromSeasonEpisodesDoc(d) : null;
+  }
+  async upsert(entry: SeasonEpisodes) {
+    await this.col.replaceOne({ _id: `${entry.source}:${entry.externalId}:${entry.season}` }, M.toSeasonEpisodesDoc(entry), { upsert: true });
+  }
 }
 
 export class MongoLibraryEntryRepository implements LibraryEntryRepository {

@@ -69,6 +69,21 @@ export interface FollowRequest {
   createdAt: Date;
 }
 
+export interface EpisodeSummary {
+  number: number;            // numéro d'épisode dans la saison
+  title: string | null;      // nom de l'épisode
+  airDate: string | null;    // "YYYY-MM-DD" ou null
+  overview: string | null;   // synopsis
+}
+
+export interface SeasonEpisodes {
+  source: WorkSource;
+  externalId: string;
+  season: number;
+  episodes: EpisodeSummary[];
+  cachedAt: Date;
+}
+
 export interface Work {
   id: string;
   source: WorkSource;

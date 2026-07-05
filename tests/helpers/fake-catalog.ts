@@ -1,5 +1,5 @@
 import type { CatalogProvider, WorkSummary, WorkDetails, Genre, Person } from "@/server/ports/catalog";
-import type { Domain, WorkType } from "@/server/domain/entities";
+import type { Domain, WorkType, EpisodeSummary } from "@/server/domain/entities";
 
 export class FakeCatalog implements CatalogProvider {
   works: Record<string, WorkDetails> = {
@@ -27,6 +27,17 @@ export class FakeCatalog implements CatalogProvider {
     return Object.values(this.works).filter((w) => (domain === "books" ? w.type === "book" : w.type !== "book"));
   }
   async getWork(externalId: string, _type: WorkType): Promise<WorkDetails | null> { return this.works[externalId] ?? null; }
+  seasonCalls = 0;
+  async getSeasonEpisodes(externalId: string, season: number): Promise<EpisodeSummary[]> {
+    this.seasonCalls++;
+    if (externalId === "1396" && season === 1) {
+      return [
+        { number: 1, title: "Pilote", airDate: "2008-01-20", overview: "Walter…" },
+        { number: 2, title: "Le Chat dans le sac", airDate: "2008-01-27", overview: "Suite…" },
+      ];
+    }
+    return [];
+  }
   async findByIsbn(isbn: string): Promise<WorkSummary | null> {
     if (isbn !== "9780441569595") return null;
     const w = this.works["book-1"]!;
