@@ -120,6 +120,25 @@ tableau (jamais nul quand `data` est défini). Le fallback d'erreur de `load`
 (`setData({ playlists: [], watchlist: [], seen: [], people: [] })`) doit inclure
 `inProgress: []`.
 
+## Optimisation de chargement (fusionnée à ce travail)
+
+`getLibrary` est aujourd'hui lent car il construit la liste des personnes via une
+**boucle séquentielle** qui re-télécharge chaque œuvre une par une
+(`for (const id of ownedWorkIds) { const w = await deps.works.findById(id); … }`),
+alors que ces œuvres ont déjà été chargées par `posters()` (double fetch).
+
+Correctif ciblé, appliqué en même temps que l'ajout de `inProgress` :
+- Charger les entrées `planned` + `done` + `in_progress` d'abord.
+- Dédupliquer l'ensemble des `workId` et charger chaque œuvre **une seule fois, en
+  parallèle**, dans une `Map<string, Work>`.
+- Construire `watchlist`, `seen`, `inProgress` et la liste des `people` à partir de
+  cette map (plus aucun `await` dans une boucle, plus de double fetch).
+- `playlists` reste inchangé (ses œuvres de couverture sont d'autres works, déjà
+  chargés en parallèle via `Promise.all`).
+
+Aucun changement de contrat de sortie : `watchlist`/`seen`/`people` gardent la même
+forme et le même contenu (couverts par les tests existants).
+
 ## Tests
 
 `tests/application/library.test.ts` — nouveau cas :

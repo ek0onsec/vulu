@@ -18,10 +18,16 @@
 
 ---
 
-### Task 1: Données — `Library.inProgress` + `getLibrary`
+### Task 1: Données — `Library.inProgress` + `getLibrary` (avec optimisation single-fetch)
+
+Cette tâche ajoute `inProgress` **et** corrige la lenteur : `getLibrary` charge
+aujourd'hui les œuvres deux fois (dont une boucle séquentielle re-`findById`). On
+réécrit le corps pour charger chaque œuvre **une seule fois, en parallèle**, dans
+une `Map`, puis construire toutes les listes depuis cette map. Les tests existants
+(watchlist/seen/people/peopleIds) protègent contre toute régression de contrat.
 
 **Files:**
-- Modify: `src/server/application/library.ts` (imports ~ligne 1-2 ; interfaces ~ligne 5-7 ; `getLibrary` ~ligne 9-45)
+- Modify: `src/server/application/library.ts` (imports ~ligne 1-2 ; interfaces ~ligne 5-7 ; `getLibrary` ~ligne 9-43)
 - Test: `tests/application/library.test.ts` (imports ~ligne 5 ; nouveau cas dans `describe("getLibrary")`)
 
 **Interfaces:**
@@ -62,10 +68,10 @@ Expected: FAIL — `lib.inProgress` est `undefined` (propriété inexistante).
 
 - [ ] **Step 3: Étendre les imports et les types**
 
-Dans `src/server/application/library.ts`, la ligne d'import des entités importe déjà `LibraryEntry, PersonRole, WorkType`. Ajouter `EntryProgress` et `WorkSource` :
+Dans `src/server/application/library.ts`, la ligne d'import des entités importe déjà `LibraryEntry, PersonRole, WorkType`. Ajouter `EntryProgress`, `Work` et `WorkSource` :
 
 ```ts
-import type { EntryProgress, LibraryEntry, PersonRole, WorkSource, WorkType } from "@/server/domain/entities";
+import type { EntryProgress, LibraryEntry, PersonRole, Work, WorkSource, WorkType } from "@/server/domain/entities";
 ```
 
 Ajouter l'interface `LibraryInProgress` juste après la définition de `LibraryPlaylist` :
@@ -80,70 +86,83 @@ export interface LibraryInProgress { entryId: string; workId: string; source: Wo
 export interface Library { playlists: LibraryPlaylist[]; watchlist: LibraryPoster[]; seen: LibraryPoster[]; inProgress: LibraryInProgress[]; people: { id: number; name: string; role: PersonRole }[] }
 ```
 
-- [ ] **Step 4: Charger et mapper les entrées `in_progress` dans `getLibrary`**
+- [ ] **Step 4: Réécrire le corps de `getLibrary` (single-fetch + inProgress)**
 
-Dans `getLibrary`, ajouter le chargement `in_progress` au `Promise.all` existant. Remplacer :
-
-```ts
-  const [watchlist, seen, lists] = await Promise.all([
-    deps.entries.listByUser(userId, { status: "planned" }).then(posters),
-    deps.entries.listByUser(userId, { status: "done" }).then(posters),
-    deps.lists.listByUser(userId),
-  ]);
-```
-
-par :
+Remplacer tout le corps de `getLibrary` **après** la garde utilisateur
+(`if (!user) throw …`) — c.-à-d. de la déclaration `async function posters` jusqu'au
+`return` inclus (≈ lignes 13-42) — par :
 
 ```ts
-  const [watchlist, seen, lists, inProgressEntries] = await Promise.all([
-    deps.entries.listByUser(userId, { status: "planned" }).then(posters),
-    deps.entries.listByUser(userId, { status: "done" }).then(posters),
-    deps.lists.listByUser(userId),
+  const [plannedEntries, doneEntries, inProgressEntries, lists] = await Promise.all([
+    deps.entries.listByUser(userId, { status: "planned" }),
+    deps.entries.listByUser(userId, { status: "done" }),
     deps.entries.listByUser(userId, { status: "in_progress" }),
+    deps.lists.listByUser(userId),
   ]);
 
-  const inProgress: LibraryInProgress[] = (
-    await Promise.all(inProgressEntries.map(async (e) => {
-      const w = await deps.works.findById(e.workId);
-      return w ? {
-        entryId: e.id, workId: w.id, source: w.source, externalId: w.externalId,
-        title: w.title, posterUrl: w.posterUrl, type: w.type,
-        episodeCounts: w.episodeCounts, pageCount: w.pageCount,
-        progress: e.progress, peopleIds: w.people.map((p) => p.tmdbId),
-      } : null;
-    }))
-  ).filter((x): x is LibraryInProgress => x !== null);
-```
+  // Chaque œuvre des entrées est chargée une seule fois, en parallèle.
+  const entryWorkIds = [...new Set([...plannedEntries, ...doneEntries, ...inProgressEntries].map((e) => e.workId))];
+  const worksById = new Map<string, Work>();
+  await Promise.all(entryWorkIds.map(async (id) => {
+    const w = await deps.works.findById(id);
+    if (w) worksById.set(id, w);
+  }));
 
-- [ ] **Step 5: Retourner `inProgress`**
+  const toPoster = (e: LibraryEntry): LibraryPoster | null => {
+    const w = worksById.get(e.workId);
+    return w ? { id: e.id, workId: w.id, title: w.title, posterUrl: w.posterUrl, type: w.type, rating: e.rating, peopleIds: w.people.map((p) => p.tmdbId) } : null;
+  };
+  const watchlist = plannedEntries.map(toPoster).filter((x): x is LibraryPoster => x !== null);
+  const seen = doneEntries.map(toPoster).filter((x): x is LibraryPoster => x !== null);
 
-Dans `getLibrary`, remplacer la ligne de retour :
+  const inProgress: LibraryInProgress[] = inProgressEntries.map((e) => {
+    const w = worksById.get(e.workId);
+    return w ? {
+      entryId: e.id, workId: w.id, source: w.source, externalId: w.externalId,
+      title: w.title, posterUrl: w.posterUrl, type: w.type,
+      episodeCounts: w.episodeCounts, pageCount: w.pageCount,
+      progress: e.progress, peopleIds: w.people.map((p) => p.tmdbId),
+    } : null;
+  }).filter((x): x is LibraryInProgress => x !== null);
 
-```ts
-  return { playlists, watchlist, seen, people };
-```
-par :
-```ts
+  const playlists: LibraryPlaylist[] = await Promise.all(
+    lists.map(async (l) => {
+      const coverWorks = await Promise.all(l.workIds.slice(0, 4).map((id) => deps.works.findById(id)));
+      const covers = coverWorks.map((w) => w?.posterUrl).filter((u): u is string => Boolean(u));
+      return { id: l.id, name: l.name, kind: l.kind, description: l.description, bannerUrl: l.bannerUrl, visibility: l.visibility, count: l.workIds.length, covers };
+    }),
+  );
+
+  // Personnes : depuis la map déjà chargée (planned + seen), sans boucle séquentielle ni re-fetch.
+  const ownedWorkIds = new Set([...watchlist, ...seen].map((p) => p.workId));
+  const peopleMap = new Map<number, { id: number; name: string; role: PersonRole }>();
+  for (const id of ownedWorkIds) {
+    const w = worksById.get(id);
+    for (const p of w?.people ?? []) if (!peopleMap.has(p.tmdbId)) peopleMap.set(p.tmdbId, { id: p.tmdbId, name: p.name, role: p.role });
+  }
+  const people = [...peopleMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+
   return { playlists, watchlist, seen, inProgress, people };
 ```
 
-- [ ] **Step 6: Lancer le test, vérifier le succès**
+Note : la fonction interne `posters` disparaît (remplacée par `toPoster` synchrone).
+Vérifier qu'aucun autre appel à `posters` ne subsiste dans le fichier.
+
+- [ ] **Step 5: Lancer le test, vérifier le succès**
 
 Run: `npm test -- library`
-Expected: PASS (nouveau cas + cas existants).
+Expected: PASS (nouveau cas `inProgress` + cas existants watchlist/seen/people/peopleIds — ces derniers valident la non-régression du refactor).
 
-- [ ] **Step 7: Typecheck**
+- [ ] **Step 6: Typecheck**
 
 Run: `npx tsc --noEmit`
-Expected: aucune erreur ici (les consommateurs de `Library` sont mis à jour en Task 2 — s'il reste des erreurs `inProgress` manquant, elles seront résolues à la Task 2 ; à ce stade, vérifier qu'aucune erreur ne provient de `library.ts` lui-même).
+Expected: la seule erreur attendue provient de `LibraryClient.tsx` (fallback sans `inProgress`, corrigé en Task 2). Vérifier qu'aucune erreur ne provient de `library.ts`.
 
-Note : `tsc` signalera probablement les fallbacks non encore mis à jour dans `LibraryClient.tsx` (champ `inProgress` manquant). C'est attendu et corrigé en Task 2.
-
-- [ ] **Step 8: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add src/server/application/library.ts tests/application/library.test.ts
-git commit -m "feat(vulu): getLibrary expose les entrées en cours (Library.inProgress)"
+git commit -m "feat(vulu): getLibrary expose les entrées en cours + chargement des œuvres en une passe parallèle"
 ```
 
 ---
@@ -253,6 +272,7 @@ git commit -m "feat(vulu): section « En cours » en haut de la Bibliothèque (m
 - Rendu en haut, avant « Mes collections », filtré type + personne, masqué si vide → Task 2 Steps 4-5 ✓
 - Fallback `load` inclut `inProgress: []` → Task 2 Step 3 ✓
 - Test `getLibrary` (inProgress présent, hors watchlist/seen, peopleIds) → Task 1 Step 1 ✓
+- Optimisation single-fetch (map d'œuvres, suppression boucle séquentielle + double fetch, `people` depuis la map) → Task 1 Step 4 ✓ ; non-régression via tests existants → Task 1 Step 5 ✓
 
 **Placeholder scan :** aucun TBD/TODO ; code complet à chaque étape.
 
