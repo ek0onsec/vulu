@@ -1,4 +1,4 @@
-import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry } from "@/server/domain/entities";
 
 export interface UserRepository {
   create(user: User): Promise<void>;
@@ -40,6 +40,11 @@ export interface WorkRepository {
 export interface EpisodeCacheRepository {
   find(source: WorkSource, externalId: string, season: number): Promise<SeasonEpisodes | null>;
   upsert(entry: SeasonEpisodes): Promise<void>;
+}
+export interface EpisodeEntryRepository {
+  upsert(entry: EpisodeEntry): Promise<void>;
+  findOne(userId: string, workId: string, season: number, episode: number): Promise<EpisodeEntry | null>;
+  listByUserAndWork(userId: string, workId: string): Promise<EpisodeEntry[]>;
 }
 export interface LibraryEntryRepository {
   upsert(entry: LibraryEntry): Promise<void>;

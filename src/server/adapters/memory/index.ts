@@ -1,8 +1,8 @@
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository, EpisodeEntryRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry } from "@/server/domain/entities";
 import { isPublishable, isFeedVisible } from "@/server/domain/feed-rules";
 
 export class InMemoryUserRepository implements UserRepository {
@@ -64,6 +64,17 @@ export class InMemoryEpisodeCache implements EpisodeCacheRepository {
   private key(source: WorkSource, externalId: string, season: number) { return `${source}:${externalId}:${season}`; }
   async find(source: WorkSource, externalId: string, season: number) { return this.byKey.get(this.key(source, externalId, season)) ?? null; }
   async upsert(entry: SeasonEpisodes) { this.byKey.set(this.key(entry.source, entry.externalId, entry.season), entry); }
+}
+
+export class InMemoryEpisodeEntryRepository implements EpisodeEntryRepository {
+  private byId = new Map<string, EpisodeEntry>();
+  async upsert(e: EpisodeEntry) { this.byId.set(e.id, e); }
+  async findOne(userId: string, workId: string, season: number, episode: number) {
+    return [...this.byId.values()].find((e) => e.userId === userId && e.workId === workId && e.season === season && e.episode === episode) ?? null;
+  }
+  async listByUserAndWork(userId: string, workId: string) {
+    return [...this.byId.values()].filter((e) => e.userId === userId && e.workId === workId);
+  }
 }
 
 export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {

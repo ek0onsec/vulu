@@ -2,7 +2,7 @@ import {
   InMemoryUserRepository, InMemoryFollowRepository, InMemoryWorkRepository,
   InMemoryLibraryEntryRepository, InMemoryListRepository, InMemoryLikeRepository, InMemoryCommentRepository,
   InMemoryFollowRequestRepository, InMemoryCommunityRepository, InMemoryMembershipRepository, InMemoryCommunityRequestRepository,
-  InMemoryEpisodeCache,
+  InMemoryEpisodeCache, InMemoryEpisodeEntryRepository,
 } from "@/server/adapters/memory";
 import { BcryptHasher } from "@/server/adapters/security/bcrypt-hasher";
 import { JwtTokenService } from "@/server/adapters/security/jwt-token-service";
@@ -11,7 +11,7 @@ import { SystemClock } from "@/server/adapters/security/system-clock";
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository,
-  EpisodeCacheRepository,
+  EpisodeCacheRepository, EpisodeEntryRepository,
 } from "@/server/ports/repositories";
 import type { CatalogProvider } from "@/server/ports/catalog";
 import type { PasswordHasher, TokenService, IdGenerator, Clock, Totp, Crypto } from "@/server/ports/security";
@@ -24,7 +24,7 @@ import {
   MongoUserRepository, MongoFollowRepository, MongoWorkRepository, MongoLibraryEntryRepository,
   MongoListRepository, MongoLikeRepository, MongoCommentRepository, MongoFollowRequestRepository,
   MongoCommunityRepository, MongoMembershipRepository, MongoCommunityRequestRepository,
-  MongoEpisodeCache,
+  MongoEpisodeCache, MongoEpisodeEntryRepository,
 } from "@/server/adapters/mongo/repositories";
 import { TmdbCatalog } from "@/server/adapters/catalog/tmdb-catalog";
 import { GoogleBooksCatalog } from "@/server/adapters/catalog/google-books-catalog";
@@ -42,6 +42,7 @@ export interface Deps {
   communityRequests: CommunityRequestRepository;
   works: WorkRepository;
   episodeCache: EpisodeCacheRepository;
+  episodeEntries: EpisodeEntryRepository;
   entries: LibraryEntryRepository;
   lists: ListRepository;
   likes: LikeRepository;
@@ -67,6 +68,7 @@ export function makeInMemoryDeps(catalog: CatalogProvider): Deps {
     communityRequests: new InMemoryCommunityRequestRepository(),
     works: new InMemoryWorkRepository(),
     episodeCache: new InMemoryEpisodeCache(),
+    episodeEntries: new InMemoryEpisodeEntryRepository(),
     entries: new InMemoryLibraryEntryRepository(),
     lists: new InMemoryListRepository(),
     likes: new InMemoryLikeRepository(),
@@ -98,6 +100,7 @@ export async function getDeps(): Promise<Deps> {
     communityRequests: new MongoCommunityRequestRepository(db),
     works: new MongoWorkRepository(db),
     episodeCache: new MongoEpisodeCache(db),
+    episodeEntries: new MongoEpisodeEntryRepository(db),
     entries: new MongoLibraryEntryRepository(db),
     lists: new MongoListRepository(db),
     likes: new MongoLikeRepository(db),

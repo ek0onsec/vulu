@@ -1,4 +1,4 @@
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, Community, Membership, CommunityRequest, SeasonEpisodes } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, Community, Membership, CommunityRequest, SeasonEpisodes, EpisodeEntry } from "@/server/domain/entities";
 import { isPublishable } from "@/server/domain/feed-rules";
 
 type WithId<T> = T & { _id: string };
@@ -49,6 +49,10 @@ export const fromCommunityRequestDoc = (d: WithIdCommunityRequest): CommunityReq
 export type WithIdSeasonEpisodes = WithId<SeasonEpisodes>;
 export const toSeasonEpisodesDoc = (s: SeasonEpisodes): WithIdSeasonEpisodes => ({ _id: `${s.source}:${s.externalId}:${s.season}`, ...s });
 export const fromSeasonEpisodesDoc = (d: WithIdSeasonEpisodes): SeasonEpisodes => strip(d);
+
+export type WithIdEpisodeEntry = WithId<EpisodeEntry>;
+export const toEpisodeEntryDoc = (e: EpisodeEntry): WithIdEpisodeEntry => ({ _id: e.id, ...e });
+export const fromEpisodeEntryDoc = (d: WithIdEpisodeEntry): EpisodeEntry => strip(d);
 
 export const toWorkDoc = (w: Work): WithIdWork => ({ _id: w.id, ...w });
 export const fromWorkDoc = (d: WithIdWork): Work => {
