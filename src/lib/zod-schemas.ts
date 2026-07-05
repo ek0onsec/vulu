@@ -32,6 +32,14 @@ export const rateSchema = z.object({
   }),
 });
 const progInt = z.number().int().min(1).nullable().optional();
+export const episodeUpdateSchema = z.object({
+  season: z.number().int().min(1),
+  episode: z.number().int().min(1),
+  watched: z.boolean().optional(),
+  watchedAt: z.string().datetime().nullable().optional(),
+  rating: z.number().min(0).max(5).nullable().optional(),
+  text: z.string().max(1000).nullable().optional(),
+});
 export const progressSchema = z.object({
   ref: workRefSchema,
   season: progInt, episode: progInt, tome: progInt, page: progInt,
