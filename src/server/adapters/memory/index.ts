@@ -69,6 +69,7 @@ export class InMemoryEpisodeCache implements EpisodeCacheRepository {
 export class InMemoryEpisodeEntryRepository implements EpisodeEntryRepository {
   private byId = new Map<string, EpisodeEntry>();
   async upsert(e: EpisodeEntry) { this.byId.set(e.id, e); }
+  async findById(id: string) { return this.byId.get(id) ?? null; }
   async findOne(userId: string, workId: string, season: number, episode: number) {
     return [...this.byId.values()].find((e) => e.userId === userId && e.workId === workId && e.season === season && e.episode === episode) ?? null;
   }

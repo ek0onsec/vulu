@@ -5,7 +5,7 @@ import { registerUser } from "@/server/application/register-user";
 import { rateOrReviewWork } from "@/server/application/library-entry";
 import { followUser } from "@/server/application/social";
 import { likeEntry } from "@/server/application/engagement";
-import { buildFeed, getWorkReviews, getEntryItem, getMyWorkReview } from "@/server/application/feed";
+import { buildFeed, getWorkReviews, getPostItem, getMyWorkReview } from "@/server/application/feed";
 import { NotFoundError } from "@/server/domain/errors";
 
 let deps: Deps; let me: string; let friend: string; let stranger: string;
@@ -98,14 +98,37 @@ describe("getWorkReviews", () => {
   });
 });
 
-describe("getEntryItem (visibilité)", () => {
+describe("getPostItem (visibilité)", () => {
   const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
   it("une entrée privée (circle=false) n'est pas visible d'un membre du cercle mais l'est du propriétaire", async () => {
     // friend et me sont dans le cercle l'un de l'autre (me suit friend)
     const entry = await rateOrReviewWork(deps, friend, ref, { rating: 4, text: "privé", audiences: { public: false, circle: false, communityIds: [] } });
-    await expect(getEntryItem(deps, me, entry.id)).rejects.toBeInstanceOf(NotFoundError);
-    const own = await getEntryItem(deps, friend, entry.id);
-    expect(own.entry.id).toBe(entry.id);
+    await expect(getPostItem(deps, me, entry.id)).rejects.toBeInstanceOf(NotFoundError);
+    const own = await getPostItem(deps, friend, entry.id);
+    expect(own.kind === "work" && own.entry.id).toBe(entry.id);
+  });
+});
+
+describe("épisode dans le feed — compteurs + post", () => {
+  const tv = { source: "tmdb" as const, externalId: "1396", type: "tv" as const };
+  async function sharedEp() {
+    const { updateEpisode } = await import("@/server/application/episode-entry");
+    await updateEpisode(deps, me, tv, 1, 1, { rating: 5 });
+    return (await updateEpisode(deps, me, tv, 1, 1, { audiences: { public: true, circle: false, communityIds: [] } })).id;
+  }
+  it("enrichEpisodeEntries expose likeCount/commentCount/likedByMe", async () => {
+    const id = await sharedEp();
+    const { likeEntry } = await import("@/server/application/engagement");
+    await likeEntry(deps, me, id);
+    const items = await buildFeed(deps, me, { scope: "foryou", cursor: null, limit: 20 });
+    const ep = items.find((i) => i.kind === "episode");
+    expect(ep && ep.kind === "episode" && ep.likeCount).toBe(1);
+    expect(ep && ep.kind === "episode" && ep.likedByMe).toBe(true);
+  });
+  it("getPostItem renvoie l'avis d'épisode pour son id", async () => {
+    const id = await sharedEp();
+    const item = await getPostItem(deps, me, id);
+    expect(item.kind).toBe("episode");
   });
 });
 

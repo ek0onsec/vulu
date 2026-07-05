@@ -19,6 +19,12 @@ describe("InMemoryEpisodeEntryRepository", () => {
     expect(await repo.listByUserAndWork("u1", "w1")).toHaveLength(2);
     expect(await repo.listByUserAndWork("u2", "w1")).toHaveLength(0);
   });
+  it("findById trouve par id ou renvoie null", async () => {
+    const repo = new InMemoryEpisodeEntryRepository();
+    await repo.upsert(mk(1, 1));
+    expect((await repo.findById("1-1"))?.episode).toBe(1);
+    expect(await repo.findById("absent")).toBeNull();
+  });
 });
 
 const shared = (season: number, episode: number, audiences: EntryAudiences, activityAt: Date | null): EpisodeEntry => ({

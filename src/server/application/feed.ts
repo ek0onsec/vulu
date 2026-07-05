@@ -1,5 +1,5 @@
 import type { Deps } from "@/server/container";
-import type { EpisodeEntry, LibraryEntry, User, Work } from "@/server/domain/entities";
+import type { EpisodeEntry, EntryAudiences, LibraryEntry, User, Work } from "@/server/domain/entities";
 import { NotFoundError } from "@/server/domain/errors";
 import { getCircle } from "./social";
 import { getSeasonEpisodes } from "./get-episodes";
@@ -25,6 +25,9 @@ export interface EpisodeFeedItem {
   season: number;
   episode: number;
   title: string | null;
+  likeCount: number;
+  commentCount: number;
+  likedByMe: boolean;
   communities: { id: string; name: string }[];
 }
 export type FeedItem = WorkFeedItem | EpisodeFeedItem;
@@ -64,11 +67,13 @@ export async function enrichEntries(deps: Deps, viewerId: string, entries: Libra
 }
 
 export async function enrichEpisodeEntries(deps: Deps, viewerId: string, entries: EpisodeEntry[]): Promise<EpisodeFeedItem[]> {
-  void viewerId;
+  const liked = new Set(await deps.likes.likedEntryIds(viewerId, entries.map((e) => e.id)));
   return Promise.all(entries.map(async (ee) => {
-    const [author, work, communities] = await Promise.all([
+    const [author, work, likeCount, commentCount, communities] = await Promise.all([
       deps.users.findById(ee.userId),
       deps.works.findById(ee.workId),
+      deps.likes.countByEntry(ee.id),
+      deps.comments.countByEntry(ee.id),
       ee.audiences.communityIds.length > 0 ? deps.communities.listByIds(ee.audiences.communityIds) : Promise.resolve([]),
     ]);
     if (!author || !work) throw new NotFoundError("Données de feed incohérentes");
@@ -82,6 +87,7 @@ export async function enrichEpisodeEntries(deps: Deps, viewerId: string, entries
       author: { id: author.id, username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl, plus: author.plus, staff: author.staff },
       work: { id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type, episodeCounts: work.episodeCounts, pageCount: work.pageCount },
       season: ee.season, episode: ee.episode, title,
+      likeCount, commentCount, likedByMe: liked.has(ee.id),
       communities: communities.map((c) => ({ id: c.id, name: c.name })),
     };
   }));
@@ -123,12 +129,12 @@ export async function buildFeed(
  * (public:false, circle:false, communityIds:[]) n'est visible que de son auteur.
  */
 export function isEntryVisibleTo(
-  entry: LibraryEntry, viewerId: string, circle: Set<string>, viewerCommunityIds: Set<string>,
+  target: { userId: string; audiences: EntryAudiences }, viewerId: string, circle: Set<string>, viewerCommunityIds: Set<string>,
 ): boolean {
-  if (entry.userId === viewerId) return true;
-  if (entry.audiences.public) return true;
-  if (entry.audiences.circle && circle.has(entry.userId)) return true;
-  return entry.audiences.communityIds.some((id) => viewerCommunityIds.has(id));
+  if (target.userId === viewerId) return true;
+  if (target.audiences.public) return true;
+  if (target.audiences.circle && circle.has(target.userId)) return true;
+  return target.audiences.communityIds.some((id) => viewerCommunityIds.has(id));
 }
 
 async function viewerCommunityIdSet(deps: Deps, viewerId: string): Promise<Set<string>> {
@@ -137,16 +143,28 @@ async function viewerCommunityIdSet(deps: Deps, viewerId: string): Promise<Set<s
 }
 
 /** Un post (entrée) enrichi, visible pour le viewer (public, cercle, communauté, ou le sien). */
-export async function getEntryItem(deps: Deps, viewerId: string, entryId: string): Promise<WorkFeedItem> {
-  const entry = await deps.entries.findById(entryId);
-  if (!entry) throw new NotFoundError("Publication introuvable");
-  if (entry.userId !== viewerId) {
-    const [circle, communityIds] = await Promise.all([getCircle(deps, viewerId), viewerCommunityIdSet(deps, viewerId)]);
-    if (!isEntryVisibleTo(entry, viewerId, circle, communityIds)) throw new NotFoundError("Publication introuvable");
+export async function getPostItem(deps: Deps, viewerId: string, id: string): Promise<WorkFeedItem | EpisodeFeedItem> {
+  const entry = await deps.entries.findById(id);
+  if (entry) {
+    if (entry.userId !== viewerId) {
+      const [circle, communityIds] = await Promise.all([getCircle(deps, viewerId), viewerCommunityIdSet(deps, viewerId)]);
+      if (!isEntryVisibleTo(entry, viewerId, circle, communityIds)) throw new NotFoundError("Publication introuvable");
+    }
+    const [item] = await enrichEntries(deps, viewerId, [entry]);
+    if (!item) throw new NotFoundError("Publication introuvable");
+    return item;
   }
-  const [item] = await enrichEntries(deps, viewerId, [entry]);
-  if (!item) throw new NotFoundError("Publication introuvable");
-  return item;
+  const ep = await deps.episodeEntries.findById(id);
+  if (ep) {
+    if (ep.userId !== viewerId) {
+      const [circle, communityIds] = await Promise.all([getCircle(deps, viewerId), viewerCommunityIdSet(deps, viewerId)]);
+      if (!isEntryVisibleTo(ep, viewerId, circle, communityIds)) throw new NotFoundError("Publication introuvable");
+    }
+    const [item] = await enrichEpisodeEntries(deps, viewerId, [ep]);
+    if (!item) throw new NotFoundError("Publication introuvable");
+    return item;
+  }
+  throw new NotFoundError("Publication introuvable");
 }
 
 /** Ton propre avis sur une œuvre, s'il est publishable ET partagé (sinon null). */
