@@ -1,5 +1,5 @@
 import type { WorkSummary, WorkDetails, Genre, Person } from "@/server/ports/catalog";
-import type { WorkType } from "@/server/domain/entities";
+import type { WorkType, EpisodeSummary } from "@/server/domain/entities";
 
 export interface TmdbConfig { apiKey: string; baseUrl: string; imageBase: string; }
 
@@ -13,6 +13,7 @@ interface TmdbDetails { id: number; title?: string; name?: string; release_date?
   "watch/providers"?: { results?: Record<string, { flatrate?: TmdbProvider[] }> };
   seasons?: { season_number: number; episode_count: number }[];
   runtime?: number | null; episode_run_time?: number[]; }
+interface TmdbSeasonEpisode { episode_number: number; name?: string; air_date?: string | null; overview?: string; }
 
 function yearOf(d?: string): number | null { return d ? Number(d.slice(0, 4)) || null : null; }
 
@@ -96,6 +97,23 @@ export class TmdbCatalog {
       pageCount: null,
       runtime,
     };
+  }
+
+  async getSeasonEpisodes(externalId: string, season: number): Promise<EpisodeSummary[]> {
+    let data: { episodes?: TmdbSeasonEpisode[] };
+    try {
+      data = await this.get<{ episodes?: TmdbSeasonEpisode[] }>(`/tv/${externalId}/season/${season}`);
+    } catch {
+      return [];
+    }
+    return (data.episodes ?? [])
+      .map((e) => ({
+        number: e.episode_number,
+        title: e.name?.trim() ? e.name : null,
+        airDate: e.air_date ?? null,
+        overview: e.overview?.trim() ? e.overview : null,
+      }))
+      .sort((a, b) => a.number - b.number);
   }
 
   async listGenres(): Promise<Genre[]> {

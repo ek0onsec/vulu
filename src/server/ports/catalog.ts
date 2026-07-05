@@ -1,4 +1,4 @@
-import type { Domain, PersonRole, WorkSource, WorkType } from "@/server/domain/entities";
+import type { Domain, EpisodeSummary, PersonRole, WorkSource, WorkType } from "@/server/domain/entities";
 
 export interface WorkSummary {
   source: WorkSource;
@@ -25,6 +25,7 @@ export interface Person { tmdbId: number; name: string; role: PersonRole; profil
 export interface CatalogProvider {
   searchWorks(query: string, domain: Domain): Promise<WorkSummary[]>;
   getWork(externalId: string, type: WorkType): Promise<WorkDetails | null>;
+  getSeasonEpisodes(externalId: string, season: number): Promise<EpisodeSummary[]>;
   findByIsbn(isbn: string): Promise<WorkSummary | null>;
   listGenres(domain: Domain): Promise<Genre[]>;
   searchPeople(query: string, domain: Domain): Promise<Person[]>;

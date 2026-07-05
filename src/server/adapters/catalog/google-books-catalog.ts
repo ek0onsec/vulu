@@ -1,4 +1,5 @@
 import type { WorkSummary, WorkDetails, Genre, Person } from "@/server/ports/catalog";
+import type { EpisodeSummary } from "@/server/domain/entities";
 
 export interface GoogleBooksConfig { baseUrl: string; apiKey?: string }
 
@@ -78,6 +79,8 @@ export class GoogleBooksCatalog {
   }
 
   async getPersonCredits(): Promise<WorkSummary[]> { return []; }
+
+  async getSeasonEpisodes(): Promise<EpisodeSummary[]> { return []; }
 
   async getWork(externalId: string): Promise<WorkDetails | null> {
     const v = await this.get<Volume>(`/volumes/${externalId}`, {});

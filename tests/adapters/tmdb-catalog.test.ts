@@ -27,6 +27,19 @@ describe("TmdbCatalog", () => {
     expect(res[0]?.posterUrl).toBe("https://img/w500/p.jpg");
     expect(res[1]).toMatchObject({ type: "tv", title: "Breaking Bad", year: 2008 });
   });
+  it("getSeasonEpisodes mappe numéro, titre, date, synopsis (trié)", async () => {
+    const c = new TmdbCatalog(cfg, fakeFetch({
+      "/tv/1396/season/1": { episodes: [
+        { episode_number: 2, name: "Le Chat dans le sac", air_date: "2008-01-27", overview: "Suite…" },
+        { episode_number: 1, name: "Pilote", air_date: "2008-01-20", overview: "Walter…" },
+        { episode_number: 3, name: "", air_date: null, overview: "" },
+      ] },
+    }));
+    const eps = await c.getSeasonEpisodes("1396", 1);
+    expect(eps.map((e) => e.number)).toEqual([1, 2, 3]);
+    expect(eps[0]).toEqual({ number: 1, title: "Pilote", airDate: "2008-01-20", overview: "Walter…" });
+    expect(eps[2]).toEqual({ number: 3, title: null, airDate: null, overview: null });
+  });
   it("getWork récupère détails + crédits (réalisateur)", async () => {
     const c = new TmdbCatalog(cfg, fakeFetch({
       "/movie/603": { id: 603, title: "The Matrix", release_date: "1999-03-30", poster_path: "/p.jpg",

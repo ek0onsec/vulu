@@ -1,5 +1,5 @@
 import type { CatalogProvider, WorkSummary, WorkDetails, Genre, Person } from "@/server/ports/catalog";
-import type { Domain, WorkType } from "@/server/domain/entities";
+import type { Domain, WorkType, EpisodeSummary } from "@/server/domain/entities";
 import type { TmdbCatalog } from "./tmdb-catalog";
 import type { GoogleBooksCatalog } from "./google-books-catalog";
 
@@ -12,6 +12,9 @@ export class CompositeCatalog implements CatalogProvider {
   }
   getWork(externalId: string, type: WorkType): Promise<WorkDetails | null> {
     return type === "book" ? this.books.getWork(externalId) : this.films.getWork(externalId, type);
+  }
+  getSeasonEpisodes(externalId: string, season: number): Promise<EpisodeSummary[]> {
+    return this.films.getSeasonEpisodes(externalId, season);
   }
   findByIsbn(isbn: string): Promise<WorkSummary | null> {
     return this.books.findByIsbn(isbn);
