@@ -85,6 +85,22 @@ export class MongoEpisodeEntryRepository implements EpisodeEntryRepository {
   async listByUserAndWork(userId: string, workId: string) {
     return (await this.col.find({ userId, workId }).toArray()).map(M.fromEpisodeEntryDoc);
   }
+  async feed(opts: { scope: "foryou" | "following"; circleUserIds: string[]; followingUserIds: string[]; viewerId: string; cursor: { activityAt: Date; id: string } | null; limit: number }) {
+    const visibility: Filter<M.WithIdEpisodeEntry> = opts.scope === "following"
+      ? { userId: { $in: opts.followingUserIds }, $or: [
+          { "audiences.public": true },
+          { "audiences.circle": true, userId: { $in: opts.circleUserIds } },
+        ] }
+      : { $or: [
+          { "audiences.public": true },
+          { "audiences.communityIds.0": { $exists: true } },
+          { "audiences.circle": true, userId: { $in: opts.circleUserIds } },
+        ] };
+    const q: Filter<M.WithIdEpisodeEntry> = opts.cursor
+      ? { activityAt: { $ne: null, $lt: opts.cursor.activityAt }, ...visibility }
+      : { activityAt: { $ne: null }, ...visibility };
+    return (await this.col.find(q).sort({ activityAt: -1 }).limit(opts.limit).toArray()).map(M.fromEpisodeEntryDoc);
+  }
 }
 
 export class MongoLibraryEntryRepository implements LibraryEntryRepository {

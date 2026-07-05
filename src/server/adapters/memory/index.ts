@@ -75,6 +75,18 @@ export class InMemoryEpisodeEntryRepository implements EpisodeEntryRepository {
   async listByUserAndWork(userId: string, workId: string) {
     return [...this.byId.values()].filter((e) => e.userId === userId && e.workId === workId);
   }
+  async feed(opts: { scope: "foryou" | "following"; circleUserIds: string[]; followingUserIds: string[]; viewerId: string; cursor: { activityAt: Date; id: string } | null; limit: number }) {
+    const circle = new Set(opts.circleUserIds);
+    const following = new Set(opts.followingUserIds);
+    return [...this.byId.values()]
+      .filter((e) => e.activityAt !== null)
+      .filter((e) => opts.scope === "following"
+        ? (following.has(e.userId) && (e.audiences.public || (e.audiences.circle && circle.has(e.userId))))
+        : (e.audiences.public || e.audiences.communityIds.length > 0 || (e.audiences.circle && circle.has(e.userId))))
+      .filter((e) => !opts.cursor || e.activityAt!.getTime() < opts.cursor.activityAt.getTime())
+      .sort((a, b) => b.activityAt!.getTime() - a.activityAt!.getTime())
+      .slice(0, opts.limit);
+  }
 }
 
 export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
