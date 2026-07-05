@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { makeInMemoryDeps, type Deps } from "@/server/container";
 import { FakeCatalog } from "../helpers/fake-catalog";
 import { registerUser } from "@/server/application/register-user";
-import { setEntryStatus, rateOrReviewWork } from "@/server/application/library-entry";
+import { setEntryStatus, rateOrReviewWork, updateProgress } from "@/server/application/library-entry";
 import { createList, addWorkToList } from "@/server/application/lists";
 import { getLibrary } from "@/server/application/library";
 
@@ -36,5 +36,19 @@ describe("getLibrary", () => {
     const matrix = lib.seen.find((p) => p.title === "The Matrix");
     expect(matrix?.peopleIds).toContain(6384);
     expect(lib.people.some((x) => x.id === 6384 && x.name === "Keanu Reeves")).toBe(true);
+  });
+
+  it("expose les entrées en cours dans inProgress, hors watchlist et seen", async () => {
+    await updateProgress(deps, me, book, { page: 50 });
+    const lib = await getLibrary(deps, me);
+    expect(lib.inProgress).toHaveLength(1);
+    const ip = lib.inProgress[0]!;
+    expect(ip.type).toBe("book");
+    expect(ip.source).toBe("googlebooks");
+    expect(ip.externalId).toBe("book-1");
+    expect(ip.progress?.page).toBe(50);
+    expect(ip.peopleIds).toContain(99); // William Gibson (auteur)
+    expect(lib.watchlist).toHaveLength(0);
+    expect(lib.seen).toHaveLength(0);
   });
 });
