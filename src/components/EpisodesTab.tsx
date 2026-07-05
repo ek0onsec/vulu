@@ -1,0 +1,105 @@
+"use client";
+import { useState } from "react";
+import { api } from "@/lib/api-client";
+import { toast } from "@/lib/toast";
+
+interface EpisodeSummary { number: number; title: string | null; airDate: string | null; overview: string | null }
+interface EpisodeEntry { season: number; episode: number; watched: boolean; watchedAt: string | null; rating: number | null; text: string | null }
+interface SeasonData { episodes: EpisodeSummary[]; entries: EpisodeEntry[] }
+
+export function EpisodesTab({ workId, episodeCounts }: { workId: string; episodeCounts: number[] | null }) {
+  const seasons = episodeCounts ?? [];
+  const [open, setOpen] = useState<number | null>(seasons.length ? 1 : null);
+  const [data, setData] = useState<Record<number, SeasonData>>({});
+
+  async function loadSeason(season: number) {
+    if (data[season]) return;
+    try {
+      const d = await api.get<SeasonData>(`/api/works/${workId}/seasons/${season}`);
+      setData((prev) => ({ ...prev, [season]: d }));
+    } catch { toast("Chargement impossible", "error"); }
+  }
+
+  function toggleSeason(season: number) {
+    const next = open === season ? null : season;
+    setOpen(next);
+    if (next) loadSeason(next);
+  }
+
+  function entryFor(season: number, episode: number): EpisodeEntry | undefined {
+    return data[season]?.entries.find((e) => e.episode === episode);
+  }
+
+  async function patch(season: number, episode: number, body: Record<string, unknown>) {
+    try {
+      const { entry } = await api.put<{ entry: EpisodeEntry }>(`/api/works/${workId}/episodes`, { season, episode, ...body });
+      setData((prev) => {
+        const sd = prev[season]; if (!sd) return prev;
+        const entries = [...sd.entries.filter((e) => e.episode !== episode), entry];
+        return { ...prev, [season]: { ...sd, entries } };
+      });
+    } catch { toast("Action impossible", "error"); }
+  }
+
+  if (!seasons.length) return <p className="text-sm text-[var(--color-text-muted)]">Épisodes indisponibles pour cette série.</p>;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {seasons.map((count, si) => {
+        const season = si + 1;
+        const sd = data[season];
+        return (
+          <div key={season} className="overflow-hidden rounded-2xl border border-[var(--color-border)]">
+            <button onClick={() => toggleSeason(season)} className="flex w-full items-center justify-between px-4 py-3 text-left font-display font-bold">
+              Saison {season} <span className="text-xs font-normal text-[var(--color-text-muted)]">{count} épisodes</span>
+            </button>
+            {open === season && (
+              <div className="border-t border-[var(--color-border)] p-3">
+                {!sd ? <p className="text-sm text-[var(--color-text-muted)]">Chargement…</p> : (
+                  <ul className="flex flex-col gap-3">
+                    {Array.from({ length: count }, (_, k) => k + 1).map((ep) => {
+                      const meta = sd.episodes.find((e) => e.number === ep);
+                      const entry = entryFor(season, ep);
+                      return (
+                        <li key={ep} className="rounded-xl border border-[var(--color-border)] p-3">
+                          <div className="flex items-start gap-3">
+                            <button aria-label={entry?.watched ? "Marquer non vu" : "Marquer vu"}
+                              onClick={() => patch(season, ep, { watched: !entry?.watched })}
+                              className={`mt-0.5 h-6 w-6 shrink-0 rounded-full border text-sm font-bold ${entry?.watched ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white" : "border-[var(--color-border)] text-transparent"}`}>
+                              ✓
+                            </button>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold">{season}×{String(ep).padStart(2, "0")}{meta?.title ? ` · ${meta.title}` : ""}
+                                {meta?.airDate ? <span className="ml-1 font-normal text-[var(--color-text-muted)]">· {new Date(meta.airDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</span> : null}
+                              </p>
+                              {meta?.overview && <p className="mt-1 line-clamp-3 text-sm text-[var(--color-text-muted)]">{meta.overview}</p>}
+                              <div className="mt-2 flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((n) => (
+                                  <button key={n} aria-label={`Noter ${n}`}
+                                    onClick={() => patch(season, ep, { rating: entry?.rating === n ? null : n })}
+                                    className={`text-lg leading-none ${entry && entry.rating !== null && entry.rating >= n ? "text-[var(--color-accent)]" : "text-[var(--color-border)]"}`}>★</button>
+                                ))}
+                              </div>
+                              {entry?.watched && (
+                                <input type="date" value={entry.watchedAt ? entry.watchedAt.slice(0, 10) : ""}
+                                  onChange={(e) => patch(season, ep, { watchedAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                                  className="mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1 text-xs" />
+                              )}
+                              <textarea defaultValue={entry?.text ?? ""} placeholder="Ton commentaire (privé)…"
+                                onBlur={(e) => { const v = e.target.value.trim(); if (v !== (entry?.text ?? "")) patch(season, ep, { text: v || null }); }}
+                                className="mt-2 min-h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-2 text-sm" />
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}

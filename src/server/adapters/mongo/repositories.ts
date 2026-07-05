@@ -1,9 +1,9 @@
 import type { Db, Filter } from "mongodb";
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository, EpisodeEntryRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry } from "@/server/domain/entities";
 import * as M from "./mappers";
 
 export class MongoUserRepository implements UserRepository {
@@ -71,6 +71,19 @@ export class MongoEpisodeCache implements EpisodeCacheRepository {
   }
   async upsert(entry: SeasonEpisodes) {
     await this.col.replaceOne({ _id: `${entry.source}:${entry.externalId}:${entry.season}` }, M.toSeasonEpisodesDoc(entry), { upsert: true });
+  }
+}
+
+export class MongoEpisodeEntryRepository implements EpisodeEntryRepository {
+  constructor(private db: Db) {}
+  private get col() { return this.db.collection<M.WithIdEpisodeEntry>("episode_entries"); }
+  async upsert(e: EpisodeEntry) { await this.col.replaceOne({ _id: e.id }, M.toEpisodeEntryDoc(e), { upsert: true }); }
+  async findOne(userId: string, workId: string, season: number, episode: number) {
+    const d = await this.col.findOne({ userId, workId, season, episode });
+    return d ? M.fromEpisodeEntryDoc(d) : null;
+  }
+  async listByUserAndWork(userId: string, workId: string) {
+    return (await this.col.find({ userId, workId }).toArray()).map(M.fromEpisodeEntryDoc);
   }
 }
 

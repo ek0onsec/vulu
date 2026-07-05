@@ -5,12 +5,12 @@ import { getOrImportWork } from "./get-work";
 
 type Ref = { source: WorkSource; externalId: string; type: WorkType };
 
-function isValidRating(r: number): boolean {
+export function isValidRating(r: number): boolean {
   if (r < 0 || r > 5) return false;
   return Math.round(r * 10) === r * 10; // pas de 0,1
 }
 
-async function loadOrCreateEntry(deps: Deps, userId: string, ref: Ref): Promise<LibraryEntry> {
+export async function loadOrCreateEntry(deps: Deps, userId: string, ref: Ref): Promise<LibraryEntry> {
   const work = await getOrImportWork(deps, ref);
   const existing = await deps.entries.findByUserAndWork(userId, work.id);
   if (existing) return existing;
@@ -62,7 +62,7 @@ function clampPositive(n: number | null | undefined, max: number | null): number
   return max && max > 0 ? Math.min(v, max) : v;
 }
 
-function normalizeGrid(grid: number[][] | null | undefined, counts: number[] | null): number[][] {
+export function normalizeGrid(grid: number[][] | null | undefined, counts: number[] | null): number[][] {
   if (!grid) return [];
   const out: number[][] = [];
   for (let i = 0; i < grid.length; i++) {
@@ -75,7 +75,7 @@ function normalizeGrid(grid: number[][] | null | undefined, counts: number[] | n
   return out;
 }
 
-function derivePosition(grid: number[][]): { season: number | null; episode: number | null } {
+export function derivePosition(grid: number[][]): { season: number | null; episode: number | null } {
   for (let i = grid.length - 1; i >= 0; i--) {
     const eps = grid[i];
     if (eps && eps.length) return { season: i + 1, episode: Math.max(...eps) };

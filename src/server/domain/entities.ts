@@ -84,6 +84,20 @@ export interface SeasonEpisodes {
   cachedAt: Date;
 }
 
+export interface EpisodeEntry {
+  id: string;
+  userId: string;
+  workId: string;
+  season: number;
+  episode: number;
+  watched: boolean;
+  watchedAt: Date | null;
+  rating: number | null;   // 0–5, pas de 0,1
+  text: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Work {
   id: string;
   source: WorkSource;

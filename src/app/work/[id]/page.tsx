@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { EntryEditor } from "@/components/EntryEditor";
 import { AddToListButton } from "@/components/AddToListButton";
 import { WorkReviews } from "@/components/WorkReviews";
+import { SeriesTabs } from "@/components/SeriesTabs";
 import { RatingStars } from "@/components/RatingStars";
 import { BackButton } from "@/components/BackButton";
 import Link from "next/link";
@@ -85,21 +86,35 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
         )}
       </div>
 
-      <div className="mt-4">
-        <EntryEditor workRef={{ source: work.source, externalId: work.externalId, type: work.type }} initial={entry} workType={work.type} episodeCounts={work.episodeCounts} pageCount={work.pageCount} />
-      </div>
-
-      <div className="mt-3">
-        <AddToListButton workRef={{ source: work.source, externalId: work.externalId, type: work.type }} workId={work.id} />
-      </div>
-
-      {entry?.status === "done" && entry.rating !== null && (
-        <p className="mt-4 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
-          Ta note : <RatingStars value={entry.rating} /> {entry.rating.toFixed(1).replace(".", ",")}/5
-        </p>
+      {work.type === "tv" ? (
+        <SeriesTabs workId={work.id} episodeCounts={work.episodeCounts}>
+          <EntryEditor workRef={{ source: work.source, externalId: work.externalId, type: work.type }} initial={entry} workType={work.type} episodeCounts={work.episodeCounts} pageCount={work.pageCount} />
+          <div className="mt-3">
+            <AddToListButton workRef={{ source: work.source, externalId: work.externalId, type: work.type }} workId={work.id} />
+          </div>
+          {entry?.status === "done" && entry.rating !== null && (
+            <p className="mt-4 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+              Ta note : <RatingStars value={entry.rating} /> {entry.rating.toFixed(1).replace(".", ",")}/5
+            </p>
+          )}
+          <WorkReviews workId={work.id} />
+        </SeriesTabs>
+      ) : (
+        <>
+          <div className="mt-4">
+            <EntryEditor workRef={{ source: work.source, externalId: work.externalId, type: work.type }} initial={entry} workType={work.type} episodeCounts={work.episodeCounts} pageCount={work.pageCount} />
+          </div>
+          <div className="mt-3">
+            <AddToListButton workRef={{ source: work.source, externalId: work.externalId, type: work.type }} workId={work.id} />
+          </div>
+          {entry?.status === "done" && entry.rating !== null && (
+            <p className="mt-4 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+              Ta note : <RatingStars value={entry.rating} /> {entry.rating.toFixed(1).replace(".", ",")}/5
+            </p>
+          )}
+          <WorkReviews workId={work.id} />
+        </>
       )}
-
-      <WorkReviews workId={work.id} />
     </AppShell>
   );
 }
