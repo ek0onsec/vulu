@@ -7,7 +7,7 @@ import { FeedCard } from "@/components/FeedCard";
 import { Icon } from "@/components/Icon";
 import { Avatar } from "@/components/Avatar";
 import { Modal } from "@/components/Modal";
-import type { FeedItem } from "@/server/application/feed";
+import type { WorkFeedItem } from "@/server/application/feed";
 
 type Role = "owner" | "moderator" | "member";
 interface CommunityDto {
@@ -23,7 +23,7 @@ const roleLabel: Record<Role, string> = { owner: "Créateur", moderator: "Modér
 
 export function CommunityClient({ id }: { id: string }) {
   const [c, setC] = useState<CommunityDto | null>(null);
-  const [items, setItems] = useState<FeedItem[] | null>(null);
+  const [items, setItems] = useState<WorkFeedItem[] | null>(null);
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [inviteName, setInviteName] = useState("");
@@ -47,7 +47,7 @@ export function CommunityClient({ id }: { id: string }) {
   // Détail dépendant de l'état d'appartenance : fil, modération, membres, invitation.
   function loadDetails(dto: CommunityDto) {
     const canSeeFeed = dto.isMember || dto.visibility === "public";
-    if (canSeeFeed) api.get<{ items: FeedItem[] }>(`/api/communities/${id}/feed`).then((d) => setItems(d.items)).catch(() => setItems([]));
+    if (canSeeFeed) api.get<{ items: WorkFeedItem[] }>(`/api/communities/${id}/feed`).then((d) => setItems(d.items)).catch(() => setItems([]));
     else setItems(null);
     if (dto.canModerate) api.get<{ requests: JoinRequest[] }>(`/api/communities/${id}/requests`).then((d) => setRequests(d.requests)).catch(() => setRequests([]));
     if (dto.isMember) api.get<{ members: Member[] }>(`/api/communities/${id}/members`).then((d) => setMembers(d.members)).catch(() => setMembers([]));

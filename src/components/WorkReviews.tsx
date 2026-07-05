@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
 import { FeedCard } from "./FeedCard";
-import type { FeedItem } from "@/server/application/feed";
+import type { WorkFeedItem } from "@/server/application/feed";
 
 export function WorkReviews({ workId }: { workId: string }) {
-  const [data, setData] = useState<{ mine: FeedItem | null; others: FeedItem[] } | null>(null);
+  const [data, setData] = useState<{ mine: WorkFeedItem | null; others: WorkFeedItem[] } | null>(null);
 
   useEffect(() => {
-    api.get<{ mine: FeedItem | null; others: FeedItem[] }>(`/api/works/${workId}/reviews`)
+    api.get<{ mine: WorkFeedItem | null; others: WorkFeedItem[] }>(`/api/works/${workId}/reviews`)
       .then(setData).catch(() => setData({ mine: null, others: [] }));
   }, [workId]);
 
