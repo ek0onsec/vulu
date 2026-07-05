@@ -78,6 +78,7 @@ export class MongoEpisodeEntryRepository implements EpisodeEntryRepository {
   constructor(private db: Db) {}
   private get col() { return this.db.collection<M.WithIdEpisodeEntry>("episode_entries"); }
   async upsert(e: EpisodeEntry) { await this.col.replaceOne({ _id: e.id }, M.toEpisodeEntryDoc(e), { upsert: true }); }
+  async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromEpisodeEntryDoc(d) : null; }
   async findOne(userId: string, workId: string, season: number, episode: number) {
     const d = await this.col.findOne({ userId, workId, season, episode });
     return d ? M.fromEpisodeEntryDoc(d) : null;
