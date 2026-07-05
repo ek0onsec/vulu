@@ -1,8 +1,8 @@
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes } from "@/server/domain/entities";
 import { isPublishable, isFeedVisible } from "@/server/domain/feed-rules";
 
 export class InMemoryUserRepository implements UserRepository {
@@ -57,6 +57,13 @@ export class InMemoryWorkRepository implements WorkRepository {
   async findByExternal(source: WorkSource, externalId: string) {
     return [...this.byId.values()].find((w) => w.source === source && w.externalId === externalId) ?? null;
   }
+}
+
+export class InMemoryEpisodeCache implements EpisodeCacheRepository {
+  private byKey = new Map<string, SeasonEpisodes>();
+  private key(source: WorkSource, externalId: string, season: number) { return `${source}:${externalId}:${season}`; }
+  async find(source: WorkSource, externalId: string, season: number) { return this.byKey.get(this.key(source, externalId, season)) ?? null; }
+  async upsert(entry: SeasonEpisodes) { this.byKey.set(this.key(entry.source, entry.externalId, entry.season), entry); }
 }
 
 export class InMemoryLibraryEntryRepository implements LibraryEntryRepository {
