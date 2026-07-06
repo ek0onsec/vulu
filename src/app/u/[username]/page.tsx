@@ -37,25 +37,36 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const tasteMatch = rawMatch && rawMatch.overlap >= 3 ? rawMatch : null;
   const [followers, following] = await Promise.all([deps.follows.countFollowers(target.id), deps.follows.countFollowing(target.id)]);
 
-  async function toPosters(entries: LibraryEntry[]): Promise<PosterItem[]> {
-    const resolved = await Promise.all(entries.map(async (e) => ({ e, w: await deps.works.findById(e.workId) })));
-    return resolved
-      .filter((x) => x.w !== null)
-      .map(({ e, w }) => ({ id: e.id, workId: w!.id, posterUrl: w!.posterUrl, title: w!.title, rating: e.rating, type: w!.type }));
-  }
+  const [watchedEntries, plannedEntries, inProgressEntries] = await Promise.all([
+    canView
+      ? deps.entries.listByUser(target.id, { status: "done" }).then((es) => es.filter((e) => e.audiences.public || isSelf || inCircle))
+      : Promise.resolve<LibraryEntry[]>([]),
+    isSelf ? deps.entries.listByUser(target.id, { status: "planned" }) : Promise.resolve<LibraryEntry[]>([]),
+    isSelf ? deps.entries.listByUser(target.id, { status: "in_progress" }) : Promise.resolve<LibraryEntry[]>([]),
+  ]);
 
-  const watchedEntries = canView
-    ? (await deps.entries.listByUser(target.id, { status: "done" })).filter((e) => e.audiences.public || isSelf || inCircle)
-    : [];
-  const watched = await toPosters(watchedEntries);
-  const planned = isSelf ? await toPosters(await deps.entries.listByUser(target.id, { status: "planned" })) : null;
-  const inProgress = isSelf
-    ? await Promise.all((await deps.entries.listByUser(target.id, { status: "in_progress" })).map(async (e) => {
-        const w = await deps.works.findById(e.workId);
-        return w ? { entryId: e.id, workId: w.id, source: w.source, externalId: w.externalId, title: w.title, posterUrl: w.posterUrl,
-          type: w.type, episodeCounts: w.episodeCounts, pageCount: w.pageCount, progress: e.progress, peopleIds: w.people.map((p) => p.tmdbId) } : null;
-      })).then((xs) => xs.filter((x): x is NonNullable<typeof x> => x !== null))
-    : [];
+  // Toutes les œuvres nécessaires (posters + vitrine) en UNE requête $in, au lieu d'un findById par entrée.
+  const showcaseIds = canView ? [...target.showcase.movie, ...target.showcase.tv, ...target.showcase.book] : [];
+  const neededWorkIds = [...new Set([
+    ...watchedEntries.map((e) => e.workId),
+    ...plannedEntries.map((e) => e.workId),
+    ...inProgressEntries.map((e) => e.workId),
+    ...showcaseIds,
+  ])];
+  const worksById = new Map((await deps.works.findByIds(neededWorkIds)).map((w) => [w.id, w]));
+
+  const toPosters = (entries: LibraryEntry[]): PosterItem[] =>
+    entries.flatMap((e) => {
+      const w = worksById.get(e.workId);
+      return w ? [{ id: e.id, workId: w.id, posterUrl: w.posterUrl, title: w.title, rating: e.rating, type: w.type }] : [];
+    });
+  const watched = toPosters(watchedEntries);
+  const planned = isSelf ? toPosters(plannedEntries) : null;
+  const inProgress = inProgressEntries.flatMap((e) => {
+    const w = worksById.get(e.workId);
+    return w ? [{ entryId: e.id, workId: w.id, source: w.source, externalId: w.externalId, title: w.title, posterUrl: w.posterUrl,
+      type: w.type, episodeCounts: w.episodeCounts, pageCount: w.pageCount, progress: e.progress, peopleIds: w.people.map((p) => p.tmdbId) }] : [];
+  });
 
   const lists: ListItem[] = canView
     ? (await deps.lists.listByUser(target.id))
@@ -63,12 +74,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
         .map((l) => ({ id: l.id, name: l.name, description: l.description, visibility: l.visibility, bannerUrl: l.bannerUrl, count: l.workIds.length }))
     : [];
 
-  async function resolveShowcase(ids: string[]): Promise<ShowcaseWork[]> {
-    const works = await Promise.all(ids.map((id) => deps.works.findById(id)));
-    return works.filter((w) => w !== null).map((w) => ({ workId: w!.id, title: w!.title, posterUrl: w!.posterUrl }));
-  }
+  const resolveShowcase = (ids: string[]): ShowcaseWork[] =>
+    ids.flatMap((id) => { const w = worksById.get(id); return w ? [{ workId: w.id, title: w.title, posterUrl: w.posterUrl }] : []; });
   const showcase = canView
-    ? { movie: await resolveShowcase(target.showcase.movie), tv: await resolveShowcase(target.showcase.tv), book: await resolveShowcase(target.showcase.book) }
+    ? { movie: resolveShowcase(target.showcase.movie), tv: resolveShowcase(target.showcase.tv), book: resolveShowcase(target.showcase.book) }
     : { movie: [], tv: [], book: [] };
 
   const showFilms = target.activeTabs.includes("films");

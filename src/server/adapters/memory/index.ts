@@ -54,6 +54,7 @@ export class InMemoryWorkRepository implements WorkRepository {
   private byId = new Map<string, Work>();
   async upsert(w: Work) { this.byId.set(w.id, w); }
   async findById(id: string) { return this.byId.get(id) ?? null; }
+  async findByIds(ids: string[]) { return ids.map((id) => this.byId.get(id)).filter((w): w is Work => w !== undefined); }
   async findByExternal(source: WorkSource, externalId: string) {
     return [...this.byId.values()].find((w) => w.source === source && w.externalId === externalId) ?? null;
   }

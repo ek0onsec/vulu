@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { InMemoryUserRepository, InMemoryFollowRepository, InMemoryLibraryEntryRepository, InMemoryMembershipRepository, InMemoryCommunityRequestRepository } from "@/server/adapters/memory";
-import type { User, LibraryEntry } from "@/server/domain/entities";
+import { InMemoryUserRepository, InMemoryFollowRepository, InMemoryLibraryEntryRepository, InMemoryMembershipRepository, InMemoryCommunityRequestRepository, InMemoryWorkRepository } from "@/server/adapters/memory";
+import type { User, LibraryEntry, Work } from "@/server/domain/entities";
+
+function work(id: string): Work {
+  return { id, source: "tmdb", externalId: id, type: "movie", domain: "films", title: id, year: null, posterUrl: null, backdropUrl: null, overview: null, genres: [], people: [], externalRating: null, watchProviders: [], episodeCounts: null, pageCount: null, runtime: null, cachedAt: new Date() };
+}
 
 function user(id: string, over: Partial<User> = {}): User {
   return { id, email: `${id}@x.io`, passwordHash: "h", username: id, displayName: id,
@@ -13,6 +17,15 @@ function entry(id: string, over: Partial<LibraryEntry> = {}): LibraryEntry {
 }
 
 describe("InMemory repos", () => {
+  it("WorkRepository.findByIds renvoie les œuvres présentes (ignore les absentes)", async () => {
+    const r = new InMemoryWorkRepository();
+    await r.upsert(work("w1"));
+    await r.upsert(work("w2"));
+    const found = await r.findByIds(["w1", "absent", "w2"]);
+    expect(found.map((w) => w.id).sort()).toEqual(["w1", "w2"]);
+    expect(await r.findByIds([])).toEqual([]);
+  });
+
   it("UserRepository find by email/username", async () => {
     const r = new InMemoryUserRepository();
     await r.create(user("u1", { email: "a@x.io", username: "alice" }));
