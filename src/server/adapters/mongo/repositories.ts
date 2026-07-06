@@ -59,6 +59,7 @@ export class MongoWorkRepository implements WorkRepository {
   private get col() { return this.db.collection<M.WithIdWork>("works"); }
   async upsert(w: Work) { await this.col.replaceOne({ _id: w.id }, M.toWorkDoc(w), { upsert: true }); }
   async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromWorkDoc(d) : null; }
+  async findByIds(ids: string[]) { if (!ids.length) return []; return (await this.col.find({ _id: { $in: ids } }).toArray()).map(M.fromWorkDoc); }
   async findByExternal(source: WorkSource, externalId: string) { const d = await this.col.findOne({ source, externalId }); return d ? M.fromWorkDoc(d) : null; }
 }
 

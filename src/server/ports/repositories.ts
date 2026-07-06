@@ -35,6 +35,7 @@ export interface FollowRequestRepository {
 export interface WorkRepository {
   upsert(work: Work): Promise<void>;
   findById(id: string): Promise<Work | null>;
+  findByIds(ids: string[]): Promise<Work[]>;
   findByExternal(source: WorkSource, externalId: string): Promise<Work | null>;
 }
 export interface EpisodeCacheRepository {

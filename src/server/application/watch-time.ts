@@ -1,8 +1,5 @@
 import type { Deps } from "@/server/container";
 import type { LibraryEntry, Work } from "@/server/domain/entities";
-import { backfillRuntime } from "./get-work";
-
-const MAX_BACKFILL = 20;
 
 /** Épisodes cumulés vus jusqu'à (saison, épisode) courant, d'après le découpage par saison. */
 function episodesSeen(entry: LibraryEntry, work: Work): number {
@@ -17,18 +14,15 @@ function episodesSeen(entry: LibraryEntry, work: Work): number {
 
 /** Temps total de visionnage (films + séries), en minutes, pour un utilisateur. */
 export async function computeWatchMinutes(deps: Deps, userId: string): Promise<number> {
-  const entries = await deps.entries.listByUser(userId, {});
+  const entries = (await deps.entries.listByUser(userId, {})).filter((e) => e.status !== "planned");
+  // Une seule requête $in au lieu d'un findById par entrée (évite le N+1 sur les gros profils).
+  const byId = new Map((await deps.works.findByIds(entries.map((e) => e.workId))).map((w) => [w.id, w]));
   let minutes = 0;
-  let backfillBudget = MAX_BACKFILL;
   for (const entry of entries) {
-    if (entry.status === "planned") continue;
-    let work = await deps.works.findById(entry.workId);
-    if (!work || work.type === "book") continue;
-    if (work.runtime === null && backfillBudget > 0) {
-      backfillBudget -= 1;
-      work = await backfillRuntime(deps, work);
-    }
-    if (work.runtime === null) continue;
+    const work = byId.get(entry.workId);
+    // Pas de backfill TMDB ici (chemin de rendu) : un runtime manquant est simplement ignoré ;
+    // il est renseigné à la visite de la page de l'œuvre (getOrImportWork → backfillRuntime).
+    if (!work || work.type === "book" || work.runtime === null) continue;
     if (work.type === "movie") {
       if (entry.status === "done") minutes += work.runtime;
     } else if (work.type === "tv") {
