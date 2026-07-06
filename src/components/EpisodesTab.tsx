@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
 import { RatingSlider } from "./RatingSlider";
@@ -9,24 +10,26 @@ interface EpisodeEntry { season: number; episode: number; watched: boolean; watc
 interface SeasonData { episodes: EpisodeSummary[]; entries: EpisodeEntry[] }
 
 export function EpisodesTab({ workId, episodeCounts }: { workId: string; episodeCounts: number[] | null }) {
+  const router = useRouter();
   const seasons = episodeCounts ?? [];
   const [open, setOpen] = useState<number | null>(seasons.length ? 1 : null);
   const [data, setData] = useState<Record<number, SeasonData>>({});
   const [communities, setCommunities] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => { api.get<{ communities: { id: string; name: string }[] }>("/api/communities/mine").then((d) => setCommunities(d.communities)).catch(() => {}); }, []);
 
-  async function loadSeason(season: number) {
-    if (data[season]) return;
-    try {
-      const d = await api.get<SeasonData>(`/api/works/${workId}/seasons/${season}`);
-      setData((prev) => ({ ...prev, [season]: d }));
-    } catch { toast("Chargement impossible", "error"); }
-  }
+  // Charge la saison ouverte (au montage — saison 1 par défaut — et à chaque ouverture),
+  // sans dépendre du clic, sinon le premier rendu reste bloqué sur « Chargement… ».
+  useEffect(() => {
+    if (open === null || data[open]) return;
+    let cancelled = false;
+    api.get<SeasonData>(`/api/works/${workId}/seasons/${open}`)
+      .then((d) => { if (!cancelled) setData((prev) => ({ ...prev, [open]: d })); })
+      .catch(() => toast("Chargement impossible", "error"));
+    return () => { cancelled = true; };
+  }, [open, workId, data]);
 
   function toggleSeason(season: number) {
-    const next = open === season ? null : season;
-    setOpen(next);
-    if (next) loadSeason(next);
+    setOpen((cur) => (cur === season ? null : season));
   }
 
   function entryFor(season: number, episode: number): EpisodeEntry | undefined {
@@ -41,6 +44,7 @@ export function EpisodesTab({ workId, episodeCounts }: { workId: string; episode
         const entries = [...sd.entries.filter((e) => e.episode !== episode), entry];
         return { ...prev, [season]: { ...sd, entries } };
       });
+      router.refresh(); // met à jour le statut dérivé (En cours / Vu) affiché ailleurs sur la page
     } catch { toast("Action impossible", "error"); }
   }
 
