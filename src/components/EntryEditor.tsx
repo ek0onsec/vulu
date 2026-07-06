@@ -9,9 +9,9 @@ import type { LibraryEntry, WorkSource, WorkType } from "@/server/domain/entitie
 
 interface Ref { source: WorkSource; externalId: string; type: WorkType }
 
-export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCount }: {
+export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCount, workId }: {
   workRef: Ref; initial: LibraryEntry | null;
-  workType: WorkType; episodeCounts: number[] | null; pageCount: number | null;
+  workType: WorkType; episodeCounts: number[] | null; pageCount: number | null; workId: string;
 }) {
   const router = useRouter();
   const [entryId, setEntryId] = useState<string | null>(initial?.id ?? null);
@@ -112,7 +112,15 @@ export function EntryEditor({ workRef, initial, workType, episodeCounts, pageCou
       <div className="mb-4 inline-flex overflow-hidden rounded-full border border-[var(--color-border)]">
         <button className={seg(status === "planned")} onClick={() => setStatus("planned")}>{statusLabel("planned", workType)}</button>
         <button className={seg(status === "in_progress")} onClick={() => setStatus("in_progress")}>{statusLabel("in_progress", workType)}</button>
-        <button className={seg(status === "done")} onClick={() => { setStatus("done"); if (!completedAt) setCompletedAt(new Date().toISOString().slice(0, 10)); }}>{statusLabel("done", workType)} ✓</button>
+        <button className={seg(status === "done")} disabled={busy} onClick={async () => {
+          if (workType === "tv") {
+            setBusy(true);
+            try { await api.put(`/api/works/${workId}/episodes/all`, { watched: true }); toast("Série marquée comme vue"); router.refresh(); }
+            catch { toast("Action impossible", "error"); } finally { setBusy(false); }
+            return;
+          }
+          setStatus("done"); if (!completedAt) setCompletedAt(new Date().toISOString().slice(0, 10));
+        }}>{statusLabel("done", workType)} ✓</button>
       </div>
 
       {status === "in_progress" && workType === "book" && (

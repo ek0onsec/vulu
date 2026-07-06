@@ -1,9 +1,10 @@
 "use client";
 import { useState, type ReactNode } from "react";
 import { EpisodesTab } from "./EpisodesTab";
+import { SeasonGrid } from "./SeasonGrid";
 
-export function SeriesTabs({ workId, episodeCounts, children }: {
-  workId: string; episodeCounts: number[] | null; children: ReactNode;
+export function SeriesTabs({ workId, episodeCounts, initialWatched, children }: {
+  workId: string; episodeCounts: number[] | null; initialWatched: number[][] | null; children: ReactNode;
 }) {
   const [tab, setTab] = useState<"apercu" | "episodes">("apercu");
   const seg = (on: boolean) =>
@@ -14,7 +15,12 @@ export function SeriesTabs({ workId, episodeCounts, children }: {
         <button className={seg(tab === "apercu")} onClick={() => setTab("apercu")}>Aperçu</button>
         <button className={seg(tab === "episodes")} onClick={() => setTab("episodes")}>Épisodes</button>
       </div>
-      {tab === "apercu" ? children : <EpisodesTab workId={workId} episodeCounts={episodeCounts} />}
+      {tab === "apercu" ? (
+        <>
+          <SeasonGrid workId={workId} episodeCounts={episodeCounts} initialWatched={initialWatched} />
+          {children}
+        </>
+      ) : <EpisodesTab workId={workId} episodeCounts={episodeCounts} />}
     </div>
   );
 }
