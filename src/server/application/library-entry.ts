@@ -2,6 +2,7 @@ import type { Deps } from "@/server/container";
 import type { EntryProgress, EntryStatus, LibraryEntry, EntryAudiences, WorkSource, WorkType } from "@/server/domain/entities";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/server/domain/errors";
 import { getOrImportWork } from "./get-work";
+import { deriveSeriesStatus } from "./series-status";
 
 type Ref = { source: WorkSource; externalId: string; type: WorkType };
 
@@ -48,9 +49,13 @@ export async function rateOrReviewWork(
     if (!member) throw new ForbiddenError("Tu n'es pas membre de cette communauté");
   }
   const entry = await loadOrCreateEntry(deps, userId, ref);
-  const updated: LibraryEntry = { ...entry, status: "done", rating: input.rating,
+  const work = await getOrImportWork(deps, ref);
+  const status = work.type === "tv"
+    ? deriveSeriesStatus(entry.progress?.watchedEpisodes ?? null, work.episodeCounts)
+    : "done";
+  const updated: LibraryEntry = { ...entry, status, rating: input.rating,
     text: input.text?.trim() ? input.text.trim() : null, audiences,
-    completedAt: input.completedAt !== undefined ? input.completedAt : (entry.completedAt ?? deps.clock.now()),
+    completedAt: input.completedAt !== undefined ? input.completedAt : (status === "done" ? entry.completedAt ?? deps.clock.now() : entry.completedAt),
     activityAt: deps.clock.now(), updatedAt: deps.clock.now() };
   await deps.entries.upsert(updated);
   return updated;

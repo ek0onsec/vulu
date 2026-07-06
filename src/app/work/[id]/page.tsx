@@ -87,8 +87,8 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {work.type === "tv" ? (
-        <SeriesTabs workId={work.id} episodeCounts={work.episodeCounts}>
-          <EntryEditor workRef={{ source: work.source, externalId: work.externalId, type: work.type }} initial={entry} workType={work.type} episodeCounts={work.episodeCounts} pageCount={work.pageCount} />
+        <SeriesTabs workId={work.id} episodeCounts={work.episodeCounts} initialWatched={entry?.progress?.watchedEpisodes ?? null}>
+          <EntryEditor workRef={{ source: work.source, externalId: work.externalId, type: work.type }} initial={entry} workType={work.type} episodeCounts={work.episodeCounts} pageCount={work.pageCount} workId={work.id} />
           <div className="mt-3">
             <AddToListButton workRef={{ source: work.source, externalId: work.externalId, type: work.type }} workId={work.id} />
           </div>
@@ -102,7 +102,7 @@ export default async function WorkPage({ params }: { params: Promise<{ id: strin
       ) : (
         <>
           <div className="mt-4">
-            <EntryEditor workRef={{ source: work.source, externalId: work.externalId, type: work.type }} initial={entry} workType={work.type} episodeCounts={work.episodeCounts} pageCount={work.pageCount} />
+            <EntryEditor workRef={{ source: work.source, externalId: work.externalId, type: work.type }} initial={entry} workType={work.type} episodeCounts={work.episodeCounts} pageCount={work.pageCount} workId={work.id} />
           </div>
           <div className="mt-3">
             <AddToListButton workRef={{ source: work.source, externalId: work.externalId, type: work.type }} workId={work.id} />
