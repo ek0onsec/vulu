@@ -13,7 +13,20 @@ interface Volume {
     categories?: string[];
     imageLinks?: { thumbnail?: string; smallThumbnail?: string };
     pageCount?: number;
+    industryIdentifiers?: { type: string; identifier: string }[];
   };
+}
+
+interface SecondaryBooks {
+  lookupIsbn(isbn: string): Promise<{ title: string; authors: string[]; coverUrl: string | null } | null>;
+  coverByIsbn(isbn: string): Promise<string | null>;
+}
+
+function isbnOf(info: Volume["volumeInfo"]): string | null {
+  const ids = info?.industryIdentifiers ?? [];
+  return ids.find((i) => i.type === "ISBN_13")?.identifier
+    ?? ids.find((i) => i.type === "ISBN_10")?.identifier
+    ?? null;
 }
 
 /** Liste curée de genres littéraires (Google Books n'expose pas de référentiel propre). */
@@ -44,7 +57,7 @@ function cover(info: Volume["volumeInfo"]): string | null {
 }
 
 export class GoogleBooksCatalog {
-  constructor(private cfg: GoogleBooksConfig, private fetchImpl: typeof fetch = fetch) {}
+  constructor(private cfg: GoogleBooksConfig, private fetchImpl: typeof fetch = fetch, private secondary?: SecondaryBooks) {}
 
   private async get<T>(path: string, params: Record<string, string>): Promise<T> {
     const url = new URL(this.cfg.baseUrl + path);
@@ -75,7 +88,15 @@ export class GoogleBooksCatalog {
   async findByIsbn(isbn: string): Promise<WorkSummary | null> {
     const data = await this.get<{ items?: Volume[] }>("/volumes", { q: `isbn:${isbn}`, maxResults: "1" });
     const v = data.items?.[0];
-    return v ? this.toSummary(v) : null;
+    if (v) return this.toSummary(v);
+    if (!this.secondary) return null;
+    let ol: { title: string; authors: string[]; coverUrl: string | null } | null = null;
+    try { ol = await this.secondary.lookupIsbn(isbn); } catch { ol = null; }
+    if (!ol) return null;
+    const byTitle = await this.searchWorks(ol.title);
+    const match = byTitle[0];
+    if (!match) return null;
+    return match.posterUrl ? match : { ...match, posterUrl: ol.coverUrl };
   }
 
   async getPersonCredits(): Promise<WorkSummary[]> { return []; }
@@ -86,7 +107,7 @@ export class GoogleBooksCatalog {
     const v = await this.get<Volume>(`/volumes/${externalId}`, {});
     if (!v?.id) return null;
     const info = v.volumeInfo ?? {};
-    return {
+    const details: WorkDetails = {
       source: "googlebooks",
       externalId: v.id,
       type: "book",
@@ -102,6 +123,13 @@ export class GoogleBooksCatalog {
       episodeCounts: null,
       pageCount: typeof info.pageCount === "number" && info.pageCount > 0 ? info.pageCount : null,
     };
+    if (details.posterUrl === null && this.secondary) {
+      const isbn = isbnOf(info);
+      if (isbn) {
+        try { const url = await this.secondary.coverByIsbn(isbn); if (url) details.posterUrl = url; } catch { /* repli silencieux */ }
+      }
+    }
+    return details;
   }
 
   async listGenres(): Promise<Genre[]> {
