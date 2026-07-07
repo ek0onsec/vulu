@@ -28,6 +28,7 @@ import {
 } from "@/server/adapters/mongo/repositories";
 import { TmdbCatalog } from "@/server/adapters/catalog/tmdb-catalog";
 import { GoogleBooksCatalog } from "@/server/adapters/catalog/google-books-catalog";
+import { OpenLibraryBooks } from "@/server/adapters/catalog/open-library";
 import { CompositeCatalog } from "@/server/adapters/catalog/composite-catalog";
 import { OtplibTotp } from "@/server/adapters/security/otplib-totp";
 import { NodeCrypto } from "@/server/adapters/security/node-crypto";
@@ -107,7 +108,11 @@ export async function getDeps(): Promise<Deps> {
     comments: new MongoCommentRepository(db),
     catalog: new CompositeCatalog(
       new TmdbCatalog({ apiKey: env.TMDB_API_KEY, baseUrl: env.TMDB_BASE_URL, imageBase: env.TMDB_IMAGE_BASE }),
-      new GoogleBooksCatalog({ baseUrl: env.GOOGLE_BOOKS_BASE_URL, apiKey: env.GOOGLE_BOOKS_API_KEY }),
+      new GoogleBooksCatalog(
+        { baseUrl: env.GOOGLE_BOOKS_BASE_URL, apiKey: env.GOOGLE_BOOKS_API_KEY },
+        fetch,
+        new OpenLibraryBooks({ baseUrl: env.OPENLIBRARY_BASE_URL }),
+      ),
     ),
     media: new LocalDiskStorage(env.UPLOADS_DIR),
     hasher: new BcryptHasher(12),

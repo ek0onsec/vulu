@@ -62,4 +62,33 @@ describe("GoogleBooksCatalog", () => {
     const c = new GoogleBooksCatalog(cfg, fakeFetch({ "/volumes": {} }));
     expect(await c.findByIsbn("0000000000000")).toBeNull();
   });
+
+  const fakeSecondary = (over: Partial<{ title: string; authors: string[]; coverUrl: string | null }> = {}) => ({
+    lookupIsbn: async () => ({ title: "La Route", authors: ["Cormac McCarthy"], coverUrl: "https://ol/cover.jpg", ...over }),
+    coverByIsbn: async () => over.coverUrl ?? "https://ol/cover.jpg",
+  });
+
+  it("getWork : couverture de repli Open Library quand Google n'en a pas", async () => {
+    const c = new GoogleBooksCatalog(cfg, fakeFetch({
+      "/volumes/BK1": { id: "BK1", volumeInfo: { title: "La Route", industryIdentifiers: [{ type: "ISBN_13", identifier: "9782207116210" }] } },
+    }), fakeSecondary());
+    const w = await c.getWork("BK1");
+    expect(w?.posterUrl).toBe("https://ol/cover.jpg");
+  });
+
+  it("findByIsbn : repli Open Library → recherche titre Google", async () => {
+    // NB : URLSearchParams encode ':' en %3A ; l'appel ISBN se distingue par maxResults=1, l'appel titre par q=La+Route.
+    const c = new GoogleBooksCatalog(cfg, fakeFetch({
+      "maxResults=1": { items: [] }, // Google ne trouve pas par ISBN
+      "q=La+Route": { items: [{ id: "BK1", volumeInfo: { title: "La Route" } }] }, // mais trouve par titre
+    }), fakeSecondary());
+    const r = await c.findByIsbn("9782207116210");
+    expect(r?.externalId).toBe("BK1");
+    expect(r?.posterUrl).toBe("https://ol/cover.jpg"); // couverture complétée depuis Open Library
+  });
+
+  it("sans secondary : comportement inchangé (couverture nulle, ISBN nul)", async () => {
+    const c = new GoogleBooksCatalog(cfg, fakeFetch({ "maxResults=1": { items: [] } }));
+    expect(await c.findByIsbn("0")).toBeNull();
+  });
 });
