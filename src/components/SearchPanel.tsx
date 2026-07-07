@@ -26,15 +26,6 @@ export function SearchPanel({ activeTabs, autoFocus = true, initialQuery, initia
   const [scanning, setScanning] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Refléter q/domaine dans l'URL (sans empiler l'historique) : « retour » depuis une fiche
-  // œuvre revient alors sur la recherche déjà filtrée.
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (q.trim()) params.set("q", q.trim());
-    params.set("domain", domain);
-    router.replace(`/search?${params.toString()}`, { scroll: false });
-  }, [q, domain, router]);
-
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
     const trimmed = q.trim();
@@ -42,15 +33,26 @@ export function SearchPanel({ activeTabs, autoFocus = true, initialQuery, initia
     const memberQuery = isMemberMode ? trimmed.slice(1).trim() : "";
     const catalogQuery = isMemberMode ? memberQuery : trimmed;
     if (!isMemberMode) setMembers([]);
-    if (!catalogQuery && !memberQuery) { setResults([]); setMembers([]); return; }
+    // Recherche « intelligente » : elle ne part qu'après une pause de frappe (debounce ci-dessous)
+    // et à partir de 2 caractères pour le catalogue — évite une requête API par lettre isolée.
+    const runMember = isMemberMode && memberQuery.length >= 1;
+    const runCatalog = catalogQuery.length >= 2;
     timer.current = setTimeout(async () => {
+      // Reflète q/domaine dans l'URL (sans empiler l'historique) une fois la frappe stabilisée.
+      // Une navigation à chaque caractère désynchronise l'input contrôlé (caractères perdus/réordonnés).
+      const params = new URLSearchParams();
+      if (trimmed) params.set("q", trimmed);
+      params.set("domain", domain);
+      router.replace(`/search?${params.toString()}`, { scroll: false });
+
+      if (!runMember && !runCatalog) { setResults([]); if (isMemberMode) setMembers([]); return; }
       setLoading(true);
       try {
-        if (isMemberMode && memberQuery) {
+        if (runMember) {
           const m = await api.get<{ users: UserSearchResult[] }>(`/api/users/search?q=${encodeURIComponent(memberQuery)}`);
           setMembers(m.users);
         }
-        if (catalogQuery) {
+        if (runCatalog) {
           const data = await api.get<{ results: WorkSummary[]; unavailable?: boolean }>(`/api/catalog/search?q=${encodeURIComponent(catalogQuery)}&domain=${domain}`);
           setResults(data.results);
           setUnavailable(Boolean(data.unavailable));
@@ -62,7 +64,7 @@ export function SearchPanel({ activeTabs, autoFocus = true, initialQuery, initia
       }
     }, 300);
     return () => { if (timer.current) clearTimeout(timer.current); };
-  }, [q, domain]);
+  }, [q, domain, router]);
 
   async function open(r: WorkSummary) {
     setOpening(r.externalId);
