@@ -24,8 +24,8 @@ export function ThemePicker({ plus }: { plus: boolean }) {
     const persist = plus || Boolean(free);
     applyPalette(id, persist);
     previewingRef.current = !persist;
-    if (persist) toast(id === "vulu" ? "Thème de marque rétabli" : "Thème activé ✓");
-    else toast("Aperçu — passe à vulu+ pour le garder", "error");
+    if (persist) toast(id === "vulu" ? "Thème de marque rétabli" : "Thème activé ✓", { key: "theme" });
+    else toast("Aperçu — passe à vulu+ pour le garder", { variant: "error", key: "theme" });
   }
 
   return (

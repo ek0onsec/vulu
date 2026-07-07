@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { subscribeToasts, type ToastItem } from "@/lib/toast";
+import { subscribeToasts, mergeToast, type ToastItem } from "@/lib/toast";
 
 export function ToastViewport() {
   const [items, setItems] = useState<ToastItem[]>([]);
 
   useEffect(() => {
     return subscribeToasts((t) => {
-      setItems((prev) => [...prev, t]);
+      setItems((prev) => mergeToast(prev, t));
       setTimeout(() => setItems((prev) => prev.filter((x) => x.id !== t.id)), t.durationMs);
     });
   }, []);
