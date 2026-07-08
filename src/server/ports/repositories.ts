@@ -13,6 +13,10 @@ export interface UserRepository {
   listRecent(limit: number): Promise<User[]>;
   /** Recherche par username OU displayName (contains, insensible à la casse). */
   searchByText(query: string, limit: number): Promise<User[]>;
+  /** Retrouve un utilisateur par son code d'invitation (déjà normalisé en majuscules). */
+  findByInviteCode(code: string): Promise<User | null>;
+  /** Liste les utilisateurs parrainés par `inviterId` (filleuls). */
+  listByInviter(inviterId: string): Promise<User[]>;
 }
 export interface FollowRepository {
   add(follow: Follow): Promise<void>;

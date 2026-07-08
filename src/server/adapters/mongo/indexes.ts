@@ -4,7 +4,9 @@ export async function ensureIndexes(db: Db): Promise<void> {
   await db.collection("users").createIndexes([
     { key: { email: 1 }, unique: true, name: "uniq_email" },
     { key: { username: 1 }, unique: true, name: "uniq_username" },
+    { key: { inviteCode: 1 }, unique: true, sparse: true, name: "uniq_invite_code" },
   ]);
+  await db.collection("users").createIndex({ invitedBy: 1 }, { name: "by_inviter" });
   await db.collection("follows").createIndexes([
     { key: { followerId: 1, followeeId: 1 }, unique: true, name: "uniq_edge" },
     { key: { followeeId: 1 }, name: "by_followee" },

@@ -9,7 +9,7 @@ function work(id: string): Work {
 function user(id: string, over: Partial<User> = {}): User {
   return { id, email: `${id}@x.io`, passwordHash: "h", username: id, displayName: id,
     bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"], tastes: { filmGenreIds: [], people: [] }, showcase: { movie: [], tv: [], book: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, twoFactorSecret: null, twoFactorBackupCodes: [], deactivatedAt: null, notificationsSeenAt: null, tourCompletedAt: null,
-    createdAt: new Date(), ...over };
+    createdAt: new Date(), inviteCode: "XXXXXXXX", invitedBy: null, ...over };
 }
 function entry(id: string, over: Partial<LibraryEntry> = {}): LibraryEntry {
   return { id, userId: "u1", workId: "w1", domain: "films", status: "done", rating: 4,

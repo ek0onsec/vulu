@@ -4,7 +4,7 @@ import type { User, LibraryEntry } from "@/server/domain/entities";
 
 const user: User = { id: "u1", email: "a@x.io", passwordHash: "h", username: "alice",
   displayName: "Alice", bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"],
-  tastes: { filmGenreIds: [1, 2, 3], people: [] }, showcase: { movie: [], tv: [], book: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, twoFactorSecret: null, twoFactorBackupCodes: [], deactivatedAt: null, notificationsSeenAt: null, tourCompletedAt: null, createdAt: new Date("2024-01-01") };
+  tastes: { filmGenreIds: [1, 2, 3], people: [] }, showcase: { movie: [], tv: [], book: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, twoFactorSecret: null, twoFactorBackupCodes: [], deactivatedAt: null, notificationsSeenAt: null, tourCompletedAt: null, createdAt: new Date("2024-01-01"), inviteCode: "XXXXXXXX", invitedBy: null };
 const entry: LibraryEntry = { id: "e1", userId: "u1", workId: "w1", domain: "films",
   status: "done", rating: 4.2, text: "top", audiences: { public: true, circle: true, communityIds: [] },
   completedAt: null, progress: null, activityAt: new Date("2024-01-02"),

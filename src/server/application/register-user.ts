@@ -43,6 +43,8 @@ export async function registerUser(deps: Deps, input: RegisterInput): Promise<Us
     notificationsSeenAt: null,
     tourCompletedAt: null,
     createdAt: deps.clock.now(),
+    inviteCode: deps.inviteCodes.next(),
+    invitedBy: null,
   };
   await deps.users.create(user);
   return user;

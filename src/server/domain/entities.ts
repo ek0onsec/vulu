@@ -53,6 +53,8 @@ export interface User {
   notificationsSeenAt: Date | null;
   tourCompletedAt: Date | null;    // null = app tour jamais vu/complété
   createdAt: Date;
+  inviteCode: string;        // code d'invitation permanent, unique, partageable
+  invitedBy: string | null;  // id du parrain (null si code fondateur / compte pré-invite)
 }
 
 export interface Follow {

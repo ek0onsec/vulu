@@ -9,6 +9,7 @@ const u: User = {
   plus: false, staff: false, private: false, twoFactorEnabled: true,
   twoFactorSecret: "ENCRYPTED", twoFactorBackupCodes: ["hash1"],
   deactivatedAt: null, notificationsSeenAt: null, tourCompletedAt: null, createdAt: new Date(),
+  inviteCode: "XXXXXXXX", invitedBy: null,
 };
 
 describe("serialize n'expose pas les secrets 2FA", () => {

@@ -11,7 +11,8 @@ beforeEach(async () => { await m.db.collection("users").deleteMany({}); await m.
 
 const user = (id: string, over: Partial<User> = {}): User => ({ id, email: `${id}@x.io`, passwordHash: "h",
   username: id, displayName: id, bio: null, avatarUrl: null, bannerUrl: null, activeTabs: ["films"],
-  tastes: { filmGenreIds: [1, 2, 3], people: [] }, showcase: { movie: [], tv: [], book: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, twoFactorSecret: null, twoFactorBackupCodes: [], deactivatedAt: null, notificationsSeenAt: null, tourCompletedAt: null, createdAt: new Date(), ...over });
+  tastes: { filmGenreIds: [1, 2, 3], people: [] }, showcase: { movie: [], tv: [], book: [] }, plus: false, staff: false, private: false, twoFactorEnabled: false, twoFactorSecret: null, twoFactorBackupCodes: [], deactivatedAt: null, notificationsSeenAt: null, tourCompletedAt: null, createdAt: new Date(),
+  inviteCode: id.toUpperCase().padEnd(8, "0").slice(0, 8), invitedBy: null, ...over });
 const entry = (id: string, over: Partial<LibraryEntry> = {}): LibraryEntry => ({ id, userId: "u1", workId: "w1",
   domain: "films", status: "done", rating: 4, text: "x", audiences: { public: true, circle: true, communityIds: [] },
   completedAt: null, progress: null, activityAt: null, createdAt: new Date(), updatedAt: new Date(), ...over });

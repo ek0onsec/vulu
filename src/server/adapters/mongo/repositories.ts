@@ -27,6 +27,8 @@ export class MongoUserRepository implements UserRepository {
     return (await this.col.find({ $or: [{ username: rx }, { displayName: rx }] })
       .sort({ username: 1 }).limit(limit).toArray()).map(M.fromUserDoc);
   }
+  async findByInviteCode(code: string) { const d = await this.col.findOne({ inviteCode: code }); return d ? M.fromUserDoc(d) : null; }
+  async listByInviter(inviterId: string) { return (await this.col.find({ invitedBy: inviterId }).toArray()).map(M.fromUserDoc); }
 }
 
 export class MongoFollowRepository implements FollowRepository {

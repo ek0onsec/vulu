@@ -25,6 +25,8 @@ export class InMemoryUserRepository implements UserRepository {
       .sort((a, b) => a.username.localeCompare(b.username))
       .slice(0, limit);
   }
+  async findByInviteCode(code: string) { return [...this.byId.values()].find((u) => u.inviteCode === code) ?? null; }
+  async listByInviter(inviterId: string) { return [...this.byId.values()].filter((u) => u.invitedBy === inviterId); }
 }
 
 export class InMemoryFollowRepository implements FollowRepository {
