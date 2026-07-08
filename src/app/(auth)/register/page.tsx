@@ -17,7 +17,9 @@ export default function RegisterPage() {
 
   useEffect(() => {
     const raw = sessionStorage.getItem(SIGNUP_KEY);
-    if (raw) setDraft(JSON.parse(raw) as SignupDraft);
+    // Fusion sur les valeurs par défaut : un brouillon sauvegardé avant l'ajout d'un champ
+    // (ex. inviteCode après déploiement) ne doit pas laisser ce champ à undefined.
+    if (raw) setDraft((d) => ({ ...d, ...(JSON.parse(raw) as Partial<SignupDraft>) }));
   }, []);
 
   function toggleTab(tab: Domain) {
