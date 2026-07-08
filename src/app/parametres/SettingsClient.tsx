@@ -11,6 +11,7 @@ import { Modal } from "@/components/Modal";
 import { Icon, type IconName } from "@/components/Icon";
 import { BrandLogo } from "@/components/BrandLogo";
 import { TwoFactorSettings } from "@/components/TwoFactorSettings";
+import { InviteSection } from "@/components/InviteSection";
 import { useTour } from "@/components/tour/TourProvider";
 import type { Tastes } from "@/server/domain/entities";
 
@@ -18,7 +19,7 @@ const DELETE_PHRASE = "SUPPRIMER MON COMPTE";
 const field = "w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm";
 const primaryBtn = "rounded-full bg-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50";
 
-type SectionId = "account" | "plus" | "security" | "privacy" | "display" | "interests" | "accessibility" | "legal" | "community";
+type SectionId = "account" | "plus" | "security" | "privacy" | "display" | "interests" | "accessibility" | "legal" | "community" | "invite";
 const SECTIONS: { id: SectionId; label: string; icon: IconName; desc: string }[] = [
   { id: "account", label: "Votre compte", icon: "profile", desc: "Infos, mot de passe, archive, suppression" },
   { id: "plus", label: "vulu+", icon: "star", desc: "Gérer l’abonnement" },
@@ -28,6 +29,7 @@ const SECTIONS: { id: SectionId; label: string; icon: IconName; desc: string }[]
   { id: "accessibility", label: "Accessibilité", icon: "shield", desc: "Tutoriel, aides" },
   { id: "interests", label: "Centres d’intérêt", icon: "heart", desc: "Genres et favoris" },
   { id: "community", label: "Rejoins-nous", icon: "user-plus", desc: "Discord" },
+  { id: "invite", label: "Parrainage", icon: "user-plus", desc: "Ton code d'invitation et tes filleuls" },
   { id: "legal", label: "Légal", icon: "dots", desc: "Conditions, confidentialité, cookies" },
 ];
 
@@ -182,6 +184,7 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
         </div>
       </>
     );
+    if (cur === "invite") return <InviteSection />;
     return (
       <>
         <h2 className="mb-4 font-display text-xl font-bold">Légal</h2>
