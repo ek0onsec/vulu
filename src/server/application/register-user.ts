@@ -1,6 +1,7 @@
 import type { Deps } from "@/server/container";
 import type { Domain, Tastes, User } from "@/server/domain/entities";
 import { ConflictError, ValidationError } from "@/server/domain/errors";
+import { generateUniqueInviteCode } from "./invite-code";
 
 export interface RegisterInput {
   email: string;
@@ -9,6 +10,7 @@ export interface RegisterInput {
   password: string;
   activeTabs: readonly Domain[];
   tastes: Tastes;
+  invitedBy?: string | null;
 }
 
 export async function registerUser(deps: Deps, input: RegisterInput): Promise<User> {
@@ -20,6 +22,8 @@ export async function registerUser(deps: Deps, input: RegisterInput): Promise<Us
   if (input.tastes.filmGenreIds.length < 3) throw new ValidationError("Sélectionne au moins 3 genres");
   if (await deps.users.findByEmail(email)) throw new ConflictError("Cet email est déjà utilisé");
   if (await deps.users.findByUsername(username)) throw new ConflictError("Ce nom d'utilisateur est pris");
+
+  const inviteCode = await generateUniqueInviteCode(deps);
 
   const user: User = {
     id: deps.ids.next(),
@@ -43,8 +47,8 @@ export async function registerUser(deps: Deps, input: RegisterInput): Promise<Us
     notificationsSeenAt: null,
     tourCompletedAt: null,
     createdAt: deps.clock.now(),
-    inviteCode: deps.inviteCodes.next(),
-    invitedBy: null,
+    inviteCode,
+    invitedBy: input.invitedBy ?? null,
   };
   await deps.users.create(user);
   return user;

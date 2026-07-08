@@ -34,4 +34,17 @@ describe("registerUser", () => {
   it("rejette activeTabs vide", async () => {
     await expect(registerUser(deps, { ...base, activeTabs: [] })).rejects.toThrow(ValidationError);
   });
+  it("attribue un code d'invitation unique au nouvel inscrit", async () => {
+    const a = await registerUser(deps, { ...base });
+    const b = await registerUser(deps, { ...base, email: "b@x.io", username: "bob" });
+    expect(a.inviteCode).toMatch(/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/);
+    expect(b.inviteCode).not.toBe(a.inviteCode);
+    expect(await deps.users.findByInviteCode(a.inviteCode)).not.toBeNull();
+  });
+  it("invitedBy vaut null par défaut et reflète l'argument fourni", async () => {
+    const solo = await registerUser(deps, { ...base });
+    expect(solo.invitedBy).toBeNull();
+    const filleul = await registerUser(deps, { ...base, email: "c@x.io", username: "carol", invitedBy: solo.id });
+    expect(filleul.invitedBy).toBe(solo.id);
+  });
 });
