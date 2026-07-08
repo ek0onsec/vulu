@@ -10,7 +10,7 @@ import { VuluLogo } from "@/components/VuluLogo";
 export default function RegisterPage() {
   const router = useRouter();
   const [draft, setDraft] = useState<SignupDraft>({
-    email: "", username: "", displayName: "", password: "", activeTabs: ["films"],
+    email: "", username: "", displayName: "", password: "", activeTabs: ["films"], inviteCode: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,6 +37,7 @@ export default function RegisterPage() {
     if (!/^[a-z0-9_]{3,20}$/.test(username)) { setError("Pseudo invalide (3–20 caractères : lettres, chiffres, _)"); return; }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setError("Email invalide"); return; }
     if (draft.password.length < 8) { setError("Mot de passe : 8 caractères minimum"); return; }
+    if (!draft.inviteCode.trim()) { setError("Un code d'invitation est requis"); return; }
     setBusy(true);
     try {
       const r = await api.get<{ usernameAvailable: boolean; emailAvailable: boolean }>(
@@ -70,6 +71,13 @@ export default function RegisterPage() {
           onChange={(e) => setDraft({ ...draft, email: e.target.value })} required />
         <input className={field} type="password" placeholder="Mot de passe (8 caractères min.)" value={draft.password}
           onChange={(e) => setDraft({ ...draft, password: e.target.value })} required />
+        <input className={field} placeholder="Code d'invitation" value={draft.inviteCode}
+          onChange={(e) => setDraft({ ...draft, inviteCode: e.target.value.toUpperCase() })} required />
+        <p className="-mt-1 text-xs text-[var(--color-text-muted)]">
+          Pas de code d'invitation ?{" "}
+          <a href="https://discord.gg/apREpGzK7K" target="_blank" rel="noreferrer"
+            className="font-semibold text-[var(--color-primary)]">Rejoins le Discord</a>
+        </p>
 
         <div>
           <p className="mb-2 text-sm font-semibold">Que veux-tu suivre ? (au moins un)</p>

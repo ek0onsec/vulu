@@ -8,4 +8,5 @@ export interface SignupDraft {
   displayName: string;
   password: string;
   activeTabs: Domain[];
+  inviteCode: string;
 }
