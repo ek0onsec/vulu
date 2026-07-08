@@ -1,9 +1,11 @@
 import type { User } from "@/server/domain/entities";
 
-/** Données publiques d'un utilisateur (sans hash ni email). */
+/** Données publiques d'un utilisateur (sans hash, email, secrets 2FA ni données d'invitation). */
 export function publicUser(u: User) {
-  const { passwordHash, email, twoFactorSecret, twoFactorBackupCodes, ...rest } = u;
-  void passwordHash; void email; void twoFactorSecret; void twoFactorBackupCodes;
+  // inviteCode/invitedBy sont privés : exposer le code contournerait le gating à l'inscription,
+  // et invitedBy révélerait le graphe de parrainage.
+  const { passwordHash, email, twoFactorSecret, twoFactorBackupCodes, inviteCode, invitedBy, ...rest } = u;
+  void passwordHash; void email; void twoFactorSecret; void twoFactorBackupCodes; void inviteCode; void invitedBy;
   return rest;
 }
 

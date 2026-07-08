@@ -26,4 +26,9 @@ describe("serialize n'expose pas les secrets 2FA", () => {
     expect(p.twoFactorSecret).toBeUndefined();
     expect(p.twoFactorBackupCodes).toBeUndefined();
   });
+  it("publicUser ne fuite pas le code d'invitation ni le parrain", () => {
+    const p = publicUser(u) as Record<string, unknown>;
+    expect(p.inviteCode).toBeUndefined();
+    expect(p.invitedBy).toBeUndefined();
+  });
 });

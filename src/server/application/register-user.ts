@@ -65,7 +65,8 @@ export async function registerWithInvite(
 ): Promise<User> {
   const code = input.inviteCode.trim().toUpperCase();
   if (!code) throw new ValidationError("Code d'invitation invalide");
-  const inviter = deps.founderCodes.has(code) ? null : await deps.users.findByInviteCode(code);
-  if (!deps.founderCodes.has(code) && !inviter) throw new ValidationError("Code d'invitation invalide");
+  const isFounder = deps.founderCodes.has(code);
+  const inviter = isFounder ? null : await deps.users.findByInviteCode(code);
+  if (!isFounder && !inviter) throw new ValidationError("Code d'invitation invalide");
   return registerUser(deps, { ...input, invitedBy: inviter?.id ?? null });
 }
