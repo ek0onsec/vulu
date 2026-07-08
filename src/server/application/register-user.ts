@@ -53,3 +53,19 @@ export async function registerUser(deps: Deps, input: RegisterInput): Promise<Us
   await deps.users.create(user);
   return user;
 }
+
+/**
+ * Inscription conditionnée à un code d'invitation. Valide le code (fondateur ou code d'un
+ * membre), résout le parrain, puis délègue à `registerUser`. La validation vit ici, à la
+ * frontière applicative de l'inscription.
+ */
+export async function registerWithInvite(
+  deps: Deps,
+  input: RegisterInput & { inviteCode: string },
+): Promise<User> {
+  const code = input.inviteCode.trim().toUpperCase();
+  if (!code) throw new ValidationError("Code d'invitation invalide");
+  const inviter = deps.founderCodes.has(code) ? null : await deps.users.findByInviteCode(code);
+  if (!deps.founderCodes.has(code) && !inviter) throw new ValidationError("Code d'invitation invalide");
+  return registerUser(deps, { ...input, invitedBy: inviter?.id ?? null });
+}
