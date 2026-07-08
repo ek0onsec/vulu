@@ -48,14 +48,13 @@ export async function computeTasteMatch(deps: Deps, viewerId: string, target: Us
   }
 
   const { score, overlap } = tasteMatchScore(pairs);
-  const sample = (
-    await Promise.all(
-      sampleEntries.map(async (e) => {
-        const work = await deps.works.findById(e.workId);
-        return work ? { workId: e.workId, domain: e.domain, title: work.title } : null;
-      }),
-    )
-  ).filter((s): s is SampleWork => s !== null);
+  const sampleWorksById = new Map((await deps.works.findByIds(sampleEntries.map((e) => e.workId))).map((w) => [w.id, w]));
+  const sample = sampleEntries
+    .map((e) => {
+      const work = sampleWorksById.get(e.workId);
+      return work ? { workId: e.workId, domain: e.domain, title: work.title } : null;
+    })
+    .filter((s): s is SampleWork => s !== null);
 
   return { score, overlap, sample };
 }

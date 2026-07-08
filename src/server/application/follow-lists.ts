@@ -14,8 +14,8 @@ function toCard(u: { id: string; username: string; displayName: string; avatarUr
 }
 
 async function resolveCards(deps: Deps, ids: string[]): Promise<UserCard[]> {
-  const users = await Promise.all(ids.map((id) => deps.users.findById(id)));
-  return users.filter((u): u is NonNullable<typeof u> => u !== null).map(toCard);
+  const byId = new Map((await deps.users.findByIds(ids)).map((u) => [u.id, u]));
+  return ids.map((id) => byId.get(id)).filter((u): u is NonNullable<typeof u> => u !== undefined).map(toCard);
 }
 
 export async function listFollowers(deps: Deps, userId: string): Promise<UserCard[]> {

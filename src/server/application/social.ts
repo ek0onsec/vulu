@@ -47,10 +47,11 @@ export interface PresentedRequest { id: string; requester: Pick<User, "username"
 
 export async function listFollowRequests(deps: Deps, targetId: string): Promise<PresentedRequest[]> {
   const reqs = await deps.followRequests.listForTarget(targetId);
-  return Promise.all(reqs.map(async (r) => {
-    const u = await deps.users.findById(r.requesterId);
+  const usersById = new Map((await deps.users.findByIds(reqs.map((r) => r.requesterId))).map((u) => [u.id, u]));
+  return reqs.map((r) => {
+    const u = usersById.get(r.requesterId);
     return { id: r.id, requester: { username: u?.username ?? "inconnu", displayName: u?.displayName ?? "Utilisateur", avatarUrl: u?.avatarUrl ?? null } };
-  }));
+  });
 }
 
 export async function setAccountPrivacy(deps: Deps, userId: string, isPrivate: boolean): Promise<User> {

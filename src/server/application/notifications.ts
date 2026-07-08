@@ -15,55 +15,71 @@ export interface Notification {
 }
 
 export async function buildNotifications(deps: Deps, userId: string): Promise<Notification[]> {
-  const me = await deps.users.findById(userId);
+  const [me, myEntries, followers] = await Promise.all([
+    deps.users.findById(userId),
+    deps.entries.listByUser(userId, {}),
+    deps.follows.listFollowers(userId).then((fs) => fs.filter((f) => f.followerId !== userId)),
+  ]);
   const seenAt = me?.notificationsSeenAt ?? null;
-  const myEntries = await deps.entries.listByUser(userId, {});
-  const cache = new Map<string, NotifActor | null>();
-  async function actor(id: string): Promise<NotifActor | null> {
-    if (cache.has(id)) return cache.get(id)!;
-    const u = await deps.users.findById(id);
-    const a = u ? { username: u.username, displayName: u.displayName, avatarUrl: u.avatarUrl } : null;
-    cache.set(id, a);
-    return a;
-  }
-  async function actors(ids: string[]): Promise<NotifActor[]> {
-    return (await Promise.all(ids.map(actor))).filter((a): a is NotifActor => a !== null);
-  }
+
+  // Toutes les œuvres, tous les likes et tous les commentaires des entrées en 3 requêtes batch,
+  // au lieu de 3 requêtes par entrée. Ce chemin est appelé à chaque page (badge de notifications).
+  const entryIds = myEntries.map((e) => e.id);
+  const [worksList, allLikes, allComments] = await Promise.all([
+    deps.works.findByIds([...new Set(myEntries.map((e) => e.workId))]),
+    deps.likes.listByEntries(entryIds),
+    deps.comments.listByEntries(entryIds),
+  ]);
+  const worksById = new Map(worksList.map((w) => [w.id, w]));
+  const likesByEntry = new Map<string, typeof allLikes>();
+  for (const l of allLikes) if (l.userId !== userId) (likesByEntry.get(l.entryId) ?? likesByEntry.set(l.entryId, []).get(l.entryId)!).push(l);
+  const commentsByEntry = new Map<string, typeof allComments>();
+  for (const c of allComments) if (c.userId !== userId) (commentsByEntry.get(c.entryId) ?? commentsByEntry.set(c.entryId, []).get(c.entryId)!).push(c);
+
+  // Un seul chargement batch de tous les acteurs (likers, commentateurs, followers).
+  const actorIds = [...new Set([
+    ...allLikes.map((l) => l.userId),
+    ...allComments.map((c) => c.userId),
+    ...followers.map((f) => f.followerId),
+  ])];
+  const actorsById = new Map((await deps.users.findByIds(actorIds)).map((u) => [u.id, u]));
+  const actors = (ids: string[]): NotifActor[] =>
+    ids.map((id) => actorsById.get(id)).filter((u): u is NonNullable<typeof u> => u !== undefined)
+      .map((u) => ({ username: u.username, displayName: u.displayName, avatarUrl: u.avatarUrl }));
 
   const notifs: Omit<Notification, "unread">[] = [];
 
   for (const entry of myEntries) {
-    const work = await deps.works.findById(entry.workId);
+    const work = worksById.get(entry.workId);
     const workDto = work ? { id: work.id, title: work.title } : undefined;
 
-    const likes = (await deps.likes.listByEntry(entry.id)).filter((l) => l.userId !== userId);
+    const likes = (likesByEntry.get(entry.id) ?? []).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     if (likes.length > 0) {
       notifs.push({
         id: `like:${entry.id}`, kind: "like",
-        actors: await actors(likes.slice(0, 3).map((l) => l.userId)),
+        actors: actors(likes.slice(0, 3).map((l) => l.userId)),
         totalActors: likes.length, work: workDto, entryId: entry.id,
         createdAt: likes[0]!.createdAt.toISOString(),
       });
     }
 
-    const comments = (await deps.comments.listByEntry(entry.id)).filter((c) => c.userId !== userId);
+    const comments = commentsByEntry.get(entry.id) ?? [];
     if (comments.length > 0) {
       const recent = [...comments].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       const distinct = [...new Set(recent.map((c) => c.userId))];
       notifs.push({
         id: `comment:${entry.id}`, kind: "comment",
-        actors: await actors(distinct.slice(0, 3)),
+        actors: actors(distinct.slice(0, 3)),
         totalActors: distinct.length, work: workDto, entryId: entry.id,
         createdAt: recent[0]!.createdAt.toISOString(),
       });
     }
   }
 
-  const followers = (await deps.follows.listFollowers(userId)).filter((f) => f.followerId !== userId);
   if (followers.length > 0) {
     notifs.push({
       id: "follow", kind: "follow",
-      actors: await actors(followers.slice(0, 3).map((f) => f.followerId)),
+      actors: actors(followers.slice(0, 3).map((f) => f.followerId)),
       totalActors: followers.length,
       createdAt: followers[0]!.createdAt.toISOString(),
     });

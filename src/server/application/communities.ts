@@ -191,26 +191,29 @@ export async function listMembers(deps: Deps, viewerId: string, communityId: str
   if (!c) throw new NotFoundError("Communauté introuvable");
   if (c.visibility === "private" && !(await deps.memberships.find(communityId, viewerId))) throw new ForbiddenError("Réservé aux membres");
   const members = await deps.memberships.listForCommunity(communityId);
-  return Promise.all(members.map(async (m) => {
-    const u = await deps.users.findById(m.userId);
+  const usersById = new Map((await deps.users.findByIds(members.map((m) => m.userId))).map((u) => [u.id, u]));
+  return members.map((m) => {
+    const u = usersById.get(m.userId);
     return { userId: m.userId, username: u?.username ?? "?", displayName: u?.displayName ?? "?", avatarUrl: u?.avatarUrl ?? null, role: m.role };
-  }));
+  });
 }
 
 export async function listJoinRequests(deps: Deps, actorId: string, communityId: string): Promise<{ requestId: string; username: string; displayName: string; avatarUrl: string | null }[]> {
   if (!(await canModerate(deps, communityId, actorId))) throw new ForbiddenError("Réservé à la modération");
   const reqs = await deps.communityRequests.listForCommunity(communityId);
-  return Promise.all(reqs.map(async (r) => {
-    const u = await deps.users.findById(r.userId);
+  const usersById = new Map((await deps.users.findByIds(reqs.map((r) => r.userId))).map((u) => [u.id, u]));
+  return reqs.map((r) => {
+    const u = usersById.get(r.userId);
     return { requestId: r.id, username: u?.username ?? "?", displayName: u?.displayName ?? "?", avatarUrl: u?.avatarUrl ?? null };
-  }));
+  });
 }
 
 export async function myInvites(deps: Deps, userId: string): Promise<{ requestId: string; community: CommunityDto }[]> {
   const invites = await deps.communityRequests.listInvitesForUser(userId);
+  const communitiesById = new Map((await deps.communities.listByIds(invites.map((inv) => inv.communityId))).map((c) => [c.id, c]));
   const out: { requestId: string; community: CommunityDto }[] = [];
   for (const inv of invites) {
-    const c = await deps.communities.findById(inv.communityId);
+    const c = communitiesById.get(inv.communityId);
     if (c) out.push({ requestId: inv.id, community: await present(deps, userId, c) });
   }
   return out;

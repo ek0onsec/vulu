@@ -41,42 +41,70 @@ export function feedKey(item: FeedItem): string {
   return item.kind === "episode" ? `ep:${item.episodeEntry.id}` : `wk:${item.entry.id}`;
 }
 
+/**
+ * Charge en batch tout ce qui enrichit un lot d'entrées (auteurs, œuvres, compteurs likes/comments,
+ * likedByMe, communautés). Remplace ~5 requêtes par entrée par un nombre constant de requêtes,
+ * quel que soit le nombre d'items — clé de la fluidité du feed.
+ */
+async function loadEnrichment(
+  deps: Deps, viewerId: string, entries: { id: string; userId: string; workId: string; audiences: EntryAudiences }[],
+) {
+  const entryIds = entries.map((e) => e.id);
+  const userIds = [...new Set(entries.map((e) => e.userId))];
+  const workIds = [...new Set(entries.map((e) => e.workId))];
+  const communityIds = [...new Set(entries.flatMap((e) => e.audiences.communityIds))];
+  const [users, works, likeCounts, commentCounts, likedIds, communities] = await Promise.all([
+    deps.users.findByIds(userIds),
+    deps.works.findByIds(workIds),
+    deps.likes.countByEntries(entryIds),
+    deps.comments.countByEntries(entryIds),
+    deps.likes.likedEntryIds(viewerId, entryIds),
+    communityIds.length > 0 ? deps.communities.listByIds(communityIds) : Promise.resolve([]),
+  ]);
+  const usersById = new Map(users.map((u) => [u.id, u]));
+  const worksById = new Map(works.map((w) => [w.id, w]));
+  const communitiesById = new Map(communities.map((c) => [c.id, c]));
+  const liked = new Set(likedIds);
+  return {
+    author(userId: string): AuthorLite {
+      const author = usersById.get(userId);
+      if (!author) throw new NotFoundError("Données de feed incohérentes");
+      return { id: author.id, username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl, plus: author.plus, staff: author.staff };
+    },
+    work(workId: string): Work {
+      const work = worksById.get(workId);
+      if (!work) throw new NotFoundError("Données de feed incohérentes");
+      return work;
+    },
+    likeCount: (id: string) => likeCounts.get(id) ?? 0,
+    commentCount: (id: string) => commentCounts.get(id) ?? 0,
+    likedByMe: (id: string) => liked.has(id),
+    communities: (ids: string[]) => ids.map((id) => communitiesById.get(id)).filter((c): c is NonNullable<typeof c> => Boolean(c)).map((c) => ({ id: c.id, name: c.name })),
+  };
+}
+
+const toWorkLite = (work: Work): WorkLite =>
+  ({ id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type, episodeCounts: work.episodeCounts, pageCount: work.pageCount });
+
 /** Enrichit des entrées brutes en items de feed (auteur, œuvre, compteurs, likedByMe). */
 export async function enrichEntries(deps: Deps, viewerId: string, entries: LibraryEntry[]): Promise<WorkFeedItem[]> {
-  const liked = new Set(await deps.likes.likedEntryIds(viewerId, entries.map((e) => e.id)));
-  return Promise.all(entries.map(async (entry) => {
-    const [author, work, likeCount, commentCount, communities] = await Promise.all([
-      deps.users.findById(entry.userId),
-      deps.works.findById(entry.workId),
-      deps.likes.countByEntry(entry.id),
-      deps.comments.countByEntry(entry.id),
-      entry.audiences.communityIds.length > 0
-        ? deps.communities.listByIds(entry.audiences.communityIds)
-        : Promise.resolve([]),
-    ]);
-    if (!author || !work) throw new NotFoundError("Données de feed incohérentes");
-    return {
-      kind: "work" as const,
-      entry,
-      author: { id: author.id, username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl, plus: author.plus, staff: author.staff },
-      work: { id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type, episodeCounts: work.episodeCounts, pageCount: work.pageCount },
-      likeCount, commentCount, likedByMe: liked.has(entry.id),
-      communities: communities.map((c) => ({ id: c.id, name: c.name })),
-    };
+  const enrich = await loadEnrichment(deps, viewerId, entries);
+  return entries.map((entry) => ({
+    kind: "work" as const,
+    entry,
+    author: enrich.author(entry.userId),
+    work: toWorkLite(enrich.work(entry.workId)),
+    likeCount: enrich.likeCount(entry.id),
+    commentCount: enrich.commentCount(entry.id),
+    likedByMe: enrich.likedByMe(entry.id),
+    communities: enrich.communities(entry.audiences.communityIds),
   }));
 }
 
 export async function enrichEpisodeEntries(deps: Deps, viewerId: string, entries: EpisodeEntry[]): Promise<EpisodeFeedItem[]> {
-  const liked = new Set(await deps.likes.likedEntryIds(viewerId, entries.map((e) => e.id)));
+  const enrich = await loadEnrichment(deps, viewerId, entries);
   return Promise.all(entries.map(async (ee) => {
-    const [author, work, likeCount, commentCount, communities] = await Promise.all([
-      deps.users.findById(ee.userId),
-      deps.works.findById(ee.workId),
-      deps.likes.countByEntry(ee.id),
-      deps.comments.countByEntry(ee.id),
-      ee.audiences.communityIds.length > 0 ? deps.communities.listByIds(ee.audiences.communityIds) : Promise.resolve([]),
-    ]);
-    if (!author || !work) throw new NotFoundError("Données de feed incohérentes");
+    const work = enrich.work(ee.workId);
     let title: string | null = null;
     try {
       const eps = await getSeasonEpisodes(deps, { source: work.source, externalId: work.externalId, type: work.type }, ee.season);
@@ -84,11 +112,13 @@ export async function enrichEpisodeEntries(deps: Deps, viewerId: string, entries
     } catch { title = null; }
     return {
       kind: "episode" as const, episodeEntry: ee,
-      author: { id: author.id, username: author.username, displayName: author.displayName, avatarUrl: author.avatarUrl, plus: author.plus, staff: author.staff },
-      work: { id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type, episodeCounts: work.episodeCounts, pageCount: work.pageCount },
+      author: enrich.author(ee.userId),
+      work: toWorkLite(work),
       season: ee.season, episode: ee.episode, title,
-      likeCount, commentCount, likedByMe: liked.has(ee.id),
-      communities: communities.map((c) => ({ id: c.id, name: c.name })),
+      likeCount: enrich.likeCount(ee.id),
+      commentCount: enrich.commentCount(ee.id),
+      likedByMe: enrich.likedByMe(ee.id),
+      communities: enrich.communities(ee.audiences.communityIds),
     };
   }));
 }

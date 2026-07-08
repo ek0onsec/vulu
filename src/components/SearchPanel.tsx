@@ -38,12 +38,14 @@ export function SearchPanel({ activeTabs, autoFocus = true, initialQuery, initia
     const runMember = isMemberMode && memberQuery.length >= 1;
     const runCatalog = catalogQuery.length >= 2;
     timer.current = setTimeout(async () => {
-      // Reflète q/domaine dans l'URL (sans empiler l'historique) une fois la frappe stabilisée.
-      // Une navigation à chaque caractère désynchronise l'input contrôlé (caractères perdus/réordonnés).
+      // Reflète q/domaine dans l'URL sans navigation Next : history.replaceState met à jour
+      // la barre d'adresse (URL partageable) sans refetch du composant serveur ni re-render de
+      // l'arbre React. Un router.replace() ici relançait la page serveur à chaque frappe et
+      // déplaçait le curseur de l'input contrôlé sur mobile (composition IME).
       const params = new URLSearchParams();
       if (trimmed) params.set("q", trimmed);
       params.set("domain", domain);
-      router.replace(`/search?${params.toString()}`, { scroll: false });
+      window.history.replaceState(null, "", `/search?${params.toString()}`);
 
       if (!runMember && !runCatalog) { setResults([]); if (isMemberMode) setMembers([]); return; }
       setLoading(true);
@@ -64,7 +66,7 @@ export function SearchPanel({ activeTabs, autoFocus = true, initialQuery, initia
       }
     }, 300);
     return () => { if (timer.current) clearTimeout(timer.current); };
-  }, [q, domain, router]);
+  }, [q, domain]);
 
   async function open(r: WorkSummary) {
     setOpening(r.externalId);

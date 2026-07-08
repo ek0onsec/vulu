@@ -9,6 +9,7 @@ export class InMemoryUserRepository implements UserRepository {
   private byId = new Map<string, User>();
   async create(u: User) { this.byId.set(u.id, u); }
   async findById(id: string) { return this.byId.get(id) ?? null; }
+  async findByIds(ids: string[]) { return ids.map((id) => this.byId.get(id)).filter((u): u is User => u !== undefined); }
   async findByEmail(email: string) { return [...this.byId.values()].find((u) => u.email === email) ?? null; }
   async findByUsername(username: string) { return [...this.byId.values()].find((u) => u.username === username) ?? null; }
   async update(u: User) { this.byId.set(u.id, u); }
@@ -199,7 +200,14 @@ export class InMemoryLikeRepository implements LikeRepository {
   async remove(entryId: string, userId: string) { this.likes = this.likes.filter((l) => !(l.entryId === entryId && l.userId === userId)); }
   async exists(entryId: string, userId: string) { return this.likes.some((l) => l.entryId === entryId && l.userId === userId); }
   async countByEntry(entryId: string) { return this.likes.filter((l) => l.entryId === entryId).length; }
+  async countByEntries(entryIds: string[]) {
+    const s = new Set(entryIds);
+    const counts = new Map<string, number>();
+    for (const l of this.likes) if (s.has(l.entryId)) counts.set(l.entryId, (counts.get(l.entryId) ?? 0) + 1);
+    return counts;
+  }
   async listByEntry(entryId: string) { return this.likes.filter((l) => l.entryId === entryId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); }
+  async listByEntries(entryIds: string[]) { const s = new Set(entryIds); return this.likes.filter((l) => s.has(l.entryId)).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); }
   async likedEntryIds(userId: string, entryIds: string[]) {
     const s = new Set(entryIds);
     return this.likes.filter((l) => l.userId === userId && s.has(l.entryId)).map((l) => l.entryId);
@@ -214,7 +222,17 @@ export class InMemoryCommentRepository implements CommentRepository {
   async listByEntry(entryId: string) {
     return [...this.byId.values()].filter((c) => c.entryId === entryId).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
+  async listByEntries(entryIds: string[]) {
+    const s = new Set(entryIds);
+    return [...this.byId.values()].filter((c) => s.has(c.entryId)).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
   async countByEntry(entryId: string) { return [...this.byId.values()].filter((c) => c.entryId === entryId).length; }
+  async countByEntries(entryIds: string[]) {
+    const s = new Set(entryIds);
+    const counts = new Map<string, number>();
+    for (const c of this.byId.values()) if (s.has(c.entryId)) counts.set(c.entryId, (counts.get(c.entryId) ?? 0) + 1);
+    return counts;
+  }
   async remove(id: string) { this.byId.delete(id); }
   async removeAllForUser(userId: string) { for (const [k, c] of this.byId) if (c.userId === userId) this.byId.delete(k); }
 }

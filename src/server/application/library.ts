@@ -18,13 +18,17 @@ export async function getLibrary(deps: Deps, userId: string): Promise<Library> {
     deps.lists.listByUser(userId),
   ]);
 
-  // Chaque œuvre des entrées est chargée une seule fois, en parallèle.
-  const entryWorkIds = [...new Set([...plannedEntries, ...doneEntries, ...inProgressEntries].map((e) => e.workId))];
+  // Toutes les œuvres nécessaires (entrées + couvertures de collections) sont chargées en UNE
+  // seule requête batch ($in), au lieu d'un findById par œuvre (N+1 qui rendait la page très lente).
+  const coverIds = lists.flatMap((l) => l.workIds.slice(0, 4));
+  const neededWorkIds = [...new Set([
+    ...plannedEntries.map((e) => e.workId),
+    ...doneEntries.map((e) => e.workId),
+    ...inProgressEntries.map((e) => e.workId),
+    ...coverIds,
+  ])];
   const worksById = new Map<string, Work>();
-  await Promise.all(entryWorkIds.map(async (id) => {
-    const w = await deps.works.findById(id);
-    if (w) worksById.set(id, w);
-  }));
+  for (const w of await deps.works.findByIds(neededWorkIds)) worksById.set(w.id, w);
 
   const toPoster = (e: LibraryEntry): LibraryPoster | null => {
     const w = worksById.get(e.workId);
@@ -43,13 +47,10 @@ export async function getLibrary(deps: Deps, userId: string): Promise<Library> {
     } : null;
   }).filter((x): x is LibraryInProgress => x !== null);
 
-  const playlists: LibraryPlaylist[] = await Promise.all(
-    lists.map(async (l) => {
-      const coverWorks = await Promise.all(l.workIds.slice(0, 4).map((id) => deps.works.findById(id)));
-      const covers = coverWorks.map((w) => w?.posterUrl).filter((u): u is string => Boolean(u));
-      return { id: l.id, name: l.name, kind: l.kind, description: l.description, bannerUrl: l.bannerUrl, visibility: l.visibility, count: l.workIds.length, covers };
-    }),
-  );
+  const playlists: LibraryPlaylist[] = lists.map((l) => {
+    const covers = l.workIds.slice(0, 4).map((id) => worksById.get(id)?.posterUrl).filter((u): u is string => Boolean(u));
+    return { id: l.id, name: l.name, kind: l.kind, description: l.description, bannerUrl: l.bannerUrl, visibility: l.visibility, count: l.workIds.length, covers };
+  });
 
   // Personnes : depuis la map déjà chargée (planned + seen), sans boucle séquentielle ni re-fetch.
   const ownedWorkIds = new Set([...watchlist, ...seen].map((p) => p.workId));

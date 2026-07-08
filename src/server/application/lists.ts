@@ -78,7 +78,8 @@ export async function getListWithWorks(
   const list = await deps.lists.findById(listId);
   if (!list) throw new NotFoundError("Liste introuvable");
   if (list.visibility === "private" && list.userId !== viewerId) throw new ForbiddenError("Liste privée");
-  const resolved = await Promise.all(list.workIds.map((id) => deps.works.findById(id)));
-  const works = resolved.filter((w): w is Work => w !== null);
+  // Une seule requête batch, puis on restitue l'ordre voulu par la liste.
+  const byId = new Map((await deps.works.findByIds(list.workIds)).map((w) => [w.id, w]));
+  const works = list.workIds.map((id) => byId.get(id)).filter((w): w is Work => w !== undefined);
   return { list, works };
 }

@@ -3,6 +3,8 @@ import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List,
 export interface UserRepository {
   create(user: User): Promise<void>;
   findById(id: string): Promise<User | null>;
+  /** Chargement batch (une requête $in) — évite un findById par utilisateur dans le feed. */
+  findByIds(ids: string[]): Promise<User[]>;
   findByEmail(email: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
   update(user: User): Promise<void>;
@@ -118,7 +120,11 @@ export interface LikeRepository {
   remove(entryId: string, userId: string): Promise<void>;
   exists(entryId: string, userId: string): Promise<boolean>;
   countByEntry(entryId: string): Promise<number>;
+  /** Compteurs batch par entrée (une agrégation) — évite un countByEntry par item de feed. */
+  countByEntries(entryIds: string[]): Promise<Map<string, number>>;
   listByEntry(entryId: string): Promise<Like[]>;
+  /** Likes de plusieurs entrées en une requête (pour agréger les notifications). */
+  listByEntries(entryIds: string[]): Promise<Like[]>;
   likedEntryIds(userId: string, entryIds: string[]): Promise<string[]>;
   removeAllForUser(userId: string): Promise<void>;
 }
@@ -126,7 +132,11 @@ export interface CommentRepository {
   add(comment: Comment): Promise<void>;
   findById(id: string): Promise<Comment | null>;
   listByEntry(entryId: string): Promise<Comment[]>;
+  /** Commentaires de plusieurs entrées en une requête (pour agréger les notifications). */
+  listByEntries(entryIds: string[]): Promise<Comment[]>;
   countByEntry(entryId: string): Promise<number>;
+  /** Compteurs batch par entrée (une agrégation) — évite un countByEntry par item de feed. */
+  countByEntries(entryIds: string[]): Promise<Map<string, number>>;
   remove(id: string): Promise<void>;
   removeAllForUser(userId: string): Promise<void>;
 }

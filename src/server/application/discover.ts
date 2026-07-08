@@ -19,16 +19,15 @@ export async function discover(deps: Deps, viewerId: string): Promise<DiscoverRe
   const counts = new Map<string, number>();
   for (const e of entries) counts.set(e.workId, (counts.get(e.workId) ?? 0) + 1);
   const topIds = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const trending = (
-    await Promise.all(
-      topIds.map(async ([workId, reviews]) => {
-        const work = await deps.works.findById(workId);
-        return work
-          ? { work: { id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type }, reviews }
-          : null;
-      }),
-    )
-  ).filter((x): x is NonNullable<typeof x> => x !== null);
+  const worksById = new Map((await deps.works.findByIds(topIds.map(([id]) => id))).map((w) => [w.id, w]));
+  const trending = topIds
+    .map(([workId, reviews]) => {
+      const work = worksById.get(workId);
+      return work
+        ? { work: { id: work.id, title: work.title, year: work.year, posterUrl: work.posterUrl, type: work.type }, reviews }
+        : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
 
   return { suggestions, trending };
 }

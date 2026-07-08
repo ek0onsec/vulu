@@ -11,6 +11,7 @@ export class MongoUserRepository implements UserRepository {
   private get col() { return this.db.collection<M.WithIdUser>("users"); }
   async create(u: User) { await this.col.insertOne(M.toUserDoc(u)); }
   async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromUserDoc(d) : null; }
+  async findByIds(ids: string[]) { if (!ids.length) return []; return (await this.col.find({ _id: { $in: ids } }).toArray()).map(M.fromUserDoc); }
   async findByEmail(email: string) { const d = await this.col.findOne({ email }); return d ? M.fromUserDoc(d) : null; }
   async findByUsername(username: string) { const d = await this.col.findOne({ username }); return d ? M.fromUserDoc(d) : null; }
   async update(u: User) { await this.col.replaceOne({ _id: u.id }, M.toUserDoc(u)); }
@@ -219,7 +220,16 @@ export class MongoLikeRepository implements LikeRepository {
   async remove(entryId: string, userId: string) { await this.col.deleteOne({ _id: `${entryId}:${userId}` }); }
   async exists(entryId: string, userId: string) { return (await this.col.countDocuments({ _id: `${entryId}:${userId}` })) > 0; }
   async countByEntry(entryId: string) { return this.col.countDocuments({ entryId }); }
+  async countByEntries(entryIds: string[]) {
+    if (!entryIds.length) return new Map<string, number>();
+    const rows = await this.col.aggregate<{ _id: string; n: number }>([
+      { $match: { entryId: { $in: entryIds } } },
+      { $group: { _id: "$entryId", n: { $sum: 1 } } },
+    ]).toArray();
+    return new Map(rows.map((r) => [r._id, r.n]));
+  }
   async listByEntry(entryId: string) { return (await this.col.find({ entryId }).sort({ createdAt: -1 }).toArray()).map(M.fromLikeDoc); }
+  async listByEntries(entryIds: string[]) { if (!entryIds.length) return []; return (await this.col.find({ entryId: { $in: entryIds } }).sort({ createdAt: -1 }).toArray()).map(M.fromLikeDoc); }
   async likedEntryIds(userId: string, entryIds: string[]) {
     return (await this.col.find({ userId, entryId: { $in: entryIds } }).toArray()).map((d) => d.entryId);
   }
@@ -232,7 +242,16 @@ export class MongoCommentRepository implements CommentRepository {
   async add(c: Comment) { await this.col.insertOne(M.toCommentDoc(c)); }
   async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromCommentDoc(d) : null; }
   async listByEntry(entryId: string) { return (await this.col.find({ entryId }).sort({ createdAt: 1 }).toArray()).map(M.fromCommentDoc); }
+  async listByEntries(entryIds: string[]) { if (!entryIds.length) return []; return (await this.col.find({ entryId: { $in: entryIds } }).sort({ createdAt: 1 }).toArray()).map(M.fromCommentDoc); }
   async countByEntry(entryId: string) { return this.col.countDocuments({ entryId }); }
+  async countByEntries(entryIds: string[]) {
+    if (!entryIds.length) return new Map<string, number>();
+    const rows = await this.col.aggregate<{ _id: string; n: number }>([
+      { $match: { entryId: { $in: entryIds } } },
+      { $group: { _id: "$entryId", n: { $sum: 1 } } },
+    ]).toArray();
+    return new Map(rows.map((r) => [r._id, r.n]));
+  }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }
   async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }
 }
