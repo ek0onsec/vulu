@@ -1,5 +1,5 @@
 import { getDeps } from "@/server/container";
-import { registerUser } from "@/server/application/register-user";
+import { registerWithInvite } from "@/server/application/register-user";
 import { authenticateUser } from "@/server/application/authenticate-user";
 import { registerSchema } from "@/lib/zod-schemas";
 import { setSessionCookie, json } from "@/server/http/session";
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     if (!authLimiter.allow(clientIp(req))) throw new AuthError("Trop de tentatives, réessaie plus tard");
     const input = registerSchema.parse(await req.json());
     const deps = await getDeps();
-    await registerUser(deps, input);
+    await registerWithInvite(deps, input);
     const { user, token } = await authenticateUser(deps, { email: input.email, password: input.password });
     await setSessionCookie(token);
     return json({ user: selfUser(user), token }, { status: 201 });

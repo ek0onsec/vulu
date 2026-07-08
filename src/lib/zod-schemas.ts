@@ -12,6 +12,7 @@ export const registerSchema = z.object({
   password: z.string().min(8),
   activeTabs: z.array(z.enum(["films", "books"])).min(1),
   tastes: tastesSchema,
+  inviteCode: z.string().min(1),
 });
 export const loginSchema = z.object({ email: z.email(), password: z.string().min(1) });
 export const updateProfileSchema = z.object({
