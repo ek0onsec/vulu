@@ -8,13 +8,14 @@ import { BcryptHasher } from "@/server/adapters/security/bcrypt-hasher";
 import { JwtTokenService } from "@/server/adapters/security/jwt-token-service";
 import { UuidIdGenerator } from "@/server/adapters/security/uuid-id-generator";
 import { SystemClock } from "@/server/adapters/security/system-clock";
+import { RandomInviteCodeGenerator } from "@/server/adapters/security/random-invite-code-generator";
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository,
   EpisodeCacheRepository, EpisodeEntryRepository,
 } from "@/server/ports/repositories";
 import type { CatalogProvider } from "@/server/ports/catalog";
-import type { PasswordHasher, TokenService, IdGenerator, Clock, Totp, Crypto } from "@/server/ports/security";
+import type { PasswordHasher, TokenService, IdGenerator, Clock, Totp, Crypto, InviteCodeGenerator } from "@/server/ports/security";
 import type { MediaStorage } from "@/server/ports/media";
 import { LocalDiskStorage } from "@/server/adapters/media/local-disk-storage";
 import { tmpdir } from "node:os";
@@ -56,6 +57,8 @@ export interface Deps {
   crypto: Crypto;
   ids: IdGenerator;
   clock: Clock;
+  inviteCodes: InviteCodeGenerator;
+  founderCodes: ReadonlySet<string>;
 }
 
 /** Fabrique de dépendances in-memory pour les tests d'use-cases. */
@@ -82,6 +85,8 @@ export function makeInMemoryDeps(catalog: CatalogProvider): Deps {
     crypto: new NodeCrypto("test-secret-test-secret-test-secret-32"),
     ids: new UuidIdGenerator(),
     clock: new SystemClock(),
+    inviteCodes: new RandomInviteCodeGenerator(),
+    founderCodes: new Set(["TESTCODE"]),
   };
 }
 
@@ -121,6 +126,13 @@ export async function getDeps(): Promise<Deps> {
     crypto: new NodeCrypto(env.JWT_SECRET),
     ids: new UuidIdGenerator(),
     clock: new SystemClock(),
+    inviteCodes: new RandomInviteCodeGenerator(),
+    founderCodes: new Set(
+      (env.INVITE_FOUNDER_CODES ?? "")
+        .split(",")
+        .map((c) => c.trim().toUpperCase())
+        .filter((c) => c.length > 0),
+    ),
   };
   return realDeps;
 }

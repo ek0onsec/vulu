@@ -23,6 +23,10 @@ export interface Crypto {
 export interface IdGenerator {
   next(): string;
 }
+export interface InviteCodeGenerator {
+  /** Un code brut de 8 caractères. L'unicité est vérifiée par l'appelant. */
+  next(): string;
+}
 export interface Clock {
   now(): Date;
 }

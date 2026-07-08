@@ -15,6 +15,9 @@ const schema = z.object({
   // X-Forwarded-For est l'IP cliente réelle (comptée depuis la fin, car les
   // entrées de gauche sont fournies — et donc falsifiables — par le client).
   TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).default(1),
+  // Codes d'invitation « fondateurs » (séparés par des virgules) permettant les
+  // premières inscriptions sur une base vierge. Optionnel.
+  INVITE_FOUNDER_CODES: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;
