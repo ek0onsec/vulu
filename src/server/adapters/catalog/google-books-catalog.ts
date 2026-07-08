@@ -1,7 +1,7 @@
 import type { WorkSummary, WorkDetails, Genre, Person } from "@/server/ports/catalog";
 import type { EpisodeSummary } from "@/server/domain/entities";
 
-export interface GoogleBooksConfig { baseUrl: string; apiKey?: string }
+export interface GoogleBooksConfig { baseUrl: string; apiKey?: string; coversBaseUrl?: string }
 
 interface Volume {
   id: string;
@@ -68,6 +68,20 @@ export class GoogleBooksCatalog {
     return res.json() as Promise<T>;
   }
 
+  /**
+   * Couverture de repli Open Library construite directement depuis l'ISBN — sans appel HTTP
+   * (les résultats Google contiennent déjà l'ISBN). Garde la recherche fluide tout en comblant
+   * les livres sans miniature Google. Retourne null si aucune base couvertures n'est configurée
+   * ou si le volume n'a pas d'ISBN.
+   */
+  private olCoverByIsbn(info: Volume["volumeInfo"]): string | null {
+    if (!this.cfg.coversBaseUrl) return null;
+    const isbn = isbnOf(info);
+    // default=false : renvoie 404 (donc tuile neutre) quand OL n'a pas la couverture,
+    // au lieu du placeholder gris « Cover not available ».
+    return isbn ? `${this.cfg.coversBaseUrl}/b/isbn/${isbn}-M.jpg?default=false` : null;
+  }
+
   private toSummary(v: Volume): WorkSummary {
     const info = v.volumeInfo ?? {};
     return {
@@ -76,7 +90,7 @@ export class GoogleBooksCatalog {
       type: "book",
       title: info.title ?? "Sans titre",
       year: yearOf(info.publishedDate),
-      posterUrl: cover(info),
+      posterUrl: cover(info) ?? this.olCoverByIsbn(info),
     };
   }
 

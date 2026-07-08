@@ -91,4 +91,44 @@ describe("GoogleBooksCatalog", () => {
     const c = new GoogleBooksCatalog(cfg, fakeFetch({ "maxResults=1": { items: [] } }));
     expect(await c.findByIsbn("0")).toBeNull();
   });
+
+  const coversCfg = { ...cfg, coversBaseUrl: "https://covers.openlibrary.org" };
+
+  it("searchWorks : couverture de repli Open Library par ISBN quand Google n'a pas d'image", async () => {
+    const c = new GoogleBooksCatalog(coversCfg, fakeFetch({
+      "/volumes": { items: [
+        { id: "BK1", volumeInfo: { title: "La Route", industryIdentifiers: [{ type: "ISBN_13", identifier: "9782207116210" }] } },
+      ] },
+    }));
+    const res = await c.searchWorks("route");
+    expect(res[0]?.posterUrl).toBe("https://covers.openlibrary.org/b/isbn/9782207116210-M.jpg?default=false");
+  });
+
+  it("searchWorks : garde la couverture Google quand elle existe (pas de repli OL)", async () => {
+    const c = new GoogleBooksCatalog(coversCfg, fakeFetch({
+      "/volumes": { items: [
+        { id: "BK1", volumeInfo: { title: "T", imageLinks: { thumbnail: "http://x/c.jpg" }, industryIdentifiers: [{ type: "ISBN_13", identifier: "9782207116210" }] } },
+      ] },
+    }));
+    const res = await c.searchWorks("t");
+    expect(res[0]?.posterUrl).toBe("https://x/c.jpg");
+  });
+
+  it("searchWorks : pas de couverture ni d'ISBN → posterUrl null", async () => {
+    const c = new GoogleBooksCatalog(coversCfg, fakeFetch({
+      "/volumes": { items: [{ id: "BK1", volumeInfo: { title: "Sans image" } }] },
+    }));
+    const res = await c.searchWorks("x");
+    expect(res[0]?.posterUrl).toBeNull();
+  });
+
+  it("searchWorks : sans coversBaseUrl configuré, pas de repli OL (couverture nulle)", async () => {
+    const c = new GoogleBooksCatalog(cfg, fakeFetch({
+      "/volumes": { items: [
+        { id: "BK1", volumeInfo: { title: "La Route", industryIdentifiers: [{ type: "ISBN_13", identifier: "9782207116210" }] } },
+      ] },
+    }));
+    const res = await c.searchWorks("route");
+    expect(res[0]?.posterUrl).toBeNull();
+  });
 });

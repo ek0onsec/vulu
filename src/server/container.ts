@@ -114,7 +114,7 @@ export async function getDeps(): Promise<Deps> {
     catalog: new CompositeCatalog(
       new TmdbCatalog({ apiKey: env.TMDB_API_KEY, baseUrl: env.TMDB_BASE_URL, imageBase: env.TMDB_IMAGE_BASE }),
       new GoogleBooksCatalog(
-        { baseUrl: env.GOOGLE_BOOKS_BASE_URL, apiKey: env.GOOGLE_BOOKS_API_KEY },
+        { baseUrl: env.GOOGLE_BOOKS_BASE_URL, apiKey: env.GOOGLE_BOOKS_API_KEY, coversBaseUrl: env.OPENLIBRARY_COVERS_BASE_URL },
         fetch,
         new OpenLibraryBooks({ baseUrl: env.OPENLIBRARY_BASE_URL }),
       ),
