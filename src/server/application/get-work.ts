@@ -28,7 +28,7 @@ export async function backfillRuntime(deps: Deps, work: Work): Promise<Work> {
 export async function getOrImportWork(
   deps: Deps, ref: { source: WorkSource; externalId: string; type: WorkType },
 ): Promise<Work> {
-  const cached = await deps.works.findByExternal(ref.source, ref.externalId);
+  const cached = await deps.works.findByExternal(ref.source, ref.externalId, ref.type);
   if (cached) return backfillRuntime(deps, cached);
   const details = await deps.catalog.getWork(ref.externalId, ref.type);
   if (!details) throw new NotFoundError("Œuvre introuvable dans le catalogue");

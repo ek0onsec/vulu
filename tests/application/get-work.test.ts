@@ -12,7 +12,7 @@ describe("getOrImportWork", () => {
     const w = await getOrImportWork(deps, { source: "tmdb", externalId: "603", type: "movie" });
     expect(w.title).toBe("The Matrix");
     expect(w.domain).toBe("films");
-    expect(await deps.works.findByExternal("tmdb", "603")).not.toBeNull();
+    expect(await deps.works.findByExternal("tmdb", "603", "movie")).not.toBeNull();
   });
   it("renvoie le cache au 2e appel (même id)", async () => {
     const a = await getOrImportWork(deps, { source: "tmdb", externalId: "603", type: "movie" });
@@ -31,6 +31,14 @@ describe("getOrImportWork", () => {
     const w = await getOrImportWork(deps, { source: "tmdb", externalId: "1396", type: "tv" });
     expect(w.episodeCounts).toEqual([7, 13]);
     expect(w.pageCount).toBeNull();
+  });
+  it("ne confond pas une série et un film partageant le même id TMDB", async () => {
+    const movie = await getOrImportWork(deps, { source: "tmdb", externalId: "1402", type: "movie" });
+    const series = await getOrImportWork(deps, { source: "tmdb", externalId: "1402", type: "tv" });
+    expect(movie.title).toBe("The Peaceful Warrior");
+    expect(series.title).toBe("The Walking Dead");
+    expect(series.type).toBe("tv");
+    expect(series.id).not.toBe(movie.id);
   });
   it("importe pageCount pour un livre", async () => {
     const w = await getOrImportWork(deps, { source: "googlebooks", externalId: "book-1", type: "book" });

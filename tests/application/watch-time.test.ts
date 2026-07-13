@@ -29,7 +29,7 @@ describe("computeWatchMinutes", () => {
   });
   it("ignore un runtime manquant sans appel TMDB (pas de backfill au rendu profil)", async () => {
     await rateOrReviewWork(deps, "u1", movie, { rating: 4, text: null, audiences: { public: false, circle: false, communityIds: [] } });
-    const work = await deps.works.findByExternal("tmdb", "603");
+    const work = await deps.works.findByExternal("tmdb", "603", "movie");
     await deps.works.upsert({ ...work!, runtime: null }); // œuvre importée avant le champ runtime
     expect(await computeWatchMinutes(deps, "u1")).toBe(0); // non compté ; le backfill se fait ailleurs (page œuvre)
   });

@@ -31,7 +31,7 @@ describe("engagement sur un avis d'épisode", () => {
   });
   it("refuse like/commentaire sur un avis d'épisode privé d'un autre", async () => {
     await updateEpisode(deps, author, tv, 1, 2, { rating: 4 }); // non partagé (activityAt null)
-    const priv = await deps.episodeEntries.findOne(author, (await deps.works.findByExternal("tmdb", "1396"))!.id, 1, 2);
+    const priv = await deps.episodeEntries.findOne(author, (await deps.works.findByExternal("tmdb", "1396", "tv"))!.id, 1, 2);
     await expect(likeEntry(deps, other, priv!.id)).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

@@ -3,7 +3,7 @@ import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository, EpisodeEntryRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry, WorkType } from "@/server/domain/entities";
 import * as M from "./mappers";
 
 export class MongoUserRepository implements UserRepository {
@@ -63,7 +63,7 @@ export class MongoWorkRepository implements WorkRepository {
   async upsert(w: Work) { await this.col.replaceOne({ _id: w.id }, M.toWorkDoc(w), { upsert: true }); }
   async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromWorkDoc(d) : null; }
   async findByIds(ids: string[]) { if (!ids.length) return []; return (await this.col.find({ _id: { $in: ids } }).toArray()).map(M.fromWorkDoc); }
-  async findByExternal(source: WorkSource, externalId: string) { const d = await this.col.findOne({ source, externalId }); return d ? M.fromWorkDoc(d) : null; }
+  async findByExternal(source: WorkSource, externalId: string, type: WorkType) { const d = await this.col.findOne({ source, externalId, type }); return d ? M.fromWorkDoc(d) : null; }
 }
 
 export class MongoEpisodeCache implements EpisodeCacheRepository {

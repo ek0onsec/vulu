@@ -22,11 +22,28 @@ export class FakeCatalog implements CatalogProvider {
       externalRating: 8.9, watchProviders: [{ name: "Netflix", logoUrl: "n.jpg" }],
       episodeCounts: [7, 13], runtime: 47,
     },
+    // Collision d'espaces d'ID TMDB : la série et le film partagent l'ID numérique 1402.
+    "tv-1402": {
+      source: "tmdb", externalId: "1402", type: "tv", title: "The Walking Dead", year: 2010,
+      posterUrl: "twd.jpg", backdropUrl: "b.jpg", overview: "Rick Grimes…",
+      genres: ["Horreur"], people: [{ tmdbId: 2, name: "Andrew Lincoln", role: "actor" }],
+      externalRating: 8.1, watchProviders: [], episodeCounts: [6], runtime: 44,
+    },
+    "movie-1402": {
+      source: "tmdb", externalId: "1402", type: "movie", title: "The Peaceful Warrior", year: 2006,
+      posterUrl: "pw.jpg", backdropUrl: "b.jpg", overview: "Un tout autre film…",
+      genres: ["Drame"], people: [{ tmdbId: 3, name: "Nick Nolte", role: "actor" }],
+      externalRating: 7.2, watchProviders: [], runtime: 120,
+    },
   };
   async searchWorks(_query: string, domain: Domain): Promise<WorkSummary[]> {
     return Object.values(this.works).filter((w) => (domain === "books" ? w.type === "book" : w.type !== "book"));
   }
-  async getWork(externalId: string, _type: WorkType): Promise<WorkDetails | null> { return this.works[externalId] ?? null; }
+  async getWork(externalId: string, type: WorkType): Promise<WorkDetails | null> {
+    // Comme TMDB (/{type}/{id}), on résout par id ET type : les espaces d'ID film/série sont disjoints.
+    return Object.values(this.works).find((w) => w.externalId === externalId && w.type === type)
+      ?? this.works[externalId] ?? null;
+  }
   seasonCalls = 0;
   async getSeasonEpisodes(externalId: string, season: number): Promise<EpisodeSummary[]> {
     this.seasonCalls++;

@@ -11,7 +11,11 @@ export async function ensureIndexes(db: Db): Promise<void> {
     { key: { followerId: 1, followeeId: 1 }, unique: true, name: "uniq_edge" },
     { key: { followeeId: 1 }, name: "by_followee" },
   ]);
-  await db.collection("works").createIndex({ source: 1, externalId: 1 }, { unique: true, name: "uniq_external" });
+  // TMDB numérote films et séries dans des espaces d'ID disjoints : un film et une série peuvent
+  // partager le même id. La clé d'unicité inclut donc le type pour ne pas les confondre.
+  // Migration : on retire l'ancien index unique {source, externalId} qui rejetait ces doublons légitimes.
+  await db.collection("works").dropIndex("uniq_external").catch(() => {});
+  await db.collection("works").createIndex({ source: 1, externalId: 1, type: 1 }, { unique: true, name: "uniq_external_type" });
   await db.collection("entries").createIndexes([
     { key: { userId: 1, workId: 1 }, unique: true, name: "uniq_user_work" },
     { key: { "audiences.public": 1, domain: 1, createdAt: -1 }, name: "feed" },

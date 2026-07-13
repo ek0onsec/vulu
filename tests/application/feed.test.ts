@@ -82,18 +82,18 @@ describe("getWorkReviews", () => {
     await rateOrReviewWork(deps, me, ref, { rating: 4, text: "le mien", audiences: { public: true, circle: true, communityIds: [] } });
     await rateOrReviewWork(deps, friend, ref, { rating: 5, text: "cercle", audiences: { public: false, circle: true, communityIds: [] } });
     await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "public", audiences: { public: true, circle: true, communityIds: [] } });
-    const work = await deps.works.findByExternal("tmdb", "603");
+    const work = await deps.works.findByExternal("tmdb", "603", "movie");
     const reviews = await getWorkReviews(deps, me, work!.id);
     expect(reviews.map((r) => r.author.username).sort()).toEqual(["friend", "stranger"]);
   });
   it("cache l'avis cercle d'un inconnu", async () => {
     await rateOrReviewWork(deps, stranger, ref, { rating: 3, text: "secret", audiences: { public: false, circle: true, communityIds: [] } });
-    const work = await deps.works.findByExternal("tmdb", "603");
+    const work = await deps.works.findByExternal("tmdb", "603", "movie");
     expect(await getWorkReviews(deps, me, work!.id)).toHaveLength(0);
   });
   it("cache l'avis privé (circle=false) d'un membre du cercle", async () => {
     await rateOrReviewWork(deps, friend, ref, { rating: 3, text: "gardé pour moi", audiences: { public: false, circle: false, communityIds: [] } });
-    const work = await deps.works.findByExternal("tmdb", "603");
+    const work = await deps.works.findByExternal("tmdb", "603", "movie");
     expect(await getWorkReviews(deps, me, work!.id)).toHaveLength(0);
   });
 });
@@ -136,17 +136,17 @@ describe("getMyWorkReview", () => {
   const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
   it("renvoie ton avis s'il est partagé (cercle)", async () => {
     await rateOrReviewWork(deps, me, ref, { rating: 4, text: "top", audiences: { public: false, circle: true, communityIds: [] } });
-    const work = await deps.works.findByExternal("tmdb", "603");
+    const work = await deps.works.findByExternal("tmdb", "603", "movie");
     const mine = await getMyWorkReview(deps, me, work!.id);
     expect(mine?.author.id).toBe(me);
   });
   it("renvoie null si gardé pour moi (non partagé)", async () => {
     await rateOrReviewWork(deps, me, ref, { rating: 4, text: "privé", audiences: { public: false, circle: false, communityIds: [] } });
-    const work = await deps.works.findByExternal("tmdb", "603");
+    const work = await deps.works.findByExternal("tmdb", "603", "movie");
     expect(await getMyWorkReview(deps, me, work!.id)).toBeNull();
   });
   it("renvoie null si aucune note ni texte", async () => {
-    const work = await deps.works.findByExternal("tmdb", "603");
+    const work = await deps.works.findByExternal("tmdb", "603", "movie");
     expect(await getMyWorkReview(deps, me, work?.id ?? "x")).toBeNull();
   });
 });

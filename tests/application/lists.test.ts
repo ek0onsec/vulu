@@ -23,7 +23,7 @@ describe("lists", () => {
   it("retire une œuvre", async () => {
     const l = await createList(deps, "u1", { name: "SF", kind: "films", description: null, visibility: "public" });
     await addWorkToList(deps, "u1", l.id, ref);
-    const work = await deps.works.findByExternal("tmdb", "603");
+    const work = await deps.works.findByExternal("tmdb", "603", "movie");
     await removeWorkFromList(deps, "u1", l.id, work!.id);
     expect((await deps.lists.findById(l.id))?.workIds).toHaveLength(0);
   });

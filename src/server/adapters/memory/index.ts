@@ -2,7 +2,7 @@ import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
   ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository, EpisodeEntryRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry, WorkType } from "@/server/domain/entities";
 import { isPublishable, isFeedVisible } from "@/server/domain/feed-rules";
 
 export class InMemoryUserRepository implements UserRepository {
@@ -58,8 +58,8 @@ export class InMemoryWorkRepository implements WorkRepository {
   async upsert(w: Work) { this.byId.set(w.id, w); }
   async findById(id: string) { return this.byId.get(id) ?? null; }
   async findByIds(ids: string[]) { return ids.map((id) => this.byId.get(id)).filter((w): w is Work => w !== undefined); }
-  async findByExternal(source: WorkSource, externalId: string) {
-    return [...this.byId.values()].find((w) => w.source === source && w.externalId === externalId) ?? null;
+  async findByExternal(source: WorkSource, externalId: string, type: WorkType) {
+    return [...this.byId.values()].find((w) => w.source === source && w.externalId === externalId && w.type === type) ?? null;
   }
 }
 
