@@ -70,7 +70,8 @@ export function parseTvTimeExport(files: TvTimeCsvFiles): TvTimeExport {
     const season = toInt(r.season_number ?? "");
     const episode = toInt(r.episode_number ?? "");
     const watchedAt = parseDate(r.created_at ?? "");
-    if (!tvdbId || season === null || episode === null || !watchedAt) continue;
+    // Saison 0 = « specials » TVTime : Vulu numérote les saisons à partir de 1, on les ignore.
+    if (!tvdbId || season === null || episode === null || season < 1 || episode < 1 || !watchedAt) continue;
     get(tvdbId, r.series_name ?? "");
     let m = watchedKey.get(tvdbId);
     if (!m) { m = new Map(); watchedKey.set(tvdbId, m); }

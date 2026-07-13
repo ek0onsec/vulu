@@ -14,6 +14,7 @@ const trackingV2 = [
   "1,1,1,40,7105043,73762,k,2018-01-01 20:00:00,rewatch-episode-1,,,,,,,,,,,,,,,,,,\"Grey's Anatomy, Meredith\",1,1",
   "2,2,1,40,7105043,73762,k,2018-01-03 20:00:00,watch-episode-2,,,,,,,,,,,,,,,,,,\"Grey's Anatomy, Meredith\",1,2",
   "3,,,,7105043,73762,k,2018-01-04 20:00:00,watch-episode-3,,,,,,,,,,,,,,,,,,\"Grey's Anatomy, Meredith\",,",
+  "4,0,0,40,7105043,73762,k,2018-01-05 20:00:00,watch-episode-4,,,,,,,,,,,,,,,,,,\"Grey's Anatomy, Meredith\",0,1",
 ].join("\n");
 
 const trackingV1 = [
