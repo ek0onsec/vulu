@@ -32,4 +32,8 @@ describe("tvtime-zip", () => {
     const bad = zipSync({ "autre.csv": strToU8("x") });
     expect(() => extractCsvFiles(bad)).toThrow();
   });
+  it("rejette un CSV décompressé plus gros que le plafond (anti zip-bomb)", () => {
+    // followed_tv_show.csv fait ~200 octets → un plafond de 50 octets doit le refuser.
+    expect(() => extractCsvFiles(makeZip(), 50)).toThrow(/trop volumineux/);
+  });
 });

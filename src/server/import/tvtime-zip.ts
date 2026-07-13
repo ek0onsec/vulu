@@ -8,8 +8,21 @@ const NEEDED = {
   trackingV1: "tracking-prod-records.csv",
 } as const;
 
-export function extractCsvFiles(zip: Uint8Array): TvTimeCsvFiles {
-  const files = unzipSync(zip);
+/** Plafond de la taille DÉCOMPRESSÉE par CSV (anti zip-bomb) — le plus gros CSV réel fait ~2 Mo. */
+export const CSV_MAX_BYTES = 32 * 1024 * 1024;
+
+export function extractCsvFiles(zip: Uint8Array, maxCsvBytes: number = CSV_MAX_BYTES): TvTimeCsvFiles {
+  const wanted = new Set<string>(Object.values(NEEDED));
+  // On ne décompresse QUE les 3 CSV attendus, et on refuse toute entrée dont la taille
+  // décompressée annoncée dépasse le plafond (protection contre les archives piégées).
+  const files = unzipSync(zip, {
+    filter: (f) => {
+      const base = f.name.split("/").pop() ?? f.name;
+      if (!wanted.has(base)) return false;
+      if (f.originalSize > maxCsvBytes) throw new ValidationError("Archive invalide : fichier trop volumineux");
+      return true;
+    },
+  });
   const names = Object.keys(files);
   const pick = (needle: string): string => {
     const key = names.find((k) => k.endsWith(needle));
