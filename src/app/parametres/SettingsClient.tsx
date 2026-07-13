@@ -19,9 +19,10 @@ const DELETE_PHRASE = "SUPPRIMER MON COMPTE";
 const field = "w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm";
 const primaryBtn = "rounded-full bg-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50";
 
-type SectionId = "account" | "plus" | "security" | "privacy" | "display" | "interests" | "accessibility" | "legal" | "community" | "invite";
+type SectionId = "account" | "import" | "plus" | "security" | "privacy" | "display" | "interests" | "accessibility" | "legal" | "community" | "invite";
 const SECTIONS: { id: SectionId; label: string; icon: IconName; desc: string }[] = [
   { id: "account", label: "Votre compte", icon: "profile", desc: "Infos, mot de passe, archive, suppression" },
+  { id: "import", label: "Importer mes données", icon: "download", desc: "Migrer depuis TV Time" },
   { id: "plus", label: "vulu+", icon: "star", desc: "Gérer l’abonnement" },
   { id: "security", label: "Sécurité", icon: "shield", desc: "2FA, sessions actives" },
   { id: "privacy", label: "Confidentialité", icon: "lock", desc: "Compte privé, anti-spoiler" },
@@ -52,6 +53,13 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
   const [newPwd, setNewPwd] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [importFile, setImportFile] = useState<File | null>(null);
+  function analyzeImport() {
+    if (!importFile) return;
+    // Étape 1 : point d'entrée seulement — le moteur d'import (parsing, mapping
+    // TheTVDB→TMDB, dédup) arrive dans une étape ultérieure.
+    toast("Analyse en préparation — le moteur d'import arrive bientôt.");
+  }
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
@@ -114,6 +122,31 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
           <Icon name="logout" size={18} /> Supprimer mon compte
         </button>
         <button onClick={logout} className="mt-4 block text-sm font-medium text-[var(--color-text-muted)]">Se déconnecter</button>
+      </>
+    );
+    if (cur === "import") return (
+      <>
+        <h2 className="mb-4 font-display text-xl font-bold">Importer mes données</h2>
+        <p className="mb-5 text-sm text-[var(--color-text-muted)]">Migre ce que tu suivais ailleurs vers vulu, sans tout ressaisir.</p>
+        <div className="mb-3 rounded-2xl border border-[var(--color-border)] p-4">
+          <div className="mb-1 flex items-center gap-2">
+            <Icon name="download" size={20} />
+            <h3 className="font-display text-lg font-bold">TV Time</h3>
+          </div>
+          <p className="mb-4 text-sm text-[var(--color-text-muted)]">Séries et épisodes vus, notes et favoris. Télécharge ton export depuis TV Time (Réglages → Confidentialité → Télécharger mes données), puis dépose l'archive <strong>.zip</strong> ici.</p>
+          <label className="mb-3 flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[var(--color-border)] p-3 text-sm transition-colors hover:border-[var(--color-primary)]">
+            <Icon name="download" size={18} />
+            <span className="min-w-0 truncate text-[var(--color-text-muted)]">{importFile ? importFile.name : "Choisir mon export TV Time (.zip)"}</span>
+            <input type="file" accept=".zip" className="hidden" onChange={(e) => setImportFile(e.target.files?.[0] ?? null)} />
+          </label>
+          <button onClick={analyzeImport} disabled={!importFile} className={primaryBtn}>Analyser mon export</button>
+        </div>
+        {["Letterboxd", "IMDb", "Trakt"].map((name) => (
+          <div key={name} className="mb-2 flex items-center justify-between rounded-xl border border-[var(--color-border)] p-3 text-sm">
+            <span className="font-medium">{name}</span>
+            <span className="rounded-full bg-[var(--color-border)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">Bientôt</span>
+          </div>
+        ))}
       </>
     );
     if (cur === "plus") return (
