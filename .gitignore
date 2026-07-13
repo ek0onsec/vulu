@@ -42,4 +42,7 @@ next-env.d.ts
 
 # tooling & runtime content
 .superpowers/
+
+# Bac à sable Mongo local (données de dev)
+.local-mongo/
 /uploads/
