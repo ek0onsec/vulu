@@ -1,8 +1,8 @@
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository, EpisodeEntryRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository, EpisodeEntryRepository, ImportJobRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry, WorkType } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry, WorkType, ImportJob } from "@/server/domain/entities";
 import { isPublishable, isFeedVisible } from "@/server/domain/feed-rules";
 
 export class InMemoryUserRepository implements UserRepository {
@@ -237,4 +237,11 @@ export class InMemoryCommentRepository implements CommentRepository {
   }
   async remove(id: string) { this.byId.delete(id); }
   async removeAllForUser(userId: string) { for (const [k, c] of this.byId) if (c.userId === userId) this.byId.delete(k); }
+}
+
+export class InMemoryImportJobRepository implements ImportJobRepository {
+  private byId = new Map<string, ImportJob>();
+  async create(j: ImportJob) { this.byId.set(j.id, j); }
+  async findById(id: string) { return this.byId.get(id) ?? null; }
+  async update(j: ImportJob) { this.byId.set(j.id, j); }
 }

@@ -1,9 +1,9 @@
 import type { Db, Filter } from "mongodb";
 import type {
   UserRepository, FollowRepository, FollowRequestRepository, WorkRepository, LibraryEntryRepository,
-  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository, EpisodeEntryRepository,
+  ListRepository, LikeRepository, CommentRepository, CommunityRepository, MembershipRepository, CommunityRequestRepository, EpisodeCacheRepository, EpisodeEntryRepository, ImportJobRepository,
 } from "@/server/ports/repositories";
-import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry, WorkType } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, RatedEntry, List, Like, Comment, WorkSource, Community, Membership, CommunityRequest, CommunityRole, SeasonEpisodes, EpisodeEntry, WorkType, ImportJob } from "@/server/domain/entities";
 import * as M from "./mappers";
 
 export class MongoUserRepository implements UserRepository {
@@ -256,4 +256,12 @@ export class MongoCommentRepository implements CommentRepository {
   }
   async remove(id: string) { await this.col.deleteOne({ _id: id }); }
   async removeAllForUser(userId: string) { await this.col.deleteMany({ userId }); }
+}
+
+export class MongoImportJobRepository implements ImportJobRepository {
+  constructor(private db: Db) {}
+  private get col() { return this.db.collection<M.WithIdImportJob>("import_jobs"); }
+  async create(j: ImportJob) { await this.col.insertOne(M.toImportJobDoc(j)); }
+  async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromImportJobDoc(d) : null; }
+  async update(j: ImportJob) { await this.col.replaceOne({ _id: j.id }, M.toImportJobDoc(j)); }
 }

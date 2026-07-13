@@ -206,3 +206,26 @@ export interface Comment {
   text: string;
   createdAt: Date;
 }
+
+export interface ImportReport {
+  seriesImported: number;
+  seriesToWatch: number;
+  episodesAdded: number;
+  episodesSkipped: number;
+  moviesImported: number;
+  unmatched: { series: string[]; movies: string[] };
+}
+
+export type ImportJobStatus = "pending" | "running" | "done" | "error";
+export interface ImportJob {
+  id: string;
+  userId: string;
+  status: ImportJobStatus;
+  phase: "series" | "movies";
+  done: number;
+  total: number;
+  report: ImportReport | null;
+  error: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}

@@ -1,4 +1,4 @@
-import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, Community, Membership, CommunityRequest, SeasonEpisodes, EpisodeEntry } from "@/server/domain/entities";
+import type { User, Follow, FollowRequest, Work, LibraryEntry, List, Like, Comment, Community, Membership, CommunityRequest, SeasonEpisodes, EpisodeEntry, ImportJob } from "@/server/domain/entities";
 import { isPublishable } from "@/server/domain/feed-rules";
 
 type WithId<T> = T & { _id: string };
@@ -92,3 +92,7 @@ export const fromLikeDoc = (d: WithIdLike): Like => strip(d);
 
 export const toCommentDoc = (c: Comment): WithIdComment => ({ _id: c.id, ...c });
 export const fromCommentDoc = (d: WithIdComment): Comment => strip(d);
+
+export type WithIdImportJob = WithId<ImportJob>;
+export const toImportJobDoc = (j: ImportJob): WithIdImportJob => ({ _id: j.id, ...j });
+export const fromImportJobDoc = (d: WithIdImportJob): ImportJob => strip(d);

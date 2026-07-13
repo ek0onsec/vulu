@@ -5,14 +5,8 @@ import { getOrImportWork, domainOf } from "./get-work";
 import { loadOrCreateEntry } from "./library-entry";
 import { recomputeSeriesEntry } from "./episode-entry";
 
-export interface ImportReport {
-  seriesImported: number;
-  seriesToWatch: number;
-  episodesAdded: number;
-  episodesSkipped: number;
-  moviesImported: number;
-  unmatched: { series: string[]; movies: string[] };
-}
+import type { ImportReport } from "@/server/domain/entities";
+export type { ImportReport };
 
 const PRIVATE = { public: false, circle: false, communityIds: [] as string[] };
 
