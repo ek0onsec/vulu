@@ -1,0 +1,73 @@
+import type { Deps } from "@/server/container";
+import type { LibraryEntry } from "@/server/domain/entities";
+import type { TvTimeExport } from "@/server/import/tvtime-parser";
+import { getOrImportWork, domainOf } from "./get-work";
+import { loadOrCreateEntry } from "./library-entry";
+import { recomputeSeriesEntry } from "./episode-entry";
+
+export interface ImportReport {
+  seriesImported: number;
+  seriesToWatch: number;
+  episodesAdded: number;
+  episodesSkipped: number;
+  moviesImported: number;
+  unmatched: { series: string[]; movies: string[] };
+}
+
+const PRIVATE = { public: false, circle: false, communityIds: [] as string[] };
+
+export async function importTvTime(deps: Deps, userId: string, data: TvTimeExport): Promise<ImportReport> {
+  const report: ImportReport = {
+    seriesImported: 0, seriesToWatch: 0, episodesAdded: 0, episodesSkipped: 0,
+    moviesImported: 0, unmatched: { series: [], movies: [] },
+  };
+
+  for (const s of data.series) {
+    const mapped = await deps.catalog.findByTvdbId(s.tvdbId);
+    if (!mapped) { report.unmatched.series.push(s.name); continue; }
+    const ref = { source: "tmdb" as const, externalId: mapped.externalId, type: "tv" as const };
+    const work = await getOrImportWork(deps, ref);
+
+    if (s.watched.length === 0) {
+      const existing = await deps.entries.findByUserAndWork(userId, work.id);
+      if (!existing) {
+        await deps.entries.upsert(await loadOrCreateEntry(deps, userId, ref)); // planned privé par défaut
+        report.seriesToWatch++;
+      }
+      continue;
+    }
+
+    let added = 0;
+    for (const w of s.watched) {
+      const ex = await deps.episodeEntries.findOne(userId, work.id, w.season, w.episode);
+      if (ex) { report.episodesSkipped++; continue; }
+      const now = deps.clock.now();
+      await deps.episodeEntries.upsert({
+        id: deps.ids.next(), userId, workId: work.id, season: w.season, episode: w.episode,
+        watched: true, watchedAt: w.watchedAt, rating: null, text: null,
+        audiences: { ...PRIVATE }, activityAt: null, createdAt: now, updatedAt: now,
+      });
+      added++; report.episodesAdded++;
+    }
+    if (added > 0) { await recomputeSeriesEntry(deps, userId, ref, work); report.seriesImported++; }
+  }
+
+  for (const m of data.movies) {
+    const mapped = await deps.catalog.findMovieByTitleYear(m.name, m.year);
+    if (!mapped) { report.unmatched.movies.push(m.name); continue; }
+    const ref = { source: "tmdb" as const, externalId: mapped.externalId, type: "movie" as const };
+    const work = await getOrImportWork(deps, ref);
+    const existing = await deps.entries.findByUserAndWork(userId, work.id);
+    if (existing) continue; // skip total
+    const base = await loadOrCreateEntry(deps, userId, ref);
+    const now = deps.clock.now();
+    const entry: LibraryEntry = {
+      ...base, domain: domainOf(work.type), status: "done", completedAt: m.watchedAt,
+      audiences: { ...PRIVATE }, activityAt: null, updatedAt: now,
+    };
+    await deps.entries.upsert(entry);
+    report.moviesImported++;
+  }
+
+  return report;
+}

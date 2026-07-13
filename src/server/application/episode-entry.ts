@@ -7,7 +7,7 @@ import { deriveSeriesStatus } from "./series-status";
 
 type Ref = { source: WorkSource; externalId: string; type: WorkType };
 
-async function recomputeSeriesEntry(deps: Deps, userId: string, ref: Ref, work: Work): Promise<void> {
+export async function recomputeSeriesEntry(deps: Deps, userId: string, ref: Ref, work: Work): Promise<void> {
   const libEntry = await loadOrCreateEntry(deps, userId, ref);
   const all = await deps.episodeEntries.listByUserAndWork(userId, work.id);
   const grid: number[][] = [];
