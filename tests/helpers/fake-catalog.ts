@@ -39,6 +39,17 @@ export class FakeCatalog implements CatalogProvider {
   async searchWorks(_query: string, domain: Domain): Promise<WorkSummary[]> {
     return Object.values(this.works).filter((w) => (domain === "books" ? w.type === "book" : w.type !== "book"));
   }
+  tvdbToTmdb: Record<string, string> = {};
+  async findByTvdbId(tvdbId: string): Promise<{ externalId: string } | null> {
+    const id = this.tvdbToTmdb[tvdbId];
+    return id ? { externalId: id } : null;
+  }
+  async findMovieByTitleYear(title: string, year: number | null): Promise<{ externalId: string } | null> {
+    const w = Object.values(this.works).find(
+      (x) => x.type === "movie" && x.title.toLowerCase() === title.toLowerCase() && (year === null || x.year === year),
+    );
+    return w ? { externalId: w.externalId } : null;
+  }
   async getWork(externalId: string, type: WorkType): Promise<WorkDetails | null> {
     // Comme TMDB (/{type}/{id}), on résout par id ET type : les espaces d'ID film/série sont disjoints.
     return Object.values(this.works).find((w) => w.externalId === externalId && w.type === type)

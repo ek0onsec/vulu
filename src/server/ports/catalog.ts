@@ -30,4 +30,6 @@ export interface CatalogProvider {
   listGenres(domain: Domain): Promise<Genre[]>;
   searchPeople(query: string, domain: Domain): Promise<Person[]>;
   getPersonCredits(personId: string): Promise<WorkSummary[]>;
+  findByTvdbId(tvdbId: string): Promise<{ externalId: string } | null>;
+  findMovieByTitleYear(title: string, year: number | null): Promise<{ externalId: string } | null>;
 }

@@ -134,4 +134,17 @@ export class TmdbCatalog {
       profileUrl: this.img(p.profile_path, "w185"),
     }));
   }
+
+  async findByTvdbId(tvdbId: string): Promise<{ externalId: string } | null> {
+    const d = await this.get<{ tv_results?: { id: number }[] }>(`/find/${tvdbId}`, { external_source: "tvdb_id" });
+    const id = d.tv_results?.[0]?.id;
+    return id ? { externalId: String(id) } : null;
+  }
+  async findMovieByTitleYear(title: string, year: number | null): Promise<{ externalId: string } | null> {
+    const params: Record<string, string> = { query: title };
+    if (year) params.year = String(year);
+    const d = await this.get<{ results?: { id: number }[] }>("/search/movie", params);
+    const id = d.results?.[0]?.id;
+    return id ? { externalId: String(id) } : null;
+  }
 }

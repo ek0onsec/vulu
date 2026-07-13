@@ -28,4 +28,10 @@ export class CompositeCatalog implements CatalogProvider {
   getPersonCredits(personId: string): Promise<WorkSummary[]> {
     return this.films.getPersonCredits(personId);
   }
+  findByTvdbId(tvdbId: string): Promise<{ externalId: string } | null> {
+    return this.films.findByTvdbId(tvdbId);
+  }
+  findMovieByTitleYear(title: string, year: number | null): Promise<{ externalId: string } | null> {
+    return this.films.findMovieByTitleYear(title, year);
+  }
 }
