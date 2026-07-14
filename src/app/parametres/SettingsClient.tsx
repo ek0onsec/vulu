@@ -13,7 +13,9 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { TwoFactorSettings } from "@/components/TwoFactorSettings";
 import { InviteSection } from "@/components/InviteSection";
 import { useTour } from "@/components/tour/TourProvider";
+import { TvTimeImportModal } from "@/components/TvTimeImportModal";
 import type { Tastes } from "@/server/domain/entities";
+import type { ImportPreview } from "@/server/import/tvtime-zip";
 
 const DELETE_PHRASE = "SUPPRIMER MON COMPTE";
 const field = "w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm";
@@ -54,11 +56,17 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
-  function analyzeImport() {
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  async function analyzeImport() {
     if (!importFile) return;
-    // Étape 1 : point d'entrée seulement — le moteur d'import (parsing, mapping
-    // TheTVDB→TMDB, dédup) arrive dans une étape ultérieure.
-    toast("Analyse en préparation — le moteur d'import arrive bientôt.");
+    setBusy(true);
+    try {
+      const res = await fetch("/api/import/tvtime/preview", { method: "POST", body: importFile, credentials: "same-origin" });
+      if (!res.ok) throw new Error();
+      setImportPreview((await res.json()) as ImportPreview);
+    } catch {
+      toast("Fichier illisible : dépose bien l'archive .zip de ton export TV Time.", "error");
+    } finally { setBusy(false); }
   }
 
   async function run(fn: () => Promise<void>) {
@@ -261,6 +269,10 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
           {busy ? "…" : "Désactiver et programmer la suppression"}
         </button>
       </Modal>
+
+      {importFile && importPreview && (
+        <TvTimeImportModal file={importFile} preview={importPreview} onClose={() => { setImportPreview(null); setImportFile(null); }} />
+      )}
     </div>
   );
 }
