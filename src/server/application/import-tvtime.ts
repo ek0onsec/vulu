@@ -18,9 +18,13 @@ export async function importTvTime(deps: Deps, userId: string, data: TvTimeExpor
     moviesImported: 0, unmatched: { series: [], movies: [] },
   };
 
+  // Progression CUMULATIVE sur un total unique (séries + films) : la barre monte de 0 à 100 %
+  // sans jamais reculer entre les deux phases.
+  const total = data.series.length + data.movies.length;
+
   for (let seriesIndex = 0; seriesIndex < data.series.length; seriesIndex++) {
     const s = data.series[seriesIndex]!;
-    await onProgress?.({ phase: "series", done: seriesIndex, total: data.series.length });
+    await onProgress?.({ phase: "series", done: seriesIndex + 1, total });
     const mapped = await deps.catalog.findByTvdbId(s.tvdbId);
     if (!mapped) { report.unmatched.series.push(s.name); continue; }
     const ref = { source: "tmdb" as const, externalId: mapped.externalId, type: "tv" as const };
@@ -52,7 +56,7 @@ export async function importTvTime(deps: Deps, userId: string, data: TvTimeExpor
 
   for (let movieIndex = 0; movieIndex < data.movies.length; movieIndex++) {
     const m = data.movies[movieIndex]!;
-    await onProgress?.({ phase: "movies", done: movieIndex, total: data.movies.length });
+    await onProgress?.({ phase: "movies", done: data.series.length + movieIndex + 1, total });
     const mapped = await deps.catalog.findMovieByTitleYear(m.name, m.year);
     if (!mapped) { report.unmatched.movies.push(m.name); continue; }
     const ref = { source: "tmdb" as const, externalId: mapped.externalId, type: "movie" as const };
@@ -89,7 +93,8 @@ export async function runImportJob(deps: Deps, jobId: string, userId: string, da
 
     const report = await importTvTime(deps, userId, data, onProgress);
     const end = await deps.importJobs.findById(jobId);
-    if (end) await deps.importJobs.update({ ...end, status: "done", report, updatedAt: deps.clock.now() });
+    // Snap à 100 % à la complétion (la barre ne doit pas rester bloquée à ~99 %).
+    if (end) await deps.importJobs.update({ ...end, status: "done", done: end.total, report, updatedAt: deps.clock.now() });
   } catch (e) {
     const cur = await deps.importJobs.findById(jobId);
     if (cur) await deps.importJobs.update({ ...cur, status: "error", error: e instanceof Error ? e.message : String(e), updatedAt: deps.clock.now() });

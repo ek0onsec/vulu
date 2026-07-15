@@ -21,11 +21,18 @@ const data: TvTimeExport = {
 };
 
 describe("progression et job", () => {
-  it("importTvTime appelle onProgress avec des total corrects", async () => {
+  it("onProgress est cumulatif, monotone et atteint 100%", async () => {
     const calls: { phase: string; done: number; total: number }[] = [];
     await importTvTime(deps, USER, data, (p) => { calls.push(p); });
-    expect(calls.some((c) => c.phase === "series" && c.total === 1)).toBe(true);
-    expect(calls.some((c) => c.phase === "movies" && c.total === 1)).toBe(true);
+    // total constant = séries + films (pas de recul de la barre entre phases)
+    expect(calls.every((c) => c.total === 2)).toBe(true);
+    // progression monotone
+    for (let i = 1; i < calls.length; i++) expect(calls[i]!.done).toBeGreaterThanOrEqual(calls[i - 1]!.done);
+    // atteint le total (100%)
+    expect(Math.max(...calls.map((c) => c.done))).toBe(2);
+    // les deux phases sont étiquetées
+    expect(calls.some((c) => c.phase === "series")).toBe(true);
+    expect(calls.some((c) => c.phase === "movies")).toBe(true);
   });
 
   it("runImportJob fait passer le job à done avec un rapport", async () => {

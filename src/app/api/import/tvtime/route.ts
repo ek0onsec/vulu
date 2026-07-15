@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const now = deps.clock.now();
     const job: ImportJob = {
       id: deps.ids.next(), userId: user.id, status: "pending", phase: "series",
-      done: 0, total: data.series.length, report: null, error: null, createdAt: now, updatedAt: now,
+      done: 0, total: data.series.length + data.movies.length, report: null, error: null, createdAt: now, updatedAt: now,
     };
     await deps.importJobs.create(job);
     // Fire-and-forget : en local (process persistant) l'import va au bout ; les erreurs sont capturées dans le job.
