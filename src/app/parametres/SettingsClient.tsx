@@ -21,10 +21,10 @@ const DELETE_PHRASE = "SUPPRIMER MON COMPTE";
 const field = "w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm";
 const primaryBtn = "rounded-full bg-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50";
 
-type SectionId = "account" | "import" | "plus" | "security" | "privacy" | "display" | "interests" | "accessibility" | "legal" | "community" | "invite";
+type SectionId = "account" | "data" | "plus" | "security" | "privacy" | "display" | "interests" | "accessibility" | "legal" | "community" | "invite";
 const SECTIONS: { id: SectionId; label: string; icon: IconName; desc: string }[] = [
   { id: "account", label: "Votre compte", icon: "profile", desc: "Infos, mot de passe, archive, suppression" },
-  { id: "import", label: "Importer mes données", icon: "download", desc: "Migrer depuis TV Time" },
+  { id: "data", label: "Mes données", icon: "download", desc: "Importer et exporter" },
   { id: "plus", label: "vulu+", icon: "star", desc: "Gérer l’abonnement" },
   { id: "security", label: "Sécurité", icon: "shield", desc: "2FA, sessions actives" },
   { id: "privacy", label: "Confidentialité", icon: "lock", desc: "Compte privé, anti-spoiler" },
@@ -123,18 +123,26 @@ export function SettingsClient({ initialTastes, initialPrivate, username, email,
           <input className={field} type="password" placeholder="Nouveau (8 car. min.)" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} />
           <button onClick={savePassword} disabled={busy || !curPwd || newPwd.length < 8} className={primaryBtn}>OK</button>
         </div>
-        <a href="/api/me/export" className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)]">
-          <Icon name="download" size={18} /> Télécharger une archive de vos données
-        </a>
         <button onClick={() => { setConfirmText(""); setDeleteOpen(true); }} className="flex items-center gap-2 text-sm font-semibold text-red-500">
           <Icon name="logout" size={18} /> Supprimer mon compte
         </button>
         <button onClick={logout} className="mt-4 block text-sm font-medium text-[var(--color-text-muted)]">Se déconnecter</button>
       </>
     );
-    if (cur === "import") return (
+    if (cur === "data") return (
       <>
-        <h2 className="mb-4 font-display text-xl font-bold">Importer mes données</h2>
+        <h2 className="mb-4 font-display text-xl font-bold">Mes données</h2>
+        <div className="mb-6 rounded-2xl border border-[var(--color-border)] p-4">
+          <div className="mb-1 flex items-center gap-2">
+            <Icon name="download" size={20} />
+            <h3 className="font-display text-lg font-bold">Exporter mes données</h3>
+          </div>
+          <p className="mb-4 text-sm text-[var(--color-text-muted)]">Télécharge une archive complète (.zip) : profil, bibliothèque, épisodes, listes, abonnements, likes, commentaires et images.</p>
+          <a href="/api/me/export" className={`inline-flex items-center gap-2 ${primaryBtn}`}>
+            <Icon name="download" size={18} /> Télécharger mon archive (.zip)
+          </a>
+        </div>
+        <h3 className="mb-1 font-display text-lg font-bold">Importer mes données</h3>
         <p className="mb-5 text-sm text-[var(--color-text-muted)]">Migre ce que tu suivais ailleurs vers vulu, sans tout ressaisir.</p>
         <div className="mb-3 rounded-2xl border border-[var(--color-border)] p-4">
           <div className="mb-1 flex items-center gap-2">
