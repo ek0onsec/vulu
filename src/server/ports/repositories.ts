@@ -57,6 +57,7 @@ export interface EpisodeEntryRepository {
   upsert(entry: EpisodeEntry): Promise<void>;
   findById(id: string): Promise<EpisodeEntry | null>;
   findOne(userId: string, workId: string, season: number, episode: number): Promise<EpisodeEntry | null>;
+  listByUser(userId: string): Promise<EpisodeEntry[]>;
   listByUserAndWork(userId: string, workId: string): Promise<EpisodeEntry[]>;
   feed(opts: { scope: "foryou" | "following"; circleUserIds: string[]; followingUserIds: string[]; viewerId: string; cursor: { activityAt: Date; id: string } | null; limit: number }): Promise<EpisodeEntry[]>;
 }
@@ -135,11 +136,13 @@ export interface LikeRepository {
   /** Likes de plusieurs entrées en une requête (pour agréger les notifications). */
   listByEntries(entryIds: string[]): Promise<Like[]>;
   likedEntryIds(userId: string, entryIds: string[]): Promise<string[]>;
+  listByUser(userId: string): Promise<Like[]>;
   removeAllForUser(userId: string): Promise<void>;
 }
 export interface CommentRepository {
   add(comment: Comment): Promise<void>;
   findById(id: string): Promise<Comment | null>;
+  listByUser(userId: string): Promise<Comment[]>;
   listByEntry(entryId: string): Promise<Comment[]>;
   /** Commentaires de plusieurs entrées en une requête (pour agréger les notifications). */
   listByEntries(entryIds: string[]): Promise<Comment[]>;

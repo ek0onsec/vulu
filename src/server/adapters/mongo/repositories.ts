@@ -87,6 +87,7 @@ export class MongoEpisodeEntryRepository implements EpisodeEntryRepository {
     const d = await this.col.findOne({ userId, workId, season, episode });
     return d ? M.fromEpisodeEntryDoc(d) : null;
   }
+  async listByUser(userId: string) { return (await this.col.find({ userId }).toArray()).map(M.fromEpisodeEntryDoc); }
   async listByUserAndWork(userId: string, workId: string) {
     return (await this.col.find({ userId, workId }).toArray()).map(M.fromEpisodeEntryDoc);
   }
@@ -218,6 +219,7 @@ export class MongoListRepository implements ListRepository {
 export class MongoLikeRepository implements LikeRepository {
   constructor(private db: Db) {}
   private get col() { return this.db.collection<M.WithIdLike>("likes"); }
+  async listByUser(userId: string) { return (await this.col.find({ userId }).toArray()).map(M.fromLikeDoc); }
   async add(l: Like) { await this.col.updateOne({ _id: `${l.entryId}:${l.userId}` }, { $setOnInsert: M.toLikeDoc(l) }, { upsert: true }); }
   async remove(entryId: string, userId: string) { await this.col.deleteOne({ _id: `${entryId}:${userId}` }); }
   async exists(entryId: string, userId: string) { return (await this.col.countDocuments({ _id: `${entryId}:${userId}` })) > 0; }
@@ -241,6 +243,7 @@ export class MongoLikeRepository implements LikeRepository {
 export class MongoCommentRepository implements CommentRepository {
   constructor(private db: Db) {}
   private get col() { return this.db.collection<M.WithIdComment>("comments"); }
+  async listByUser(userId: string) { return (await this.col.find({ userId }).toArray()).map(M.fromCommentDoc); }
   async add(c: Comment) { await this.col.insertOne(M.toCommentDoc(c)); }
   async findById(id: string) { const d = await this.col.findOne({ _id: id }); return d ? M.fromCommentDoc(d) : null; }
   async listByEntry(entryId: string) { return (await this.col.find({ entryId }).sort({ createdAt: 1 }).toArray()).map(M.fromCommentDoc); }

@@ -1,4 +1,4 @@
-import { mkdir, writeFile, unlink } from "node:fs/promises";
+import { mkdir, writeFile, unlink, readFile } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { MediaStorage, ImageExt } from "@/server/ports/media";
@@ -23,6 +23,15 @@ export class LocalDiskStorage implements MediaStorage {
       await unlink(join(this.dir, name));
     } catch {
       /* best-effort : fichier déjà absent */
+    }
+  }
+
+  async load(url: string): Promise<Uint8Array | null> {
+    if (!url.startsWith(PUBLIC_PREFIX)) return null;
+    try {
+      return new Uint8Array(await readFile(join(this.dir, basename(url))));
+    } catch {
+      return null; // best-effort : fichier absent
     }
   }
 

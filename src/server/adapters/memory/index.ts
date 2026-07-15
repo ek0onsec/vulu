@@ -77,6 +77,7 @@ export class InMemoryEpisodeEntryRepository implements EpisodeEntryRepository {
   async findOne(userId: string, workId: string, season: number, episode: number) {
     return [...this.byId.values()].find((e) => e.userId === userId && e.workId === workId && e.season === season && e.episode === episode) ?? null;
   }
+  async listByUser(userId: string) { return [...this.byId.values()].filter((e) => e.userId === userId); }
   async listByUserAndWork(userId: string, workId: string) {
     return [...this.byId.values()].filter((e) => e.userId === userId && e.workId === workId);
   }
@@ -214,6 +215,7 @@ export class InMemoryLikeRepository implements LikeRepository {
     const s = new Set(entryIds);
     return this.likes.filter((l) => l.userId === userId && s.has(l.entryId)).map((l) => l.entryId);
   }
+  async listByUser(userId: string) { return this.likes.filter((l) => l.userId === userId); }
   async removeAllForUser(userId: string) { this.likes = this.likes.filter((l) => l.userId !== userId); }
 }
 
@@ -221,6 +223,7 @@ export class InMemoryCommentRepository implements CommentRepository {
   private byId = new Map<string, Comment>();
   async add(c: Comment) { this.byId.set(c.id, c); }
   async findById(id: string) { return this.byId.get(id) ?? null; }
+  async listByUser(userId: string) { return [...this.byId.values()].filter((c) => c.userId === userId); }
   async listByEntry(entryId: string) {
     return [...this.byId.values()].filter((c) => c.entryId === entryId).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
