@@ -58,19 +58,6 @@ export async function cancelAccountDeletion(deps: Deps, userId: string): Promise
   return updated;
 }
 
-/** Archive des données de l'utilisateur (export RGPD léger). */
-export async function exportUserData(deps: Deps, userId: string) {
-  const user = await deps.users.findById(userId);
-  if (!user) throw new NotFoundError("Utilisateur introuvable");
-  const [entries, lists] = await Promise.all([
-    deps.entries.listByUser(userId, {}),
-    deps.lists.listByUser(userId),
-  ]);
-  const { passwordHash, ...profile } = user;
-  void passwordHash;
-  return { exportedAt: deps.clock.now().toISOString(), profile, entries, lists };
-}
-
 /** Suppression définitive : retire l'utilisateur et toutes ses données. */
 export async function purgeUser(deps: Deps, userId: string): Promise<void> {
   await Promise.all([
