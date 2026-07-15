@@ -212,6 +212,7 @@ export interface ImportReport {
   seriesToWatch: number;
   episodesAdded: number;
   episodesSkipped: number;
+  datesBackfilled: number;
   moviesImported: number;
   unmatched: { series: string[]; movies: string[] };
 }

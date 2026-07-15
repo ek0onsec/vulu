@@ -4,6 +4,7 @@ import { FakeCatalog } from "../helpers/fake-catalog";
 import { importTvTime } from "@/server/application/import-tvtime";
 import type { TvTimeExport } from "@/server/import/tvtime-parser";
 import { updateEpisode } from "@/server/application/episode-entry";
+import { setEntryStatus } from "@/server/application/library-entry";
 
 let deps: Deps;
 let fake: FakeCatalog;
@@ -69,6 +70,51 @@ describe("importTvTime", () => {
     });
     expect(r.unmatched.series).toContain("Série Inconnue");
     expect(r.unmatched.movies).toContain("Film Inconnu");
+  });
+
+  it("complète la date d'un épisode déjà vu mais sans date (backfill)", async () => {
+    const ref = { source: "tmdb" as const, externalId: "1396", type: "tv" as const };
+    await updateEpisode(deps, USER, ref, 1, 1, { watched: true, watchedAt: null }); // vu, sans date
+    const report = await importTvTime(deps, USER, bbSeries);
+    expect(report.datesBackfilled).toBe(1);         // S1E1 : date complétée
+    expect(report.episodesSkipped).toBe(0);
+    expect(report.episodesAdded).toBe(1);           // S1E2 : nouveau
+    const ep = await deps.episodeEntries.findOne(USER, (await firstWork(deps)).id, 1, 1);
+    expect(ep!.watchedAt).toEqual(new Date("2020-01-01")); // date de l'import
+    expect(ep!.watched).toBe(true);
+  });
+
+  it("n'écrase pas la date d'un épisode déjà daté", async () => {
+    const ref = { source: "tmdb" as const, externalId: "1396", type: "tv" as const };
+    await updateEpisode(deps, USER, ref, 1, 1, { watched: true, watchedAt: new Date("2019-06-06") });
+    const report = await importTvTime(deps, USER, bbSeries);
+    expect(report.datesBackfilled).toBe(0);
+    expect(report.episodesSkipped).toBe(1);
+    const ep = await deps.episodeEntries.findOne(USER, (await firstWork(deps)).id, 1, 1);
+    expect(ep!.watchedAt).toEqual(new Date("2019-06-06")); // inchangé
+  });
+
+  it("complète la date d'un film déjà 'done' sans date", async () => {
+    const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+    await setEntryStatus(deps, USER, ref, "done", null); // done, sans date
+    const data: TvTimeExport = { series: [], movies: [{ name: "The Matrix", year: 1999, watchedAt: new Date("2021-03-03") }] };
+    const report = await importTvTime(deps, USER, data);
+    expect(report.datesBackfilled).toBe(1);
+    expect(report.moviesImported).toBe(0);
+    const entry = await deps.entries.findByUserAndWork(USER, (await firstWork(deps)).id);
+    expect(entry!.completedAt).toEqual(new Date("2021-03-03"));
+  });
+
+  it("ne touche pas un film déjà daté ou en 'à voir'", async () => {
+    const ref = { source: "tmdb" as const, externalId: "603", type: "movie" as const };
+    await setEntryStatus(deps, USER, ref, "planned"); // à voir → ne doit pas devenir 'done'
+    const data: TvTimeExport = { series: [], movies: [{ name: "The Matrix", year: 1999, watchedAt: new Date("2021-03-03") }] };
+    const report = await importTvTime(deps, USER, data);
+    expect(report.datesBackfilled).toBe(0);
+    expect(report.moviesImported).toBe(0);
+    const entry = await deps.entries.findByUserAndWork(USER, (await firstWork(deps)).id);
+    expect(entry!.status).toBe("planned");   // inchangé
+    expect(entry!.completedAt).toBeNull();
   });
 });
 

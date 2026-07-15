@@ -15,7 +15,7 @@ export type ImportProgress = (p: { phase: "series" | "movies"; done: number; tot
 export async function importTvTime(deps: Deps, userId: string, data: TvTimeExport, onProgress?: ImportProgress): Promise<ImportReport> {
   const report: ImportReport = {
     seriesImported: 0, seriesToWatch: 0, episodesAdded: 0, episodesSkipped: 0,
-    moviesImported: 0, unmatched: { series: [], movies: [] },
+    datesBackfilled: 0, moviesImported: 0, unmatched: { series: [], movies: [] },
   };
 
   // Progression CUMULATIVE sur un total unique (séries + films) : la barre monte de 0 à 100 %
@@ -40,18 +40,29 @@ export async function importTvTime(deps: Deps, userId: string, data: TvTimeExpor
     }
 
     let added = 0;
+    let touched = false;
     for (const w of s.watched) {
       const ex = await deps.episodeEntries.findOne(userId, work.id, w.season, w.episode);
-      if (ex) { report.episodesSkipped++; continue; }
+      if (ex) {
+        // Backfill : uniquement si déjà vu et sans date. Jamais d'écrasement.
+        if (ex.watched && ex.watchedAt === null) {
+          await deps.episodeEntries.upsert({ ...ex, watchedAt: w.watchedAt, updatedAt: deps.clock.now() });
+          report.datesBackfilled++; touched = true;
+        } else {
+          report.episodesSkipped++;
+        }
+        continue;
+      }
       const now = deps.clock.now();
       await deps.episodeEntries.upsert({
         id: deps.ids.next(), userId, workId: work.id, season: w.season, episode: w.episode,
         watched: true, watchedAt: w.watchedAt, rating: null, text: null,
         audiences: { ...PRIVATE }, activityAt: null, createdAt: now, updatedAt: now,
       });
-      added++; report.episodesAdded++;
+      added++; report.episodesAdded++; touched = true;
     }
-    if (added > 0) { await recomputeSeriesEntry(deps, userId, ref, work); report.seriesImported++; }
+    if (touched) await recomputeSeriesEntry(deps, userId, ref, work);
+    if (added > 0) report.seriesImported++;
   }
 
   for (let movieIndex = 0; movieIndex < data.movies.length; movieIndex++) {
@@ -62,7 +73,14 @@ export async function importTvTime(deps: Deps, userId: string, data: TvTimeExpor
     const ref = { source: "tmdb" as const, externalId: mapped.externalId, type: "movie" as const };
     const work = await getOrImportWork(deps, ref);
     const existing = await deps.entries.findByUserAndWork(userId, work.id);
-    if (existing) continue; // skip total
+    if (existing) {
+      // Backfill : uniquement un film déjà 'done' sans date. Jamais de changement de statut.
+      if (existing.status === "done" && existing.completedAt === null) {
+        await deps.entries.upsert({ ...existing, completedAt: m.watchedAt, updatedAt: deps.clock.now() });
+        report.datesBackfilled++;
+      }
+      continue;
+    }
     const base = await loadOrCreateEntry(deps, userId, ref);
     const now = deps.clock.now();
     const entry: LibraryEntry = {
