@@ -76,6 +76,9 @@ export function TvTimeImportModal({ file, preview, onClose }: { file: File; prev
           <ul className="mb-3 space-y-1 text-sm">
             <li>{status.report.seriesImported} séries importées, {status.report.seriesToWatch} ajoutées « à voir »</li>
             <li>{status.report.episodesAdded} épisodes ajoutés, {status.report.episodesSkipped} déjà présents (ignorés)</li>
+            {status.report.datesBackfilled > 0 && (
+              <li>{status.report.datesBackfilled} dates complétées sur des éléments déjà présents</li>
+            )}
             <li>{status.report.moviesImported} films importés</li>
           </ul>
           {(status.report.unmatched.series.length > 0 || status.report.unmatched.movies.length > 0) && (
